@@ -1,0 +1,400 @@
+import * as vscode from 'vscode';
+import { TranslationSession } from './session.ts';
+import type { SessionDiagnostic, TargetState } from './session.ts';
+import { PreviewStore } from './preview.ts';
+import type { PreviewPair } from './preview.ts';
+import type { CalculationAdvisory } from '../../src/calculationAdvisories.ts';
+import type { ConditionInformation } from '../../src/conditionInformation.ts';
+
+type Choice = vscode.QuickPickItem & { action: 'insert' | 'edit' | 'return' | 'cancel' };
+export type SessionInspection = {
+  phase: string; ui: 'input' | 'confirmation' | 'none'; draft: string;
+  targetUri: string; choices: string[]; diagnostic: SessionDiagnostic | undefined;
+  preview: { before: string; after: string } | undefined;
+  advisories: CalculationAdvisory[];
+  information: ConditionInformation[];
+  attachmentLabel: string | undefined;
+  validation: string | vscode.InputBoxValidationMessage | undefined;
+  confirmationTitle: string | undefined;
+  pedagogyEntry: string;
+  loggedPreviews: number;
+};
+export type ExtensionApi = { inspect(): SessionInspection | undefined };
+
+function indentation(editor: vscode.TextEditor): { unit: string; signature: string } | undefined {
+  const { insertSpaces, tabSize, indentSize } = editor.options;
+  if (typeof insertSpaces !== 'boolean' || typeof tabSize !== 'number' || !Number.isSafeInteger(tabSize) || tabSize < 1
+    || typeof indentSize !== 'number' || !Number.isSafeInteger(indentSize) || indentSize < 1) return undefined;
+  try {
+    return { unit: insertSpaces ? ' '.repeat(indentSize) : '\t', signature: `${insertSpaces}:${tabSize}:${indentSize}` };
+  } catch { return undefined; }
+}
+
+function message(diagnostic: SessionDiagnostic): string {
+  const label = diagnostic.stage === 'translation' ? 'Traduction' : diagnostic.stage === 'placement' ? 'Placement refusé' : 'Intégration';
+  return `${label} : ${diagnostic.message}`;
+}
+
+class NativeSession {
+  readonly controller: TranslationSession;
+  private readonly document: vscode.TextDocument;
+  private readonly column: vscode.ViewColumn;
+  private readonly initial: TargetState;
+  private readonly subscriptions: vscode.Disposable[] = [];
+  private input: vscode.InputBox | undefined;
+  private picker: vscode.QuickPick<Choice> | undefined;
+  private pair: PreviewPair | undefined;
+  private disposed = false;
+  private finishing = false;
+  private busy = false;
+  private manualSelectionDuringApply = false;
+  private diagnostic: SessionDiagnostic | undefined;
+  private readonly editor: vscode.TextEditor;
+  private readonly store: PreviewStore;
+  private readonly id: number;
+  private readonly finished: (draft: string) => void;
+  private readonly pedagogy: vscode.OutputChannel;
+  private lastLoggedToken: number | undefined;
+  private pedagogyEntry = '';
+  private loggedPreviews = 0;
+
+  constructor(
+    editor: vscode.TextEditor,
+    store: PreviewStore,
+    id: number,
+    initial: TargetState,
+    draft: string,
+    finished: (draft: string) => void,
+    pedagogy: vscode.OutputChannel,
+  ) {
+    this.editor = editor; this.store = store; this.id = id; this.finished = finished;
+    this.pedagogy = pedagogy;
+    this.document = editor.document;
+    this.column = editor.viewColumn ?? vscode.ViewColumn.One;
+    this.initial = initial;
+    this.controller = new TranslationSession(initial, draft);
+    const observe = () => {
+      if (this.disposed || this.finishing) return;
+      this.controller.observe(this.capture());
+      this.refresh();
+    };
+    this.subscriptions.push(
+      vscode.workspace.onDidChangeTextDocument(event => { if (event.document === this.document) observe(); }),
+      vscode.workspace.onDidCloseTextDocument(document => {
+        if (document === this.document) this.invalidate('Le document cible a été fermé. Revenez au fichier et relancez C-A.');
+      }),
+      vscode.window.onDidChangeTextEditorSelection(event => {
+        if (event.textEditor !== this.editor) return;
+        if (this.controller.phase === 'applying') {
+          if (event.kind === vscode.TextEditorSelectionChangeKind.Keyboard || event.kind === vscode.TextEditorSelectionChangeKind.Mouse) {
+            this.manualSelectionDuringApply = true;
+          }
+          return;
+        }
+        observe();
+      }),
+      vscode.window.onDidChangeTextEditorOptions(event => { if (event.textEditor === this.editor) observe(); }),
+      vscode.window.onDidChangeVisibleTextEditors(() => observe()),
+      vscode.window.onDidChangeActiveTextEditor(active => {
+        if (active && active !== this.editor && !this.store.owns(this.pair, active.document.uri)) {
+          this.invalidate('Un autre éditeur est actif. La cible n’a pas été déplacée : revenez au fichier et relancez C-A.');
+        }
+      }),
+    );
+  }
+
+  private capture(): TargetState {
+    const open = !this.document.isClosed && this.editor.document === this.document
+      && this.document.languageId === 'c' && vscode.window.visibleTextEditors.includes(this.editor);
+    const settings = indentation(this.editor);
+    return {
+      document: open ? { id: this.document.uri.toString(), revision: this.document.version, text: this.document.getText() } : { ...this.initial.document },
+      cursorOffset: open ? this.document.offsetAt(this.editor.selection.active) : this.initial.cursorOffset,
+      singleCursor: this.editor.selections.length === 1 && this.editor.selection.isEmpty,
+      indentUnit: settings?.unit ?? '', indentSignature: settings?.signature ?? 'indéterminée',
+      eol: this.document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n', open,
+    };
+  }
+
+  private invalidate(text: string): void {
+    if (this.disposed || this.finishing) return;
+    this.controller.invalidate(text);
+    this.refresh();
+  }
+
+  private refresh(): void {
+    if (this.disposed || this.finishing || this.controller.phase === 'applying') return;
+    this.diagnostic = this.controller.diagnose(this.capture());
+    const advisories = this.diagnostic ? [] : this.controller.advisories;
+    if (this.input) this.input.validationMessage = this.diagnostic ? message(this.diagnostic)
+      : advisories.length ? { message: `${advisories.length} avertissement(s) — ${advisories[0]?.message} Consultez « C-A — Pédagogie » après préparation de l’aperçu.`,
+        severity: vscode.InputBoxValidationSeverity.Warning } : undefined;
+    if (this.picker && this.controller.phase === 'stale') {
+      this.picker.title = 'C-A : aperçu périmé — aucune insertion autorisée';
+      this.picker.placeholder = this.diagnostic ? message(this.diagnostic) : 'Demandez un nouvel aperçu.';
+      this.picker.items = this.choices(false);
+    }
+  }
+
+  focus(): void {
+    if (this.input) this.input.show();
+    else if (this.picker) this.picker.show();
+    else void vscode.window.showInformationMessage('C-A : préparation ou insertion en cours.');
+  }
+
+  showInput(): void {
+    if (this.disposed || this.finishing) return;
+    const input = vscode.window.createInputBox();
+    this.input = input;
+    let intentionalHide = false;
+    const listeners: vscode.Disposable[] = [];
+    const close = () => {
+      intentionalHide = true;
+      for (const listener of listeners) listener.dispose();
+      if (this.input === input) this.input = undefined;
+      input.dispose();
+    };
+    input.title = 'C-A : instruction française';
+    input.prompt = 'Entrée prépare l’aperçu uniquement. Échap annule.';
+    input.placeholder = 'Exemples : Crée un bloc si "actif && age >= 18". / Ajoute une branche sinon.';
+    input.ignoreFocusOut = true;
+    input.value = this.controller.draft;
+    listeners.push(
+      input.onDidChangeValue(value => { this.controller.updateText(value); this.refresh(); }),
+      input.onDidHide(() => { if (!intentionalHide) { close(); void this.close(false); } }),
+      input.onDidAccept(() => {
+        if (this.busy || this.disposed) return;
+        const result = this.controller.prepare(this.capture());
+        if (result.status === 'error') {
+          this.diagnostic = result.diagnostic;
+          input.validationMessage = message(result.diagnostic);
+          if (result.diagnostic.stage === 'translation' && result.diagnostic.range) {
+            input.valueSelection = [result.diagnostic.range.start, result.diagnostic.range.end];
+          }
+          return;
+        }
+        this.busy = true;
+        this.logAdvisories(result.preview.token);
+        input.enabled = false;
+        close();
+        void this.store.show(this.id, result.preview, pair => { this.pair = pair; },
+          () => !this.disposed && !this.finishing && this.controller.phase === 'preparing').then(async pair => {
+          if (this.disposed || this.finishing) { await this.store.close(pair); return; }
+          this.controller.reviewReady(result.preview.token, this.capture());
+          this.busy = false;
+          this.showConfirmation(result.preview.token, result.preview.eol);
+        }).catch(async () => {
+          if (this.disposed || this.finishing) return;
+          try { await this.store.close(this.pair); } catch { /* No source edit is attempted. */ }
+          this.pair = undefined;
+          this.busy = false;
+          this.controller.editAgain();
+          this.showInput();
+          this.diagnostic = { stage: 'integration', code: 'PREVIEW_FAILED', message: 'Impossible d’ouvrir l’aperçu. Aucune insertion n’a été demandée ; relancez C-A.' };
+          if (this.input) this.input.validationMessage = message(this.diagnostic);
+        });
+      }),
+    );
+    this.refresh();
+    input.show();
+  }
+
+  private choices(current: boolean): Choice[] {
+    const advisories = this.diagnostic ? [] : this.controller.advisories;
+    return current ? [
+      { label: 'Insérer', description: this.controller.attachmentLabel ?? 'Appliquer exactement l’aperçu affiché', action: 'insert',
+        ...(advisories.length ? { detail: advisories[0]?.message ?? '' } : {}) },
+      { label: 'Modifier la phrase', action: 'edit' }, { label: 'Annuler', action: 'cancel' },
+    ] : [{ label: 'Revenir au fichier', description: 'Phrase conservée pour la prochaine commande C-A', action: 'return' }, { label: 'Annuler', action: 'cancel' }];
+  }
+
+  private showConfirmation(token: number, eol: '\n' | '\r\n'): void {
+    if (this.disposed || this.finishing) return;
+    const picker = vscode.window.createQuickPick<Choice>();
+    this.picker = picker;
+    let intentionalHide = false;
+    const listeners: vscode.Disposable[] = [];
+    const close = () => {
+      intentionalHide = true;
+      for (const listener of listeners) listener.dispose();
+      if (this.picker === picker) this.picker = undefined;
+      picker.dispose();
+    };
+    picker.title = `C-A : confirmer l’aperçu — fins de ligne ${eol === '\n' ? 'LF' : 'CRLF'}`;
+    const advisories = this.controller.advisories;
+    if (advisories.length) picker.title += ` — ${advisories.length} avertissement(s) — C-A — Pédagogie`;
+    picker.placeholder = 'Entrée sur « Insérer » modifie le fichier ; Échap annule.';
+    picker.ignoreFocusOut = true;
+    picker.items = this.choices(this.controller.phase === 'review');
+    listeners.push(
+      picker.onDidHide(() => { if (!intentionalHide) { close(); void this.close(false); } }),
+      picker.onDidAccept(() => {
+        if (this.busy || this.disposed) return;
+        const choice = picker.selectedItems[0];
+        if (!choice) return;
+        if (choice.action === 'edit') {
+          close();
+          this.controller.editAgain();
+          this.busy = true;
+          void this.store.close(this.pair).then(() => { this.pair = undefined; this.busy = false; this.showInput(); }).catch(() => {
+            this.busy = false;
+            this.controller.invalidate('L’aperçu ne peut pas être fermé. Revenez au fichier et relancez C-A.');
+            this.showInput();
+          });
+        } else if (choice.action === 'insert') {
+          this.busy = true;
+          picker.enabled = false;
+          close();
+          void this.apply(token);
+        } else { close(); void this.close(false); }
+      }),
+    );
+    this.refresh();
+    picker.show();
+  }
+
+  private logAdvisories(token: number): void {
+    if (this.lastLoggedToken === token) return;
+    this.lastLoggedToken = token;
+    const advisories = this.controller.advisories;
+    const information = this.controller.information;
+    if (!advisories.length && !information.length) return;
+    this.pedagogyEntry = `Session ${this.id}, aperçu ${token} — historique, pas un état actif\n${this.controller.draft}\n`
+      + [...advisories.map(advice => `${advice.code} [${advice.assessment}] UTF-16 [${advice.range.start}, ${advice.range.end}) : ${advice.message}`),
+        ...information.map(info => `${info.code} [information] UTF-16 [${info.range.start}, ${info.range.end}) : ${info.message}`)].join('\n');
+    this.pedagogy.appendLine(this.pedagogyEntry);
+    this.loggedPreviews++;
+  }
+
+  private async apply(token: number): Promise<void> {
+    try {
+      if (this.document.isClosed) { this.invalidate('Le document cible a été fermé.'); this.busy = false; this.showInput(); return; }
+      const focused = await vscode.window.showTextDocument(this.document, { viewColumn: this.column, preserveFocus: false });
+      if (focused !== this.editor) this.invalidate('La vue cible a été remplacée. Relancez C-A depuis le fichier.');
+      const result = this.controller.beginApply(token, this.capture());
+      if (result.status !== 'apply') {
+        this.busy = false;
+        this.showInput();
+        this.diagnostic = result.diagnostic;
+        if (this.input) this.input.validationMessage = message(result.diagnostic);
+        return;
+      }
+      const desiredEol = result.plan.eol === '\n' ? vscode.EndOfLine.LF : vscode.EndOfLine.CRLF;
+      // Refuse a mismatch instead of letting VS Code normalize the shown text.
+      // No separate EOL edit: it would not undo together with the insertion.
+      if (this.document.eol !== desiredEol) {
+        this.controller.finishApply(false);
+        this.busy = false;
+        this.showInput();
+        if (this.input) this.input.validationMessage = 'Intégration : la fin de ligne de l’éditeur ne correspond plus à l’aperçu. Aucune insertion effectuée ; demandez un nouvel aperçu.';
+        return;
+      }
+      // No await between beginApply's freshness check and this one edit call.
+      const success = await this.editor.edit(builder => {
+        for (const edit of result.plan.edits) {
+          builder.replace(new vscode.Range(this.document.positionAt(edit.range.start), this.document.positionAt(edit.range.end)), edit.newText);
+        }
+      }, { undoStopBefore: true, undoStopAfter: true });
+      this.controller.finishApply(success);
+      if (!success) {
+        this.busy = false;
+        this.showInput();
+        if (this.input) this.input.validationMessage = 'Intégration : l’édition a été refusée. Demandez un nouvel aperçu ; aucune reprise automatique.';
+        return;
+      }
+      const version = this.document.version;
+      await this.close(true, { text: result.expectedAfter, version, cursor: result.plan.cursorAfter });
+    } catch {
+      this.controller.finishApply(false);
+      this.busy = false;
+      if (!this.disposed && !this.finishing) {
+        this.showInput();
+        this.diagnostic = { stage: 'integration', code: 'APPLY_FAILED', message: 'L’application n’a pas pu être confirmée. Vérifiez le document avant de demander un nouvel aperçu ; aucune reprise automatique.' };
+        if (this.input) this.input.validationMessage = message(this.diagnostic);
+      }
+    }
+  }
+
+  async close(applied: boolean, expected?: { text: string; version: number; cursor: number }): Promise<void> {
+    if (this.finishing || this.disposed || (!applied && this.controller.phase === 'applying')) return;
+    this.finishing = true;
+    const active = vscode.window.activeTextEditor;
+    const restore = !active || active === this.editor || this.store.owns(this.pair, active.document.uri);
+    if (!applied) this.controller.cancel();
+    for (const listener of this.subscriptions) listener.dispose();
+    // onDidHide callbacks see finishing and close() is idempotent.
+    this.input?.dispose(); this.input = undefined;
+    this.picker?.dispose(); this.picker = undefined;
+    try {
+      await this.store.close(this.pair);
+      const now = vscode.window.activeTextEditor;
+      if (restore && !this.document.isClosed && (!now || now === this.editor || this.store.owns(this.pair, now.document.uri))) {
+        const editor = await vscode.window.showTextDocument(this.document, { viewColumn: this.column, preserveFocus: false });
+        if (expected && !this.manualSelectionDuringApply && this.document.version === expected.version && this.document.getText() === expected.text) {
+          const position = this.document.positionAt(expected.cursor);
+          editor.selection = new vscode.Selection(position, position);
+          editor.revealRange(new vscode.Range(position, position));
+        }
+      }
+    } catch {
+      void vscode.window.showWarningMessage('C-A : impossible de rétablir complètement la vue. Vérifiez le fichier ; aucune reprise automatique n’est effectuée.');
+    } finally {
+      this.disposed = true;
+      this.finished(applied ? '' : this.controller.draft);
+    }
+  }
+
+  inspect(): SessionInspection {
+    return {
+      phase: this.controller.phase, ui: this.input ? 'input' : this.picker ? 'confirmation' : 'none',
+      draft: this.controller.draft, targetUri: this.document.uri.toString(), choices: this.picker?.items.map(item => item.label) ?? [],
+      diagnostic: this.diagnostic,
+      advisories: this.diagnostic ? [] : this.controller.advisories,
+      information: this.diagnostic ? [] : this.controller.information,
+      attachmentLabel: this.controller.attachmentLabel,
+      validation: this.input?.validationMessage,
+      confirmationTitle: this.picker?.title,
+      pedagogyEntry: this.pedagogyEntry, loggedPreviews: this.loggedPreviews,
+      preview: this.pair ? { before: this.pair.before.toString(), after: this.pair.after.toString() } : undefined,
+    };
+  }
+}
+
+export function activate(context: vscode.ExtensionContext): ExtensionApi {
+  const store = new PreviewStore();
+  const pedagogy = vscode.window.createOutputChannel('C-A — Pédagogie');
+  context.subscriptions.push(pedagogy);
+  let active: NativeSession | undefined;
+  let nextId = 0;
+  let rememberedDraft = '';
+  context.subscriptions.push(store, { dispose: () => { if (active) void active.close(false); } });
+  context.subscriptions.push(vscode.commands.registerCommand('c-a.translate', (draft?: unknown) => {
+    if (active) { active.focus(); return; }
+    const editor = vscode.window.activeTextEditor;
+    const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
+    if (!editor || editor.document.uri.scheme !== 'file' || !editor.document.uri.path.endsWith('.c')
+      || editor.document.languageId !== 'c' || editor.viewColumn === undefined || !(tab?.input instanceof vscode.TabInputText)) {
+      void vscode.window.showWarningMessage('C-A : ouvrez un fichier .c ordinaire en mode C avant de saisir une instruction.');
+      return;
+    }
+    if (editor.selections.length !== 1 || !editor.selection.isEmpty) {
+      void vscode.window.showWarningMessage('C-A : placez un seul curseur, sans sélection, sur une ligne blanche.');
+      return;
+    }
+    const settings = indentation(editor);
+    if (!settings) { void vscode.window.showWarningMessage('C-A : les réglages effectifs d’indentation ne sont pas résolus.'); return; }
+    const target: TargetState = {
+      document: { id: editor.document.uri.toString(), revision: editor.document.version, text: editor.document.getText() },
+      cursorOffset: editor.document.offsetAt(editor.selection.active), singleCursor: true,
+      indentUnit: settings.unit, indentSignature: settings.signature, open: true,
+      eol: editor.document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n',
+    };
+    const session = new NativeSession(editor, store, ++nextId, target, typeof draft === 'string' ? draft : rememberedDraft, value => {
+      if (active === session) { rememberedDraft = value; active = undefined; }
+    }, pedagogy);
+    active = session;
+    session.showInput();
+  }));
+  // Read-only observability: no API bypasses the native confirmation control.
+  return { inspect: () => active?.inspect() };
+}

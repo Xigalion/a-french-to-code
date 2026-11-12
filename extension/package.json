@@ -1,0 +1,29 @@
+{
+  "name": "c-a",
+  "displayName": "C-A — Français contrôlé vers C17",
+  "description": "Prototype pédagogique : traduction, aperçu et insertion explicite de quatre instructions C17.",
+  "version": "0.3.0",
+  "publisher": "projet-a-local",
+  "private": true,
+  "type": "commonjs",
+  "engines": { "vscode": "^1.96.0" },
+  "categories": ["Programming Languages"],
+  "main": "./out/extension/src/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": { "supported": true },
+    "virtualWorkspaces": false
+  },
+  "contributes": {
+    "commands": [{
+      "command": "c-a.translate",
+      "title": "C-A : Saisir une instruction",
+      "enablement": "editorLangId == c && resourceScheme == file && resourceExtname == .c"
+    }],
+    "keybindings": [{
+      "command": "c-a.translate",
+      "key": "ctrl+k a",
+      "mac": "cmd+k a",
+      "when": "editorTextFocus && editorLangId == c && resourceScheme == file && resourceExtname == .c && !editorReadonly"
+    }]
+  }
+}

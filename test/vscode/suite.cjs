@@ -1,0 +1,734 @@
+const vscode = require('vscode');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+
+exports.run = async function run() {
+  const cases = [];
+  const report = process.env.CA_TEST_REPORT;
+  const workspace = process.env.CA_TEST_WORKSPACE;
+  const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+  async function waitFor(predicate, label) {
+    const deadline = Date.now() + 8000;
+    while (Date.now() < deadline) {
+      const value = await predicate();
+      if (value) return value;
+      await delay(40);
+    }
+    throw new Error('Délai dépassé : ' + label);
+  }
+  let api;
+  let fixtureNumber = 0;
+  const documents = [];
+  async function fixture(text = '', cursor = text.length) {
+    const file = path.join(workspace, `scenario-${++fixtureNumber}.c`);
+    fs.writeFileSync(file, text, 'utf8');
+    const document = await vscode.workspace.openTextDocument(vscode.Uri.file(file));
+    const editor = await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.One });
+    editor.options = { insertSpaces: true, tabSize: 4, indentSize: 'tabSize' };
+    const position = document.positionAt(cursor);
+    editor.selection = new vscode.Selection(position, position);
+    documents.push(document);
+    await delay(100);
+    return { file, document, editor };
+  }
+  async function start(phrase) {
+    await vscode.commands.executeCommand('c-a.translate', phrase);
+    await waitFor(() => api.inspect()?.ui === 'input', 'champ de saisie');
+    await delay(100);
+  }
+  async function accept() {
+    await vscode.commands.executeCommand('workbench.action.acceptSelectedQuickOpenItem');
+    await delay(100);
+  }
+  async function preview(phrase) {
+    await start(phrase);
+    await accept();
+    await waitFor(() => {
+      const state = api.inspect();
+      if (state?.phase === 'stale') throw new Error('Session invalidée pendant la préparation : ' + JSON.stringify(state.diagnostic));
+      return state?.ui === 'confirmation';
+    }, 'confirmation après diff');
+    assert.equal(api.inspect().phase, 'review', JSON.stringify(api.inspect()));
+    await delay(100);
+  }
+  async function cancel() {
+    if (api?.inspect()) {
+      await vscode.commands.executeCommand('workbench.action.closeQuickOpen');
+      await waitFor(() => !api.inspect(), 'fermeture de session');
+    }
+  }
+  async function inserted() {
+    await accept();
+    await waitFor(() => !api.inspect(), 'fin de l’insertion');
+  }
+  async function test(name, body) {
+    try { await body(); cases.push({ name, status: 'passed' }); }
+    catch (error) { cases.push({ name, status: 'failed', error: error.stack ?? String(error) }); }
+    finally {
+      try {
+        await cancel();
+        // Test fixtures only. Production C-A never calls save(). Check disk before teardown.
+        for (const document of documents.splice(0)) if (!document.isClosed && document.isDirty) await document.save();
+        await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+      } catch (error) { cases.push({ name: name + ' / nettoyage', status: 'failed', error: String(error) }); }
+    }
+  }
+  try {
+    const extension = vscode.extensions.getExtension('projet-a-local.c-a');
+    assert.ok(extension, 'Extension C-A chargée dans l’hôte de développement');
+    api = await extension.activate();
+    assert.ok((await vscode.commands.getCommands()).includes('workbench.action.acceptSelectedQuickOpenItem'));
+
+    await test('InputBox : Échap annule, aucun changement', async () => {
+      const { document } = await fixture();
+      await start('Crée la fonction principale');
+      assert.equal(document.getText(), '');
+      await cancel();
+      assert.equal(document.getText(), '');
+    });
+    await test('première Entrée : diff complet en lecture seule, sans insertion', async () => {
+      const { document } = await fixture();
+      await preview('Crée la fonction principale');
+      const state = api.inspect();
+      const before = await vscode.workspace.openTextDocument(vscode.Uri.parse(state.preview.before));
+      const after = await vscode.workspace.openTextDocument(vscode.Uri.parse(state.preview.after));
+      const eol = document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+      assert.equal(before.getText(), '');
+      assert.equal(after.getText(), '// Crée la fonction principale\nint main(void) {\n    \n}\n'.replaceAll('\n', eol));
+      assert.equal(document.getText(), '');
+      assert.equal(before.isDirty, false);
+      assert.equal(after.isDirty, false);
+      const diff = vscode.window.tabGroups.all.flatMap(group => group.tabs).find(tab => tab.input instanceof vscode.TabInputTextDiff);
+      assert.ok(diff);
+      await cancel();
+      assert.equal(document.getText(), '');
+    });
+    await test('MAIN : confirmation native, retour au curseur, annulation et rétablissement', async () => {
+      const { document, file } = await fixture();
+      const originalEol = document.eol;
+      await preview('Crée la fonction principale');
+      await inserted();
+      const expected = '// Crée la fonction principale\nint main(void) {\n    \n}\n'.replaceAll('\n', originalEol === vscode.EndOfLine.CRLF ? '\r\n' : '\n');
+      assert.equal(document.getText(), expected);
+      assert.equal(document.isDirty, true);
+      assert.equal(fs.readFileSync(file, 'utf8'), '');
+      const editor = vscode.window.activeTextEditor;
+      assert.equal(editor.document, document);
+      assert.equal(document.offsetAt(editor.selection.active), expected.indexOf('    ') + 4);
+      await vscode.commands.executeCommand('undo');
+      assert.equal(document.getText(), '');
+      assert.equal(document.eol, originalEol);
+      await vscode.commands.executeCommand('redo');
+      assert.equal(document.getText(), expected);
+    });
+    await test('trois sessions successives, sans accumulation de lignes blanches', async () => {
+      const { document } = await fixture();
+      const eol = document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+      for (const phrase of ['Crée la fonction principale', 'Déclare un entier nommé age', 'Affecte la valeur 25 à age']) {
+        await preview(phrase);
+        await inserted();
+      }
+      assert.equal(document.getText(), '// Crée la fonction principale\nint main(void) {\n    // Déclare un entier nommé age\n    int age;\n    // Affecte la valeur 25 à age\n    age = 25;\n    \n}\n'.replaceAll('\n', eol));
+    });
+    await test('brouillon non enregistré utilisé et jamais sauvegardé par C-A', async () => {
+      const { document, editor, file } = await fixture();
+      await editor.edit(builder => builder.insert(new vscode.Position(0, 0), '// brouillon é😀\n'));
+      const draft = document.getText();
+      const position = document.positionAt(document.getText().length);
+      editor.selection = new vscode.Selection(position, position);
+      await preview('Crée la fonction principale');
+      const before = await vscode.workspace.openTextDocument(vscode.Uri.parse(api.inspect().preview.before));
+      assert.equal(before.getText(), draft);
+      await inserted();
+      assert.ok(document.getText().startsWith(draft));
+      assert.equal(fs.readFileSync(file, 'utf8'), '');
+    });
+    await test('navigation dans le diff ne redirige pas l’insertion', async () => {
+      const { document } = await fixture();
+      await preview('Crée la fonction principale');
+      const virtualEditor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.scheme === 'c-a-preview');
+      assert.ok(virtualEditor);
+      virtualEditor.selection = new vscode.Selection(0, 0, 0, 0);
+      virtualEditor.revealRange(new vscode.Range(0, 0, 0, 0));
+      await delay(100);
+      assert.equal(api.inspect().phase, 'review');
+      await inserted();
+      assert.ok(document.getText().includes('int main(void)'));
+      assert.equal(virtualEditor.document.isDirty, false);
+    });
+    await test('modification du document après aperçu : Insérer disparaît', async () => {
+      const { document, editor } = await fixture();
+      await preview('Crée la fonction principale');
+      await editor.edit(builder => builder.insert(new vscode.Position(0, 0), '// manuel\n'));
+      const manualText = document.getText();
+      await waitFor(() => api.inspect()?.phase === 'stale', 'aperçu périmé');
+      assert.ok(!api.inspect().choices.includes('Insérer'));
+      await accept();
+      await waitFor(() => !api.inspect(), 'retour sans insertion');
+      assert.equal(document.getText(), manualText);
+    });
+    await test('déplacement du curseur invalide le plan même sur la même ligne', async () => {
+      const { document, editor } = await fixture('    ', 4);
+      await preview('Crée la fonction principale');
+      editor.selection = new vscode.Selection(0, 0, 0, 0);
+      await waitFor(() => api.inspect()?.phase === 'stale', 'curseur changé');
+      assert.ok(!api.inspect().choices.includes('Insérer'));
+      assert.equal(document.getText(), '    ');
+    });
+    await test('réglages d’indentation modifiés : aperçu périmé', async () => {
+      const { editor } = await fixture();
+      await preview('Crée la fonction principale');
+      editor.options = { insertSpaces: false, tabSize: 8 };
+      await waitFor(() => api.inspect()?.phase === 'stale', 'indentation changée');
+      assert.ok(!api.inspect().choices.includes('Insérer'));
+    });
+    await test('fermeture du document cible : aucun autre éditeur modifié', async () => {
+      const { document } = await fixture();
+      await preview('Crée la fonction principale');
+      const tab = vscode.window.tabGroups.all.flatMap(group => group.tabs).find(tab => tab.input instanceof vscode.TabInputText && tab.input.uri.toString() === document.uri.toString());
+      assert.ok(tab);
+      await vscode.window.tabGroups.close(tab, true);
+      await waitFor(() => api.inspect()?.phase === 'stale', 'cible fermée');
+      assert.ok(!api.inspect().choices.includes('Insérer'));
+    });
+    await test('confirmations natives répétées : une seule insertion', async () => {
+      const { document } = await fixture();
+      await preview('Crée la fonction principale');
+      await Promise.all([accept(), accept()]);
+      await waitFor(() => !api.inspect(), 'une seule session appliquée');
+      assert.equal(document.getText().split('int main(void)').length - 1, 1);
+    });
+    await test('diagnostic de traduction : français, UTF-16, aucune édition', async () => {
+      const { document } = await fixture();
+      await start('Déclare un entier nommé int.');
+      assert.equal(api.inspect().diagnostic.stage, 'translation');
+      assert.deepEqual(api.inspect().diagnostic.range, { start: 24, end: 27 });
+      await accept();
+      assert.equal(api.inspect().ui, 'input');
+      assert.equal(document.getText(), '');
+    });
+    await test('diagnostic de placement séparé, sans correction du fichier', async () => {
+      const { document } = await fixture('int x;');
+      await start('Déclare un entier nommé age');
+      assert.equal(api.inspect().diagnostic.stage, 'placement');
+      assert.equal(api.inspect().diagnostic.code, 'TARGET_LINE_NOT_BLANK');
+      await accept();
+      assert.equal(document.getText(), 'int x;');
+    });
+    await test('réglage deux espaces transmis à MAIN', async () => {
+      const { document, editor } = await fixture();
+      editor.options = { insertSpaces: true, tabSize: 2 };
+      await waitFor(() => editor.options.tabSize === 2 && editor.options.indentSize === 2, 'réglages deux espaces résolus');
+      await preview('Crée la fonction principale');
+      await inserted();
+      const eol = document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+      assert.ok(document.getText().includes('{' + eol + '  ' + eol + '}'));
+    });
+    for (const eol of ['\n', '\r\n']) {
+      await test(`texte existant ${JSON.stringify(eol)} et UTF-16 : insertion et curseur exacts`, async () => {
+        const prefix = '// é😀' + eol + 'int main(void) {' + eol;
+        const original = prefix + '    ' + eol + '}' + eol;
+        const { document, file } = await fixture(original, prefix.length + 4);
+        await preview('Crée un entier nommé Age de valeur -20');
+        await inserted();
+        const expected = prefix + '    // Crée un entier nommé Age de valeur -20' + eol + '    int Age = -20;' + eol + '    ' + eol + '}' + eol;
+        assert.equal(document.getText(), expected);
+        assert.equal(document.offsetAt(vscode.window.activeTextEditor.selection.active), expected.lastIndexOf('    ' + eol) + 4);
+        assert.equal(fs.readFileSync(file, 'utf8'), original);
+      });
+    }
+    await test('changement de métadonnée LF/CRLF dans un fichier vide : plan périmé', async () => {
+      const { document, editor } = await fixture();
+      await preview('Crée la fonction principale');
+      await editor.edit(builder => builder.setEndOfLine(document.eol === vscode.EndOfLine.LF ? vscode.EndOfLine.CRLF : vscode.EndOfLine.LF));
+      await waitFor(() => api.inspect()?.phase === 'stale', 'métadonnée de fin de ligne changée');
+      assert.ok(!api.inspect().choices.includes('Insérer'));
+      assert.equal(document.getText(), '');
+    });
+    await test('un autre fichier actif ne devient jamais la cible', async () => {
+      const original = await fixture();
+      await preview('Crée la fonction principale');
+      const other = await fixture();
+      await waitFor(() => api.inspect()?.phase === 'stale', 'autre fichier actif');
+      assert.equal(api.inspect().targetUri, original.document.uri.toString());
+      assert.ok(!api.inspect().choices.includes('Insérer'));
+      await cancel();
+      assert.equal(original.document.getText(), '');
+      assert.equal(other.document.getText(), '');
+    });
+    await test('Modifier la phrase réouvre le brouillon et impose un nouvel aperçu', async () => {
+      const { document } = await fixture();
+      await preview('Crée la fonction principale');
+      const first = api.inspect().preview.after;
+      await vscode.commands.executeCommand('workbench.action.quickOpenSelectNext');
+      await accept();
+      await waitFor(() => api.inspect()?.ui === 'input', 'retour à la saisie');
+      assert.equal(api.inspect().draft, 'Crée la fonction principale');
+      assert.equal(document.getText(), '');
+      await accept();
+      await waitFor(() => api.inspect()?.ui === 'confirmation', 'nouvel aperçu');
+      assert.notEqual(api.inspect().preview.after, first);
+      await inserted();
+      assert.equal(document.getText().split('int main(void)').length - 1, 1);
+    });
+    await test('indentSize distinct de tabSize respecté sans reformatter le texte', async () => {
+      const { document, editor } = await fixture();
+      editor.options = { insertSpaces: true, tabSize: 8, indentSize: 2 };
+      await waitFor(() => editor.options.tabSize === 8 && editor.options.indentSize === 2, 'indentSize distinct résolu');
+      await preview('Crée la fonction principale');
+      await inserted();
+      const eol = document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+      assert.ok(document.getText().includes('{' + eol + '  ' + eol + '}'));
+    });
+    await test('lot 4 : inclusion, main, entier et affichages sans retour implicite', async () => {
+      const { document } = await fixture();
+      for (const phrase of ['Inclue la bibliothèque stdio.h.', 'Inclue la bibliothèque stdio.h.',
+        'Crée la fonction principale.', 'Crée un entier nommé age de valeur 20.',
+        'Affiche le texte "Âge : 100 % ".', 'Affiche la valeur de age.',
+        String.raw`Affiche le texte "\n".`]) {
+        const before = document.getText();
+        await preview(phrase);
+        const after = await vscode.workspace.openTextDocument(vscode.Uri.parse(api.inspect().preview.after));
+        const expected = after.getText();
+        assert.equal(document.getText(), before);
+        await inserted();
+        assert.equal(document.getText(), expected);
+      }
+      assert.equal(document.getText().split('#include <stdio.h>').length - 1, 2);
+      assert.ok(document.getText().includes('printf("%d", age);'));
+      assert.ok(document.getText().includes('printf("%s", "Âge : 100 % ");'));
+      assert.ok(document.getText().includes('printf("%s", "\\n");'));
+      const beforeUndo = document.getText();
+      await vscode.commands.executeCommand('undo');
+      assert.ok(!document.getText().includes('printf("%s", "\\n");'));
+      await vscode.commands.executeCommand('redo');
+      assert.equal(document.getText(), beforeUndo);
+    });
+    for (const [phrase, code, message, range] of [
+      ['Affiche age.', 'MISSING_DISPLAY_FORMAT', 'Il manque le format d’affichage.', { start: 11, end: 11 }],
+      ['Affiche age en.', 'MISSING_DISPLAY_FORMAT', 'Il manque le format d’affichage.', { start: 14, end: 14 }],
+      ['Affiche en décimal.', 'INCOMPLETE_INSTRUCTION', 'Il manque le nom à afficher.', { start: 8, end: 8 }],
+      ['Affiche age en binaire.', 'UNSUPPORTED_DISPLAY_FORMAT', 'Ce format d’affichage n’est pas pris en charge.', { start: 15, end: 22 }],
+      ['Affiche 😀 en octal.', 'INVALID_IDENTIFIER', undefined, { start: 8, end: 10 }],
+    ]) {
+      await test(`lot 5 refus sans insertion : ${phrase}`, async () => {
+        const { document, file } = await fixture();
+        await start(phrase);
+        const diagnostic = api.inspect().diagnostic;
+        assert.equal(diagnostic.stage, 'translation');
+        assert.equal(diagnostic.code, code);
+        assert.deepEqual(diagnostic.range, range);
+        if (message) assert.equal(diagnostic.message, message);
+        await accept();
+        await accept();
+        assert.equal(api.inspect().ui, 'input');
+        assert.ok(!api.inspect().choices.includes('Insérer'));
+        assert.equal(document.getText(), '');
+        assert.equal(fs.readFileSync(file, 'utf8'), '');
+      });
+    }
+    await test('lot 5 formats explicites : aperçu, confirmation et curseur successif', async () => {
+      const { document, file } = await fixture();
+      let expected = '';
+      const eol = document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+      for (const [word, specifier] of [['décimal', '%d'], ['hexadécimal', '%x'], ['octal', '%o']]) {
+        const phrase = `Affiche age en ${word}.`;
+        const before = document.getText();
+        await preview(phrase);
+        const after = await vscode.workspace.openTextDocument(vscode.Uri.parse(api.inspect().preview.after));
+        expected += `// ${phrase}${eol}printf("${specifier}", age);${eol}`;
+        assert.equal(after.getText(), expected + eol);
+        assert.equal(document.getText(), before);
+        await inserted();
+        assert.equal(document.getText(), expected + eol);
+        assert.equal(document.offsetAt(vscode.window.activeTextEditor.selection.active), expected.length);
+        assert.equal(fs.readFileSync(file, 'utf8'), '');
+      }
+    });
+    for (const [expression, code, token] of [
+      ['a +', 'MISSING_OPERAND', ''], ['', 'MISSING_EXPRESSION', ''],
+      ['(a + b', 'MISSING_CLOSING_PARENTHESIS', ''],
+      ['a + 😀', 'INVALID_EXPRESSION_TOKEN', '😀'],
+      ['a == b', 'UNSUPPORTED_EXPRESSION_OPERATOR', '=='],
+      ['('.repeat(65) + 'a' + ')'.repeat(65), 'EXPRESSION_TOO_COMPLEX', undefined],
+      [Array(513).fill('a').join('+'), 'EXPRESSION_TOO_COMPLEX', undefined],
+    ]) {
+      await test(`lot 6 refus sans insertion : ${code} ${expression.slice(0, 24)}`, async () => {
+        const { document, file } = await fixture();
+        const source = `Affecte à resultat le résultat de "${expression}".`;
+        await start(source);
+        assert.equal(api.inspect().diagnostic.stage, 'translation');
+        assert.equal(api.inspect().diagnostic.code, code);
+        if (token !== undefined) {
+          const start = token ? source.indexOf(token) : source.lastIndexOf('"');
+          assert.deepEqual(api.inspect().diagnostic.range, { start, end: start + token.length });
+        }
+        await accept();
+        await accept();
+        assert.equal(api.inspect().ui, 'input');
+        assert.ok(!api.inspect().choices.includes('Insérer'));
+        assert.equal(document.getText(), '');
+        assert.equal(fs.readFileSync(file, 'utf8'), '');
+      });
+    }
+    await test('lot 6 négations, calculs et confirmation : source, aperçu et curseur exacts', async () => {
+      const { document, file } = await fixture();
+      const eol = document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+      let expected = '';
+      for (const [expression, code] of [['-a', '(-a)'], ['-(a + b)', '(-(a + b))'],
+        ['a * -b', '(a * (-b))'], ['2 + 3 * 4', '(2 + (3 * 4))'], ['a / b', '(a / b)'], ['a % b', '(a % b)']]) {
+        const source = `Affecte à resultat le résultat de "${expression}".`;
+        const before = document.getText();
+        await preview(source);
+        const after = await vscode.workspace.openTextDocument(vscode.Uri.parse(api.inspect().preview.after));
+        expected += `// ${source}${eol}resultat = ${code};${eol}`;
+        assert.equal(after.getText(), expected + eol);
+        assert.equal(document.getText(), before);
+        await inserted();
+        assert.equal(document.getText(), expected + eol);
+        assert.equal(document.offsetAt(vscode.window.activeTextEditor.selection.active), expected.length);
+        assert.equal(fs.readFileSync(file, 'utf8'), '');
+      }
+      const applied = document.getText();
+      await vscode.commands.executeCommand('undo');
+      assert.equal(document.getText().includes('resultat = (a % b);'), false);
+      await vscode.commands.executeCommand('redo');
+      assert.equal(document.getText(), applied);
+    });
+    for (const [phrase, code] of [
+      ['Déclare une variable de type.', 'MISSING_NUMERIC_TYPE'],
+      ['Déclare une variable de type long double nommée d.', 'UNSUPPORTED_NUMERIC_TYPE'],
+      ['Affecte à r le résultat numérique de "(double)".', 'MISSING_OPERAND'],
+      ['Affecte à r le résultat numérique de "1e-".', 'INCOMPLETE_NUMERIC_LITERAL'],
+      ['Affiche f en notation fixe.', 'MISSING_DISPLAY_PRECISION'],
+      ['Affiche f en notation scientifique avec 21 décimales.', 'INVALID_DISPLAY_PRECISION'],
+      ['Affecte à r le résultat numérique de "a + 😀".', 'INVALID_EXPRESSION_TOKEN'],
+      ['Affecte à r le résultat numérique de "' + '(double) '.repeat(65) + 'a".', 'EXPRESSION_TOO_COMPLEX'],
+    ]) {
+      await test(`lot 7 refus sans insertion : ${code}`, async () => {
+        const { document, file } = await fixture();
+        await start(phrase);
+        assert.equal(api.inspect().diagnostic.stage, 'translation');
+        assert.equal(api.inspect().diagnostic.code, code);
+        if (phrase.includes('😀')) assert.deepEqual(api.inspect().diagnostic.range, { start: phrase.indexOf('😀'), end: phrase.indexOf('😀') + 2 });
+        await accept();
+        await accept();
+        assert.equal(api.inspect().ui, 'input');
+        assert.ok(!api.inspect().choices.includes('Insérer'));
+        assert.equal(document.getText(), '');
+        assert.equal(fs.readFileSync(file, 'utf8'), '');
+      });
+    }
+    await test('lot 7 types, divisions, casts et formats : parcours inchangé', async () => {
+      const { document, file } = await fixture();
+      const eol = document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+      let expected = '';
+      for (const [phrase, code] of [
+        ['Déclare une variable de type double nommée q.', 'double q;'],
+        ['Crée une variable de type unsigned int nommée u avec le résultat de "7u".', 'unsigned int u = 7u;'],
+        ['Crée une variable de type float nommée f avec le résultat de "0.1f".', 'float f = 0.1f;'],
+        ['Affecte à q le résultat numérique de "7 / 2".', 'q = (7 / 2);'],
+        ['Affecte à q le résultat numérique de "7.0 / 2".', 'q = (7.0 / 2);'],
+        ['Affecte à q le résultat numérique de "(double) 7 / 2".', 'q = (((double) 7) / 2);'],
+        ['Affiche u en décimal non signé.', 'printf("%u", u);'],
+        ['Affiche f en notation fixe avec 9 décimales.', 'printf("%.9f", f);'],
+        ['Affiche q en notation scientifique avec 3 décimales.', 'printf("%.3e", q);'],
+      ]) {
+        const before = document.getText();
+        await preview(phrase);
+        const after = await vscode.workspace.openTextDocument(vscode.Uri.parse(api.inspect().preview.after));
+        expected += `// ${phrase}${eol}${code}${eol}`;
+        assert.equal(after.getText(), expected + eol);
+        assert.equal(document.getText(), before);
+        await inserted();
+        assert.equal(document.getText(), expected + eol);
+        assert.equal(document.offsetAt(vscode.window.activeTextEditor.selection.active), expected.length);
+        assert.equal(fs.readFileSync(file, 'utf8'), '');
+      }
+      const applied = document.getText();
+      await vscode.commands.executeCommand('undo');
+      assert.equal(document.getText().includes('printf("%.3e", q);'), false);
+      await vscode.commands.executeCommand('redo');
+      assert.equal(document.getText(), applied);
+    });
+    for (const [expression, codes] of [
+      ['7 / 0', ['INTEGER_ZERO_DIVISOR']],
+      ['1.0 / 0.0', ['ZERO_DIVISOR']],
+      ['a / 0', ['ZERO_DIVISOR']],
+      ['7 % 0.0', ['FLOAT_REMAINDER_OPERAND']],
+      ['7 / 0 + 5.0 % 2', ['INTEGER_ZERO_DIVISOR', 'FLOAT_REMAINDER_OPERAND']],
+    ]) {
+      await test(`lot 8 nonblocking warnings and unchanged insertion: ${expression}`, async () => {
+        const { document, file } = await fixture();
+        const phrase = `Affecte à r le résultat numérique de "${expression}".`;
+        await start(phrase);
+        const editing = api.inspect();
+        assert.equal(editing.diagnostic, undefined);
+        assert.equal(editing.validation.severity, vscode.InputBoxValidationSeverity.Warning);
+        assert.deepEqual(editing.advisories.map(a => a.code), codes);
+        assert.equal(editing.loggedPreviews, 0);
+        await accept();
+        await waitFor(() => api.inspect()?.ui === 'confirmation', 'lot 8 warning allows preview');
+        const state = api.inspect();
+        assert.equal(state.phase, 'review');
+        assert.deepEqual(state.choices, ['Insérer', 'Modifier la phrase', 'Annuler']);
+        assert.ok(state.confirmationTitle.includes(`${codes.length} avertissement(s)`));
+        assert.equal(state.loggedPreviews, 1);
+        assert.ok(state.pedagogyEntry.includes(phrase));
+        for (const code of codes) assert.ok(state.pedagogyEntry.includes(code));
+        assert.equal(vscode.window.activeTextEditor?.document.uri.scheme, 'c-a-preview');
+        await vscode.commands.executeCommand('c-a.translate'); // Focus existing UI, no second log entry.
+        assert.equal(api.inspect().loggedPreviews, 1);
+        const after = await vscode.workspace.openTextDocument(vscode.Uri.parse(state.preview.after));
+        const shown = after.getText();
+        assert.ok(shown.includes('// ' + phrase));
+        assert.ok(!shown.includes('avertissement'));
+        assert.equal(document.getText(), '');
+        await inserted(); // Source only: no C compilation or execution in this suite.
+        assert.equal(document.getText(), shown);
+        assert.equal(fs.readFileSync(file, 'utf8'), '');
+        assert.ok(document.offsetAt(vscode.window.activeTextEditor.selection.active) > 0);
+        await vscode.commands.executeCommand('undo');
+        assert.equal(document.getText(), '');
+        await vscode.commands.executeCommand('redo');
+        assert.equal(document.getText(), shown);
+      });
+    }
+    await test('lot 8 edit/cancel drops warned preview; incomplete new phrase cannot insert', async () => {
+      const { document } = await fixture();
+      await preview('Affecte à r le résultat de "7 / 0".');
+      assert.equal(api.inspect().advisories.length, 1);
+      await vscode.commands.executeCommand('workbench.action.quickOpenSelectNext');
+      await accept();
+      await waitFor(() => api.inspect()?.ui === 'input', 'lot 8 edit again');
+      assert.equal(api.inspect().loggedPreviews, 1);
+      await cancel();
+      await start('Affecte à r le résultat de "a +".');
+      assert.equal(api.inspect().diagnostic.code, 'MISSING_OPERAND');
+      assert.equal(api.inspect().loggedPreviews, 0);
+      assert.deepEqual(api.inspect().advisories, []);
+      await accept();
+      assert.equal(api.inspect().ui, 'input');
+      assert.equal(document.getText(), '');
+    });
+    await test('lot 8 stale preview clears active warnings and insertion choices', async () => {
+      const { editor, document } = await fixture();
+      await preview('Affecte à r le résultat de "7 / 0".');
+      await editor.edit(builder => builder.insert(new vscode.Position(0, 0), ' '));
+      await waitFor(() => api.inspect()?.phase === 'stale', 'lot 8 stale');
+      assert.deepEqual(api.inspect().advisories, []);
+      assert.ok(!api.inspect().choices.includes('Insérer'));
+      assert.equal(api.inspect().loggedPreviews, 1);
+      await cancel();
+      assert.equal(document.getText(), ' ');
+    });
+    await test('lot 8 deliberate exclusions have no warning or log', async () => {
+      await fixture();
+      await preview('Affecte à r le résultat numérique de "7 / (1 - 1)".');
+      assert.deepEqual(api.inspect().advisories, []);
+      assert.equal(api.inspect().loggedPreviews, 0);
+      await cancel();
+    });
+    for (const eol of ['\n', '\r\n']) {
+      for (const unit of ['  ', '\t']) {
+        await test(`lot 9 : IF imbriqués et insertions successives ${JSON.stringify([eol, unit])}`, async () => {
+          const prefix = '// 😀 avant' + eol + 'int main(void) {' + eol;
+          const suffix = unit + 'printf("après");' + eol + '}' + eol;
+          const initial = prefix + unit + eol + suffix;
+          const { document, editor, file } = await fixture(initial, prefix.length + unit.length);
+          editor.options = { insertSpaces: unit !== '\t', tabSize: 2, indentSize: 'tabSize' };
+          await delay(100);
+          let previous = initial;
+          for (const source of ['Crée un bloc si "age >= 18".', 'Déclare un entier nommé x.',
+            'Affecte la valeur 1 à x.', 'Crée un bloc si "x == 1".', 'Affiche la valeur de x.']) {
+            await preview(source);
+            const after = await vscode.workspace.openTextDocument(vscode.Uri.parse(api.inspect().preview.after));
+            const expected = after.getText();
+            assert.equal(document.getText(), previous);
+            await inserted();
+            assert.equal(document.getText(), expected);
+            assert.equal(vscode.window.activeTextEditor.document.uri.toString(), document.uri.toString());
+            const cursor = document.offsetAt(editor.selection.active);
+            assert.equal(document.getText().slice(cursor, cursor + eol.length), eol);
+            assert.ok(document.getText().startsWith(prefix));
+            assert.ok(document.getText().endsWith(suffix));
+            previous = expected;
+          }
+          assert.ok(document.getText().includes(unit.repeat(2) + 'int x;' + eol));
+          assert.ok(document.getText().includes(unit.repeat(2) + 'if (x == 1) {' + eol));
+          assert.ok(document.getText().includes(unit.repeat(3) + 'printf("%d", x);' + eol));
+          assert.equal(editor.selection.active.character, unit.length * 3);
+          assert.equal(fs.readFileSync(file, 'utf8'), initial);
+          await vscode.commands.executeCommand('undo');
+          assert.ok(!document.getText().includes('printf("%d", x);'));
+          assert.ok(document.getText().includes('if (x == 1)'));
+          await vscode.commands.executeCommand('undo');
+          assert.ok(!document.getText().includes('if (x == 1)'));
+          await vscode.commands.executeCommand('redo');
+          await vscode.commands.executeCommand('redo');
+          assert.equal(document.getText(), previous);
+        });
+      }
+    }
+    await test('lot 9 : document vide, IF complet sans main implicite et annulation', async () => {
+      const { document, editor } = await fixture();
+      await preview('Crée un bloc si "actif".');
+      const after = await vscode.workspace.openTextDocument(vscode.Uri.parse(api.inspect().preview.after));
+      const expected = after.getText();
+      assert.equal(document.getText(), '');
+      await inserted();
+      assert.equal(document.getText(), expected);
+      assert.ok(!document.getText().includes('main'));
+      assert.equal(editor.selection.active.character, 4);
+      await vscode.commands.executeCommand('undo');
+      assert.equal(document.getText(), '');
+      await vscode.commands.executeCommand('redo');
+      assert.equal(document.getText(), expected);
+    });
+    await test('lot 9 : IF périmé ne s’applique pas', async () => {
+      const { document, editor } = await fixture();
+      await preview('Crée un bloc si "age > 0".');
+      await editor.edit(builder => builder.insert(new vscode.Position(0, 0), ' '));
+      await waitFor(() => api.inspect()?.phase === 'stale', 'IF périmé');
+      assert.ok(!api.inspect().choices.includes('Insérer'));
+      await cancel();
+      assert.equal(document.getText(), ' ');
+    });
+    await test('lot 9 : avis historiques dans les conditions, sans blocage', async () => {
+      const { document } = await fixture();
+      await preview('Crée un bloc si "7 / 0 < 5.0 % 2".');
+      assert.deepEqual(api.inspect().advisories.map(item => item.code), ['INTEGER_ZERO_DIVISOR', 'FLOAT_REMAINDER_OPERAND']);
+      assert.ok(api.inspect().choices.includes('Insérer'));
+      await inserted();
+      assert.ok(document.getText().includes('if ((7 / 0) < (5.0 % 2))'));
+    });
+    await test('lot 9 : affectation refusée, aucune insertion ou correction', async () => {
+      const { document } = await fixture();
+      await start('Crée un bloc si "age = 18".');
+      await accept();
+      assert.equal(api.inspect().ui, 'input');
+      assert.equal(api.inspect().diagnostic.code, 'ASSIGNMENT_IN_CONDITION');
+      assert.equal(document.getText(), '');
+      await cancel();
+    });
+    await test('lot 10 : précédence et informations passives sans Warning', async () => {
+      const { document } = await fixture();
+      await preview('Crée un bloc si "!a == b || c && d".');
+      assert.deepEqual(api.inspect().advisories, []);
+      assert.equal(api.inspect().information.length, 3);
+      assert.match(api.inspect().pedagogyEntry, /SHORT_CIRCUIT_AND/);
+      assert.match(api.inspect().pedagogyEntry, /LOGICAL_NOT/);
+      assert.ok(!api.inspect().confirmationTitle.includes('avertissement'));
+      await inserted();
+      assert.ok(document.getText().includes('if ((((!a) == b) || (c && d)))'));
+    });
+    for (const eol of ['\n', '\r\n']) {
+      await test(`lot 10 : chaîne progressive, cible et annulations ${JSON.stringify(eol)}`, async () => {
+        const before = 'int main(void) {' + eol + '    if (a) {' + eol + '    }' + eol + '    ' + eol + '    int apres = 9;' + eol + '}' + eol;
+        const { document, editor, file } = await fixture(before, before.indexOf('    int apres') - eol.length);
+        for (const source of ['Ajoute une branche sinon si "b && !c".', 'Ajoute une branche sinon si "d".', 'Ajoute une branche sinon.']) {
+          const previous = document.getText();
+          await preview(source);
+          assert.match(api.inspect().attachmentLabel, /ligne 2/);
+          const after = await vscode.workspace.openTextDocument(vscode.Uri.parse(api.inspect().preview.after));
+          const expected = after.getText();
+          assert.equal(document.getText(), previous);
+          await inserted();
+          assert.equal(document.getText(), expected);
+          assert.equal(editor.selection.active.character, 8);
+          const emptyBranch = document.getText();
+          await preview('Affiche le texte "branche".');
+          await inserted();
+          const filled = document.getText();
+          await vscode.commands.executeCommand('undo');
+          assert.equal(document.getText(), emptyBranch);
+          await vscode.commands.executeCommand('undo');
+          assert.equal(document.getText(), previous);
+          await vscode.commands.executeCommand('redo');
+          await vscode.commands.executeCommand('redo');
+          assert.equal(document.getText(), filled);
+          // A manual empty line after the branch is an explicit student action.
+          const cursor = document.offsetAt(editor.selection.active);
+          const closing = document.getText().indexOf('    }' + eol, cursor);
+          const offset = closing + 5 + eol.length;
+          await editor.edit(builder => builder.insert(document.positionAt(offset), '    ' + eol));
+          const position = document.positionAt(offset + 4);
+          editor.selection = new vscode.Selection(position, position);
+          await delay(100);
+        }
+        assert.ok(document.getText().endsWith('    int apres = 9;' + eol + '}' + eol));
+        assert.equal(fs.readFileSync(file, 'utf8'), before);
+        await start('Ajoute une branche sinon si "x".');
+        await accept();
+        assert.equal(api.inspect().diagnostic.code, 'BRANCH_AFTER_ELSE');
+        await cancel();
+      });
+    }
+    await test('lot 10 : rattachement imbriqué explicite', async () => {
+      const before = 'int main(void) {\n    if (outer) {\n        if (inner) {\n        }\n        \n    }\n    \n}\n';
+      const { document, editor } = await fixture(before, before.indexOf('        \n') + 8);
+      await preview('Ajoute une branche sinon.');
+      assert.match(api.inspect().attachmentLabel, /ligne 3/);
+      await inserted();
+      const outside = document.getText().lastIndexOf('    \n') + 4;
+      const position = document.positionAt(outside);
+      editor.selection = new vscode.Selection(position, position);
+      await delay(100);
+      await preview('Ajoute une branche sinon.');
+      assert.match(api.inspect().attachmentLabel, /ligne 2/);
+      await inserted();
+      assert.ok(document.getText().includes('        else {'));
+      assert.ok(document.getText().includes('\n    else {'));
+    });
+    await test('lot 10 : branche isolée et branche existante refusées', async () => {
+      let fixtureState = await fixture();
+      await start('Ajoute une branche sinon.');
+      await accept();
+      assert.equal(api.inspect().diagnostic.stage, 'placement');
+      assert.equal(fixtureState.document.getText(), '');
+      await cancel();
+      const text = 'if (a) {\n}\n\nelse {\n}\n';
+      fixtureState = await fixture(text, text.indexOf('\n\n') + 1);
+      await start('Ajoute une branche sinon.');
+      await accept();
+      assert.equal(api.inspect().diagnostic.code, 'BRANCH_NOT_AT_CHAIN_END');
+      assert.equal(fixtureState.document.getText(), text);
+      await cancel();
+    });
+    await test('lot 10 : branche périmée sans redirection de cible', async () => {
+      const { document, editor } = await fixture('if (a) {\n}\n');
+      await preview('Ajoute une branche sinon.');
+      await editor.edit(builder => builder.insert(new vscode.Position(0, 0), '// changé\n'));
+      await waitFor(() => api.inspect()?.phase === 'stale', 'branche périmée');
+      assert.ok(!api.inspect().choices.includes('Insérer'));
+      await cancel();
+      assert.ok(!document.getText().includes('else'));
+    });
+    await test('lot 10 : court-circuit ne supprime pas les avis calcul', async () => {
+      const { document } = await fixture();
+      await preview('Crée un bloc si "0 && 7 / 0 || 5.0 % 2".');
+      assert.equal(api.inspect().advisories.length, 2);
+      assert.equal(api.inspect().information.length, 2);
+      assert.match(api.inspect().pedagogyEntry, /FLOAT_REMAINDER_OPERAND/);
+      assert.match(api.inspect().pedagogyEntry, /SHORT_CIRCUIT_OR/);
+      assert.equal(document.getText(), '');
+      await cancel();
+    });
+    await test('changer indentSize seul invalide le plan', async () => {
+      const { editor } = await fixture();
+      await preview('Crée la fonction principale');
+      editor.options = { indentSize: 2 };
+      await waitFor(() => api.inspect()?.phase === 'stale', 'indentSize changé');
+      assert.ok(!api.inspect().choices.includes('Insérer'));
+    });
+  } catch (error) {
+    cases.push({ name: 'initialisation hôte', status: 'failed', error: error.stack ?? String(error) });
+  }
+  const result = { vscode: vscode.version, passed: cases.filter(item => item.status === 'passed').length,
+    failed: cases.filter(item => item.status === 'failed').length, cases,
+    manualRemaining: ['Touches physiques Ctrl+K puis A / Cmd+K puis A', 'Composition IME et disposition de clavier', 'Vérification visuelle du focus et du diff'] };
+  fs.mkdirSync(path.dirname(report), { recursive: true });
+  fs.writeFileSync(report, JSON.stringify(result, null, 2));
+  if (result.failed) throw new Error(`${result.failed} test(s) VS Code en échec ; voir le rapport.`);
+};

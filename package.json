@@ -1,0 +1,20 @@
+{
+  "name": "projet-a-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.12.0"
+  },
+  "scripts": {
+    "test": "npm run build:extension && node --test test/translate.test.mjs test/placement.test.mjs test/session.test.mjs test/display.test.mjs test/expression.test.mjs test/arithmetic.test.mjs test/numeric.test.mjs test/calculationAdvisories.test.mjs test/condition.test.mjs test/branches.test.mjs",
+    "typecheck": "tsc --project tsconfig.json && tsc --project tsconfig.extension.json --noEmit",
+    "build:extension": "tsc --project tsconfig.extension.json",
+    "test:vscode": "npm run build:extension && node scripts/test-vscode.mjs",
+    "check": "npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "@types/vscode": "1.96.0",
+    "typescript": "5.9.3"
+  }
+}

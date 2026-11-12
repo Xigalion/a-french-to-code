@@ -1,0 +1,4 @@
+node_modules/
+.cache/
+extension/out/
+/debug.log

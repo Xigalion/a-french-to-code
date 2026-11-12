@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "Node10",
+    "types": ["vscode"],
+    "rootDir": ".",
+    "outDir": "extension/out",
+    "noEmit": false,
+    "verbatimModuleSyntax": false,
+    "rewriteRelativeImportExtensions": true
+  },
+  "include": ["src/**/*.ts", "extension/src/**/*.ts"],
+  "exclude": ["node_modules", "extension/out"]
+}

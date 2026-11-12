@@ -1,0 +1,11 @@
+{
+  "version": "0.2.0",
+  "configurations": [{
+    "name": "C-A : lancer le prototype",
+    "type": "extensionHost",
+    "request": "launch",
+    "args": ["--extensionDevelopmentPath=${workspaceFolder}/extension"],
+    "outFiles": ["${workspaceFolder}/extension/out/**/*.js"],
+    "preLaunchTask": "C-A : compiler l’extension"
+  }]
+}
