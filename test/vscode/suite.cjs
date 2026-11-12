@@ -978,6 +978,52 @@ exports.run = async function run() {
       await cancel();
       assert.ok(!document.getText().includes('break'));
     });
+    await test('lot 12 : fonction, paramètres, retour et appel', async () => {
+      const { document, editor, file } = await fixture();
+      await preview('Crée une fonction nommée somme qui retourne un int et prend un int nommé a et un int nommé b.');
+      assert.equal(api.inspect().information[0].code, 'FUNCTION_SCOPE');
+      assert.equal(api.inspect().information[1].code, 'PARAMETERS_BY_VALUE');
+      assert.deepEqual(api.inspect().advisories, []);
+      await inserted();
+      assert.ok(document.getText().includes('int somme(int a, int b) {'));
+      assert.equal(editor.selection.active.character, 4);
+      await preview('Retourne le résultat de "a + b".');
+      assert.equal(api.inspect().information[0].code, 'RETURN_ENDS_FUNCTION');
+      assert.match(api.inspect().attachmentLabel, /ligne 2/);
+      await inserted();
+      assert.ok(document.getText().includes('    return (a + b);'));
+      // No return and no include was ever added on its own.
+      assert.equal((document.getText().match(/return/gu) ?? []).length, 1);
+      assert.ok(!document.getText().includes('#include'));
+      assert.equal(fs.readFileSync(file, 'utf8'), '');
+    });
+    await test('lot 12 : contrat de retour refusé sans insertion', async () => {
+      for (const [text, phrase, code] of [
+        ['void f(void) {\n    \n}\n', 'Retourne la valeur 0.', 'RETURN_IN_VOID_FUNCTION'],
+        ['int f(void) {\n    \n}\n', 'Retourne.', 'RETURN_NEEDS_VALUE'],
+        ['int x;\n\n', 'Retourne.', 'NO_ENCLOSING_FUNCTION'],
+        ['long f(void) {\n    \n}\n', 'Retourne la valeur 0.', 'UNSUPPORTED_RETURN_TYPE'],
+      ]) {
+        const { document } = await fixture(text, text.indexOf('    \n') === -1 ? text.length : text.indexOf('    \n') + 4);
+        await start(phrase);
+        await accept();
+        assert.equal(api.inspect().diagnostic.stage, 'placement', `${text} / ${phrase}`);
+        assert.equal(api.inspect().diagnostic.code, code, `${text} / ${phrase}`);
+        assert.equal(document.getText(), text);
+        await cancel();
+      }
+    });
+    await test('lot 12 : appel avec arguments, avis conservé et cible affichée', async () => {
+      const { document } = await fixture('int main(void) {\n    \n}\n', 21);
+      await preview('Affecte à total le résultat de l’appel de somme avec "2" et "3".');
+      assert.equal(api.inspect().information[0].code, 'CALL_NOT_RESOLVED');
+      await inserted();
+      assert.ok(document.getText().includes('    total = somme(2, 3);'));
+      await preview('Appelle f avec "10 / 0".');
+      assert.equal(api.inspect().advisories.length, 1);
+      assert.match(api.inspect().confirmationTitle, /avertissement/);
+      await cancel();
+    });
     await test('changer indentSize seul invalide le plan', async () => {
       const { editor } = await fixture();
       await preview('Crée la fonction principale');

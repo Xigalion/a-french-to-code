@@ -90,7 +90,8 @@ const definitionRefusals = [
   ['Crée une fonction nommée int qui retourne un int.', 'C_KEYWORD_IDENTIFIER', 'int'],
   ['Crée une fonction nommée 1f qui retourne un int.', 'INVALID_IDENTIFIER', '1f'],
   ['Crée une fonction nomme f qui retourne un int.', 'UNKNOWN_FORMULATION', 'nomme'],
-  ['Crée une fonction nommée f qui retourne un int et plus.', 'UNEXPECTED_TEXT'],
+  ['Crée une fonction nommée f qui retourne un int plus.', 'UNKNOWN_FORMULATION', 'plus'],
+  ['Crée une fonction nommée f qui retourne un int et plus.', 'UNKNOWN_FORMULATION', 'plus'],
   ['Cree une fonction nommée f qui retourne un int.', 'UNKNOWN_FORMULATION'],
 ];
 for (const [source, code, token] of definitionRefusals) {
@@ -447,13 +448,9 @@ test('12A : les chaînes de branches et les transferts fonctionnent encore', () 
   assert.equal(loop.plan.functionContext, undefined);
 });
 
-test('12A : paramètres et appels ne sont pas livrés', () => {
-  for (const source of [
-    'Crée une fonction nommée somme qui retourne un int et prend un int nommé a.',
-    'Appelle somme.',
-    'Affecte à r le résultat de l’appel de somme.',
-    'Crée un bloc selon "i".',
-  ]) {
+test('12 : switch et les types non numériques restent non livrés', () => {
+  for (const source of ['Crée un bloc selon "i".', 'Choisis selon "i".',
+    'Crée une fonction nommée f qui retourne un pointeur.']) {
     assert.equal(translate(source).status, 'rejected', source);
   }
 });

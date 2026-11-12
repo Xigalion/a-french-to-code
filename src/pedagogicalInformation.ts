@@ -5,7 +5,7 @@ import { instructionCondition } from './translate.ts';
 export type PedagogicalInformation = {
   code: 'SHORT_CIRCUIT_AND' | 'SHORT_CIRCUIT_OR' | 'LOGICAL_NOT'
     | 'WHILE_PRETEST' | 'DO_WHILE_POSTTEST' | 'FOR_CLAUSE_ORDER'
-    | 'FUNCTION_SCOPE' | 'RETURN_ENDS_FUNCTION';
+    | 'FUNCTION_SCOPE' | 'RETURN_ENDS_FUNCTION' | 'PARAMETERS_BY_VALUE' | 'CALL_NOT_RESOLVED';
   severity: 'information';
   range: SourceRange;
   message: string;
@@ -36,9 +36,19 @@ export function explainInstruction(result: TranslationResult): PedagogicalInform
   if (result.status !== 'translated') return entries;
   const instruction = result.instruction;
   if (instruction.kind === 'FUNC_DEF') {
-    return [{ code: 'FUNCTION_SCOPE', severity: 'information', range: { ...instruction.parameters.nameRange },
+    const scope: PedagogicalInformation = { code: 'FUNCTION_SCOPE', severity: 'information',
+      range: { ...instruction.parameters.nameRange },
       message: 'Le corps est créé vide : aucun return n’y est ajouté. Les variables qui y seront déclarées '
-        + 'n’existeront que pendant une exécution de cette fonction. Aucune portée n’est vérifiée.' }];
+        + 'n’existeront que pendant une exécution de cette fonction. Aucune portée n’est vérifiée.' };
+    if (!instruction.parameters.params.length) return [scope];
+    return [scope, { code: 'PARAMETERS_BY_VALUE', severity: 'information', range: { ...instruction.parameters.nameRange },
+      message: 'En C, un paramètre reçoit une copie de la valeur passée à l’appel : le modifier dans le corps '
+        + 'ne modifie pas la variable de l’appelant. Aucun type d’argument n’est vérifié.' }];
+  }
+  if (instruction.kind === 'CALL' || instruction.kind === 'CALL_ASSIGN') {
+    return [{ code: 'CALL_NOT_RESOLVED', severity: 'information', range: { ...instruction.parameters.nameRange },
+      message: 'Les arguments sont évalués avant l’entrée dans la fonction, dans un ordre non spécifié par C17. '
+        + 'C-A ne recherche ni la déclaration de cette fonction, ni son nombre de paramètres, ni leurs types.' }];
   }
   if (instruction.kind === 'RETURN' || instruction.kind === 'RETURN_INT'
     || instruction.kind === 'RETURN_EXPRESSION' || instruction.kind === 'RETURN_NUMERIC') {

@@ -187,7 +187,7 @@ Directions envisagées : **algorithmique et développement logiciel**, **systèm
 | Fondations | 1 à 5, déjà développés | Instructions de base, VS Code, variables, affichage, diagnostics |
 | Expressions et calculs | 6 à 8 livrés ; recette complète du domaine ouverte | Opérateurs, priorités, types numériques, représentation, précision, conversions et fiabilité des calculs |
 | Décisions et répétitions | **Lots 9 à 11D implémentés : domaine complet côté moteur.** Deux gestes du lot 9 confirmés ; recette manuelle du domaine ouverte ([protocole](RECETTE_DOMAINE3.md)) | Comparaisons, branches, `while` ([11A](LOT11A_BILAN.md)), `do/while` ([11B](LOT11B_CONTRAT_ET_BILAN.md)), `for` ([11C](LOT11C_CONTRAT_ET_BILAN.md)), `break`/`continue` ([11D](LOT11D_CONTRAT_ET_BILAN.md)). `switch` et `return` non livrés |
-| Fonctions et décomposition | À définir | Paramètres, retours, portée et appels |
+| Fonctions et décomposition | **Lot 12 implémenté : 12A définition et retour, 12B paramètres, 12C appels** ([contrat et bilan](LOT12_CONTRAT_ET_BILAN.md)). Recette manuelle du domaine à rédiger | Définition, type de retour vérifié contre la forme de la phrase, paramètres explicites passés par valeur, appels sans résolution de symbole |
 | Tableaux, chaînes et pointeurs | À définir | Collections, accès et adresses |
 | Structures et mémoire dynamique | À définir | Données composées, allocation et durée de vie |
 | Fichiers et modularité | À définir | Entrées/sorties, erreurs, interfaces et compilation séparée |
@@ -251,6 +251,22 @@ Bilan observé pour l'ensemble du lot 11 : **2 402 tests Node réussis, 0 échec
 **Aucun résultat hôte n'est revendiqué pour aucun de ces incréments.** La suite hôte VS Code est restée inexécutable pendant toute la livraison : une mise à jour de VS Code est en attente sur la machine et le mutex Inno Setup `vscode-updating`, détenu par l'instance en cours d'exécution, empêche tout démarrage d'hôte de développement. Les 68 tests hôte du lot 10 ne sont pas reconfirmés, et les 25 tests hôte écrits pour le lot 11 n'ont jamais été exécutés. Reprise attendue : redémarrer VS Code, puis `npm run test:vscode`.
 
 Restent ouverts : cette exécution hôte, la recette GCC complète Expressions et calculs, la [recette manuelle du domaine 3](RECETTE_DOMAINE3.md) qui intègre celle du lot 10, et la qualification mutex/N-API. `switch`, `return` et `goto` ne sont ni générés ni interprétés ; `switch` est seulement **reconnu** s'il a été écrit à la main, parce qu'il change le sens de `break`.
+
+### Domaine 4 — lot 12 implémenté le 12 novembre 2026
+
+Le porteur lève le périmètre restreint du sprint initial : le cadre strict visait à observer la méthode de travail, et, les tests étant jugés concluants, il accorde une page blanche et annonce qu'il organisera lui-même un test final plus complexe pour une pédagogie de base. Le passage à un modèle moins restrictif — les paliers de liberté — reste prévu **après** ce test et n'est pas engagé.
+
+Le [contrat et bilan du lot 12](LOT12_CONTRAT_ET_BILAN.md) couvre les trois incréments : définition de fonction et `return` (12A), paramètres (12B), appels (12C). Sept intentions nouvelles. Les corps de fonction sont créés vides, `(void)` est écrit explicitement, et aucun `return` n'est jamais ajouté.
+
+**Le contrat de retour est vérifié au placement**, selon le raisonnement du lot 11D : `Retourne.` dans une fonction qui déclare un type, ou une valeur retournée d'une fonction `void`, rendrait la phrase de l'étudiant fausse, donc la demande est refusée plutôt que traduite. Le type déclaré est lu **syntaxiquement dans un en-tête** ; ce n'est pas un vérificateur de types et rien ne vérifie le type de l'expression retournée. **Aucune résolution de symbole** n'est faite pour les appels : ni existence, ni arité, ni types des arguments. Une définition de fonction imbriquée reste acceptée, par cohérence avec `Crée la fonction principale.`
+
+Mutualisation : le balayage contextuel et la classification des accolades passent dans `src/enclosingStructures.ts`, partagés par `loopTarget` (11D) et `functionContext` (12). `loopTarget` mappe les codes génériques vers ceux que son contrat a publiés, pour ne pas modifier un contrat livré ; `branchTarget.ts` du lot 10 reste entièrement à part. `conditionInformation.ts` devient `pedagogicalInformation.ts` : le canal n'est plus réservé aux conditions. Quatre motifs passifs ajoutés, dont `PARAMETERS_BY_VALUE`, qui porte la compétence centrale du domaine. Deux manques antérieurs corrigés : les avertissements du lot 8 ne couvraient ni les expressions de retour ni les arguments d'appel.
+
+Bilan observé : **2 583 tests Node réussis, 0 échec, 0 ignoré, TypeScript sans diagnostic.** Les 2 402 des lots 1 à 11D sont inclus et inchangés.
+
+**Aucun résultat hôte n'est revendiqué.** La suite hôte VS Code est restée inexécutable pendant toute la session : une mise à jour de VS Code est en attente sur la machine et le mutex Inno Setup `vscode-updating`, détenu par l'instance en cours d'exécution, empêche tout démarrage d'hôte de développement. Trois tentatives. Les 96 tests hôte existants n'ont pas été exécutés.
+
+Restent ouverts : cette exécution hôte, la recette GCC Expressions et calculs, la [recette manuelle du domaine 3](RECETTE_DOMAINE3.md), la recette manuelle du domaine 4 à rédiger, la qualification mutex/N-API, les domaines 5 à 9 sans contrat, et la spécification du modèle moins restrictif.
 
 ## 10. Modèle de fiche pour chaque futur lot
 

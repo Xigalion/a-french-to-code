@@ -78,6 +78,9 @@ export type DiagnosticCode =
   | 'UNSUPPORTED_NUMERIC_LITERAL'
   | 'MISSING_DISPLAY_PRECISION'
   | 'INVALID_DISPLAY_PRECISION'
+  | 'DUPLICATE_PARAMETER_NAME'
+  | 'TOO_MANY_PARAMETERS'
+  | 'TOO_MANY_ARGUMENTS'
   | 'INVALID_IDENTIFIER'
   | 'C_KEYWORD_IDENTIFIER'
   | 'INVALID_INTEGER'
@@ -206,7 +209,17 @@ function render(text: string, instruction: Instruction): TranslationResult {
     case 'CONTINUE': code = 'continue;\n'; break;
     // A function body is created empty: no return is ever added implicitly,
     // and no parameter list is invented beyond the explicit « (void) ».
-    case 'FUNC_DEF': code = `${instruction.parameters.returnType} ${instruction.parameters.name}(void) {\n    \n}\n`; break;
+    case 'FUNC_DEF': {
+      // « (void) » is written when there is no parameter: an empty list would
+      // mean something else in C, and is never produced here.
+      const { returnType, name, params } = instruction.parameters;
+      const list = params.length ? params.map(parameter => `${parameter.type} ${parameter.name}`).join(', ') : 'void';
+      code = `${returnType} ${name}(${list}) {\n    \n}\n`;
+      break;
+    }
+    case 'CALL': code = `${instruction.parameters.name}(${instruction.parameters.args.map(renderNumericExpression).join(', ')});\n`; break;
+    case 'CALL_ASSIGN': code = `${instruction.parameters.target} = ${instruction.parameters.name}`
+      + `(${instruction.parameters.args.map(renderNumericExpression).join(', ')});\n`; break;
     case 'RETURN': code = 'return;\n'; break;
     case 'RETURN_INT': code = `return ${instruction.parameters.value};\n`; break;
     case 'RETURN_EXPRESSION': code = `return ${renderExpression(instruction.parameters.expression)};\n`; break;

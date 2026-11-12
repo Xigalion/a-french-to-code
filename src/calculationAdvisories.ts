@@ -40,6 +40,10 @@ export function analyzeCalculations(translation: TranslationResult): Calculation
       instruction.parameters.initial];
   } else if (condition) {
     stack = conditionNumericRoots(condition).reverse();
+  } else if (instruction.kind === 'CALL' || instruction.kind === 'CALL_ASSIGN') {
+    // Every argument is inspected; the final sort puts the advisories back in
+    // source order whatever the evaluation order C17 leaves unspecified.
+    stack = [...instruction.parameters.args].reverse();
   } else if (instruction.kind === 'RETURN_EXPRESSION' || instruction.kind === 'RETURN_NUMERIC'
     || instruction.kind === 'ASSIGN_EXPRESSION' || instruction.kind === 'NUMERIC_INIT'
     || instruction.kind === 'NUMERIC_ASSIGN') stack = [instruction.parameters.expression];
