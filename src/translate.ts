@@ -4,13 +4,15 @@ import { renderNumericExpression, parseNumericExpression } from './numericExpres
 import type { NumericExpression } from './numericExpression.ts';
 import { analyzeNumericInstruction } from './numericInstructions.ts';
 import type { NumericInstruction } from './numericInstructions.ts';
+import { analyzeFunctionInstruction } from './functionInstructions.ts';
+import type { FunctionInstruction } from './functionInstructions.ts';
 import { parseCondition, renderCondition } from './condition.ts';
 import type { Condition } from './condition.ts';
 
 /** Half-open offsets in UTF-16 code units, relative to the original input. */
 export type SourceRange = { start: number; end: number };
 
-export type Instruction = NumericInstruction
+export type Instruction = NumericInstruction | FunctionInstruction
   | { kind: 'IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE_IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE'; parameters: Record<string, never> }
@@ -35,7 +37,7 @@ type DisplayFormat = 'decimal' | 'hexadecimal' | 'octal';
  * cursor placed inside. Shared by the translator and the placement planner so
  * both stay in step.
  */
-export const BLOCK_KINDS: readonly string[] = ['MAIN', 'IF', 'ELSE_IF', 'ELSE', 'WHILE', 'DO_WHILE', 'FOR'];
+export const BLOCK_KINDS: readonly string[] = ['MAIN', 'IF', 'ELSE_IF', 'ELSE', 'WHILE', 'DO_WHILE', 'FOR', 'FUNC_DEF'];
 
 /** Intents whose only parameter is a bounded condition of the lot 10 profile. */
 export function instructionCondition(instruction: Instruction): Condition | undefined {
@@ -130,7 +132,7 @@ const C17_KEYWORDS = new Set([
 
 type Token = { text: string; range: SourceRange };
 type Parameter = { parameter: 'name' | 'value' | 'header' };
-type Rule = { kind: Exclude<Instruction['kind'], 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind']>; parts: (string | Parameter)[] };
+type Rule = { kind: Exclude<Instruction['kind'], 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | FunctionInstruction['kind'] | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind']>; parts: (string | Parameter)[] };
 
 const RULES: [Rule, ...Rule[]] = [
   { kind: 'MAIN', parts: ['Crée', 'la', 'fonction', 'principale'] },
@@ -202,6 +204,13 @@ function render(text: string, instruction: Instruction): TranslationResult {
     // Neither has the meaning of return: the transfer stays inside the loop.
     case 'BREAK': code = 'break;\n'; break;
     case 'CONTINUE': code = 'continue;\n'; break;
+    // A function body is created empty: no return is ever added implicitly,
+    // and no parameter list is invented beyond the explicit « (void) ».
+    case 'FUNC_DEF': code = `${instruction.parameters.returnType} ${instruction.parameters.name}(void) {\n    \n}\n`; break;
+    case 'RETURN': code = 'return;\n'; break;
+    case 'RETURN_INT': code = `return ${instruction.parameters.value};\n`; break;
+    case 'RETURN_EXPRESSION': code = `return ${renderExpression(instruction.parameters.expression)};\n`; break;
+    case 'RETURN_NUMERIC': code = `return ${renderNumericExpression(instruction.parameters.expression)};\n`; break;
     case 'INCLUDE_STDIO': code = '#include <stdio.h>\n'; break;
     case 'PRINT_INT': code = `printf("%d", ${instruction.parameters.name});\n`; break;
     case 'PRINT_FORMATTED': {
@@ -521,6 +530,10 @@ export function translate(text: string): TranslationResult {
     if (tokens[4]) return reject(text, 'UNEXPECTED_TEXT', 'Ce texte supplémentaire n’est pas accepté après sinon.', { start: tokens[4].range.start, end });
     return render(text, { kind: 'ELSE', parameters: {} });
   }
+
+  const functions = analyzeFunctionInstruction(text, tokens, end, identifierDiagnostic);
+  if (functions?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [functions.diagnostic] };
+  if (functions?.status === 'recognized') return render(text, functions.instruction);
 
   const numeric = analyzeNumericInstruction(text, tokens, end, identifierDiagnostic);
   if (numeric?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [numeric.diagnostic] };

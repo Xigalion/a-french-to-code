@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { translate } from '../src/translate.ts';
 import { planPlacement, validatePlan } from '../src/planPlacement.ts';
-import { explainConditions } from '../src/conditionInformation.ts';
+import { explainInstruction } from '../src/pedagogicalInformation.ts';
 import { analyzeCalculations } from '../src/calculationAdvisories.ts';
 import { TranslationSession } from '../extension/out/extension/src/session.js';
 
@@ -256,7 +256,7 @@ for (const field of ['code', 'source', 'cursor', 'instruction']) {
 test('DO_WHILE_POSTTEST : information passive sur la plage de la condition', () => {
   const source = doWhile('i < limite');
   const result = translated(source);
-  const information = explainConditions(result);
+  const information = explainInstruction(result);
   assert.equal(information.length, 1);
   assert.equal(information[0].code, 'DO_WHILE_POSTTEST');
   assert.equal(information[0].severity, 'information');
@@ -268,8 +268,8 @@ test('DO_WHILE_POSTTEST : information passive sur la plage de la condition', () 
 });
 
 test('le moment du test distingue les deux formes de boucle', () => {
-  const pre = explainConditions(translated(loop('i < limite')))[0];
-  const post = explainConditions(translated(doWhile('i < limite')))[0];
+  const pre = explainInstruction(translated(loop('i < limite')))[0];
+  const post = explainInstruction(translated(doWhile('i < limite')))[0];
   assert.equal(pre.code, 'WHILE_PRETEST');
   assert.equal(post.code, 'DO_WHILE_POSTTEST');
   assert.match(pre.message, /avant chaque itération/u);
@@ -280,7 +280,7 @@ test('le moment du test distingue les deux formes de boucle', () => {
 });
 
 test('DO_WHILE_POSTTEST précède les informations d’opérateurs', () => {
-  const information = explainConditions(translated(doWhile('!suspendu && (i < limite || forcer)')));
+  const information = explainInstruction(translated(doWhile('!suspendu && (i < limite || forcer)')));
   assert.deepEqual(information.map(entry => entry.code),
     ['DO_WHILE_POSTTEST', 'LOGICAL_NOT', 'SHORT_CIRCUIT_AND', 'SHORT_CIRCUIT_OR']);
   assert.ok(information.every(entry => entry.severity === 'information'));
@@ -292,14 +292,14 @@ for (const [condition, code] of [['i < 10 / 0', 'INTEGER_ZERO_DIVISOR'], ['7.5 %
     const advisories = analyzeCalculations(result).advisories;
     assert.ok(advisories.some(advice => advice.code === code), JSON.stringify(advisories));
     assert.ok(advisories.every(advice => advice.severity === 'warning'));
-    assert.equal(explainConditions(result)[0].code, 'DO_WHILE_POSTTEST');
+    assert.equal(explainInstruction(result)[0].code, 'DO_WHILE_POSTTEST');
   });
 }
 
 test('DO_WHILE : aucun avertissement de terminaison', () => {
   for (const condition of ['1', '0', 'i < limite']) {
     assert.deepEqual(analyzeCalculations(translated(doWhile(condition))).advisories, []);
-    assert.equal(explainConditions(translated(doWhile(condition))).length, 1);
+    assert.equal(explainInstruction(translated(doWhile(condition))).length, 1);
   }
 });
 
@@ -324,8 +324,8 @@ test('DO_WHILE : session, information passive et confirmation unique', () => {
 // Non-régression.
 // ---------------------------------------------------------------------------
 
-test('11B : switch et return restent non livrés', () => {
-  for (const source of ['Crée un bloc selon "i".', 'Retourne la valeur 0.']) {
+test('11B : switch reste non livré', () => {
+  for (const source of ['Crée un bloc selon "i".', 'Choisis selon "i".']) {
     assert.equal(translate(source).status, 'rejected', source);
   }
 });
@@ -335,5 +335,5 @@ test('11B : les sorties du lot 11A et des lots historiques sont inchangées', ()
   assert.equal(translated('Crée un bloc si "age >= 18".').fragments[0].code, 'if (age >= 18) {\n    \n}\n');
   assert.equal(translated('Ajoute une branche sinon.').fragments[0].code, 'else {\n    \n}\n');
   assert.equal(translated('Crée la fonction principale.').fragments[0].code, 'int main(void) {\n    \n}\n');
-  assert.equal(explainConditions(translate('Crée un bloc si "a && b".')).length, 1);
+  assert.equal(explainInstruction(translate('Crée un bloc si "a && b".')).length, 1);
 });

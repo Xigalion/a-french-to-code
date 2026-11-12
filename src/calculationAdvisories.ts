@@ -40,7 +40,8 @@ export function analyzeCalculations(translation: TranslationResult): Calculation
       instruction.parameters.initial];
   } else if (condition) {
     stack = conditionNumericRoots(condition).reverse();
-  } else if (instruction.kind === 'ASSIGN_EXPRESSION' || instruction.kind === 'NUMERIC_INIT'
+  } else if (instruction.kind === 'RETURN_EXPRESSION' || instruction.kind === 'RETURN_NUMERIC'
+    || instruction.kind === 'ASSIGN_EXPRESSION' || instruction.kind === 'NUMERIC_INIT'
     || instruction.kind === 'NUMERIC_ASSIGN') stack = [instruction.parameters.expression];
   else return report;
   while (stack.length) {

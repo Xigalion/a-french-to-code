@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { translate } from '../src/translate.ts';
 import { planPlacement, validatePlan } from '../src/planPlacement.ts';
-import { explainConditions } from '../src/conditionInformation.ts';
+import { explainInstruction } from '../src/pedagogicalInformation.ts';
 import { analyzeCalculations } from '../src/calculationAdvisories.ts';
 import { resolveLoopTarget, MAX_TRANSFER_UNITS, MAX_TRANSFER_TOKENS, MAX_TRANSFER_DEPTH } from '../src/loopTarget.ts';
 import { TranslationSession } from '../extension/out/extension/src/session.js';
@@ -77,7 +77,7 @@ const refusals = [
   ['Passe à l’itération suivante de la boucle.', 'INCOMPLETE_INSTRUCTION'],
   ['Passe à l’itération suivante de la boucle la plus', 'INCOMPLETE_INSTRUCTION'],
   ['Passe a l’itération suivante de la boucle la plus intérieure.', 'UNKNOWN_FORMULATION', 'a'],
-  ['Retourne de la boucle la plus intérieure.', 'UNKNOWN_FORMULATION', 'Retourne'],
+  ['Sors de la boucle la plus intérieure et arrête.', 'UNEXPECTED_TEXT'],
   ['Sors du switch.', 'UNKNOWN_FORMULATION'],
   ['Sors de la fonction.', 'UNKNOWN_FORMULATION'],
 ];
@@ -88,7 +88,7 @@ for (const [source, code, token] of refusals) {
 test('les transferts n’ont ni condition ni avis ni information', () => {
   for (const source of [BREAK, CONTINUE]) {
     const result = translated(source);
-    assert.deepEqual(explainConditions(result), []);
+    assert.deepEqual(explainInstruction(result), []);
     assert.deepEqual(analyzeCalculations(result).advisories, []);
   }
 });
@@ -385,8 +385,8 @@ test('transfert : session périmée refuse l’insertion', () => {
 // Non-régression.
 // ---------------------------------------------------------------------------
 
-test('11D : switch, return et goto restent non livrés', () => {
-  for (const source of ['Crée un bloc selon "i".', 'Retourne la valeur 0.', 'Saute à l’étiquette fin.']) {
+test('11D : switch et goto restent non livrés', () => {
+  for (const source of ['Crée un bloc selon "i".', 'Choisis selon "i".', 'Saute à l’étiquette fin.']) {
     assert.equal(translate(source).status, 'rejected', source);
   }
 });

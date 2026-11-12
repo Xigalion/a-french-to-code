@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { translate } from '../src/translate.ts';
 import { planPlacement, validatePlan } from '../src/planPlacement.ts';
-import { explainConditions } from '../src/conditionInformation.ts';
+import { explainInstruction } from '../src/pedagogicalInformation.ts';
 import { analyzeCalculations } from '../src/calculationAdvisories.ts';
 import { resolveBranchTarget, MAX_BRANCH_UNITS, MAX_BRANCH_TOKENS, MAX_BRANCH_DEPTH, MAX_CHAIN_BRANCHES } from '../src/branchTarget.ts';
 import { TranslationSession } from '../extension/out/extension/src/session.js';
@@ -69,7 +69,7 @@ test('lot 10 plages UTF16 ELSE_IF décalées et noms astraux',()=>{
   const result=refused(source,'INVALID_IDENTIFIER','A😀B');
   assert.equal(result.diagnostics[0].range.start,source.indexOf('A😀B'));
   const good=command('a && !b || c',true);
-  assert.deepEqual(explainConditions(translated(good)).map(x=>good.slice(x.range.start,x.range.end)),['&&','!','||']);
+  assert.deepEqual(explainInstruction(translated(good)).map(x=>good.slice(x.range.start,x.range.end)),['&&','!','||']);
 });
 for(const source of ['Ajoute une branche sinon si','Ajoute une branche sinon si "', 'Ajoute une branche sinon "a".',otherwise+' autre',command('a')+' '+otherwise]) {
   test('lot 10 phrase incomplète/suffixe '+source,()=>refused(source));
@@ -94,7 +94,7 @@ for(const condition of ['0 && 7 / 0','1 || 7 / 0','!((int)(7 / 0))','a && 5.0 % 
     assert.ok(warnings.length);
     assert.deepEqual(result,original);
     assert.ok(warnings.every(w=>w.severity==='warning'));
-    const info=explainConditions(result);
+    const info=explainInstruction(result);
     assert.ok(info.length);
     assert.ok(info.every(x=>x.severity==='information' && x.message.includes('sûreté')));
   });

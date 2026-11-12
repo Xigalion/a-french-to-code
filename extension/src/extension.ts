@@ -4,7 +4,7 @@ import type { SessionDiagnostic, TargetState } from './session.ts';
 import { PreviewStore } from './preview.ts';
 import type { PreviewPair } from './preview.ts';
 import type { CalculationAdvisory } from '../../src/calculationAdvisories.ts';
-import type { ConditionInformation } from '../../src/conditionInformation.ts';
+import type { PedagogicalInformation } from '../../src/pedagogicalInformation.ts';
 
 type Choice = vscode.QuickPickItem & { action: 'insert' | 'edit' | 'return' | 'cancel' };
 export type SessionInspection = {
@@ -12,7 +12,7 @@ export type SessionInspection = {
   targetUri: string; choices: string[]; diagnostic: SessionDiagnostic | undefined;
   preview: { before: string; after: string } | undefined;
   advisories: CalculationAdvisory[];
-  information: ConditionInformation[];
+  information: PedagogicalInformation[];
   attachmentLabel: string | undefined;
   validation: string | vscode.InputBoxValidationMessage | undefined;
   confirmationTitle: string | undefined;

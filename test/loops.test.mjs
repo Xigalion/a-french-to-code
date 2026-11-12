@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { translate } from '../src/translate.ts';
 import { planPlacement, validatePlan } from '../src/planPlacement.ts';
-import { explainConditions } from '../src/conditionInformation.ts';
+import { explainInstruction } from '../src/pedagogicalInformation.ts';
 import { analyzeCalculations } from '../src/calculationAdvisories.ts';
 import { TranslationSession } from '../extension/out/extension/src/session.js';
 
@@ -436,7 +436,7 @@ for (const mutation of ['text', 'revision', 'id']) {
 test('WHILE_PRETEST : information passive sur la plage de la condition', () => {
   const source = loop('i < limite');
   const result = translated(source);
-  const information = explainConditions(result);
+  const information = explainInstruction(result);
   assert.equal(information.length, 1);
   const entry = information[0];
   assert.equal(entry.code, 'WHILE_PRETEST');
@@ -451,13 +451,13 @@ test('WHILE_PRETEST : information passive sur la plage de la condition', () => {
 });
 
 test('WHILE_PRETEST précède les informations d’opérateurs, sans les supprimer', () => {
-  const information = explainConditions(translated(loop('!suspendu && (i < limite || forcer)')));
+  const information = explainInstruction(translated(loop('!suspendu && (i < limite || forcer)')));
   assert.deepEqual(information.map(entry => entry.code), ['WHILE_PRETEST', 'LOGICAL_NOT', 'SHORT_CIRCUIT_AND', 'SHORT_CIRCUIT_OR']);
   assert.ok(information.every(entry => entry.severity === 'information'));
 });
 
 test('WHILE : les informations d’IF restent inchangées', () => {
-  const information = explainConditions(translate('Crée un bloc si "!suspendu && (i < limite || forcer)".'));
+  const information = explainInstruction(translate('Crée un bloc si "!suspendu && (i < limite || forcer)".'));
   assert.deepEqual(information.map(entry => entry.code), ['LOGICAL_NOT', 'SHORT_CIRCUIT_AND', 'SHORT_CIRCUIT_OR']);
 });
 
@@ -477,7 +477,7 @@ for (const [condition, code] of advisoryCases) {
     // A risky condition is still translated faithfully.
     assert.equal(result.instruction.kind, 'WHILE');
     // The passive loop information is never merged into the warnings.
-    assert.ok(explainConditions(result).some(entry => entry.code === 'WHILE_PRETEST'));
+    assert.ok(explainInstruction(result).some(entry => entry.code === 'WHILE_PRETEST'));
   });
 }
 test('WHILE : le court-circuit ne supprime pas un avis à droite', () => {
@@ -490,7 +490,7 @@ test('WHILE : aucun avertissement de terminaison ou de progression', () => {
   for (const condition of ['1', '0', 'i < limite', 'actif']) {
     const result = translated(loop(condition));
     assert.deepEqual(analyzeCalculations(result).advisories, []);
-    const information = explainConditions(result);
+    const information = explainInstruction(result);
     assert.equal(information.length, 1);
     assert.equal(information[0].code, 'WHILE_PRETEST');
   }
@@ -539,7 +539,6 @@ test('WHILE : session périmée n’expose plus aucune information', () => {
 const notDelivered = [
   'Crée une boucle do while "i < 3".',
   'Crée un bloc selon "i".',
-  'Retourne la valeur 0.',
 ];
 for (const source of notDelivered) {
   test(`non livré au lot 11A : ${source.slice(0, 48)}`, () => {

@@ -5,8 +5,13 @@ import { resolveBranchTarget } from './branchTarget.ts';
 import type { Attachment, BranchCode } from './branchTarget.ts';
 import { resolveLoopTarget } from './loopTarget.ts';
 import type { LoopTarget, TransferCode } from './loopTarget.ts';
+import type { ContextCode } from './enclosingStructures.ts';
+import { resolveFunctionContext } from './functionContext.ts';
+import type { FunctionContext, FunctionCode } from './functionContext.ts';
 
 export type SuccessfulTranslation = Extract<TranslationResult, { status: 'translated' }>;
+/** Intents whose placement must agree with the enclosing function's contract. */
+const RETURN_KINDS: readonly string[] = ['RETURN', 'RETURN_INT', 'RETURN_EXPRESSION', 'RETURN_NUMERIC'];
 export type DocumentSnapshot = { id: string; revision: string | number; text: string };
 export type PlacementRequest = {
   document: DocumentSnapshot;
@@ -17,7 +22,8 @@ export type PlacementRequest = {
   fallbackEol?: '\n' | '\r\n';
 };
 export type PlacementDiagnostic = {
-  code: BranchCode | TransferCode | 'INVALID_DOCUMENT' | 'INVALID_CURSOR' | 'INVALID_INDENT_UNIT' | 'INVALID_EOL'
+  code: BranchCode | TransferCode | ContextCode | FunctionCode
+    | 'RETURN_NEEDS_VALUE' | 'RETURN_IN_VOID_FUNCTION' | 'INVALID_DOCUMENT' | 'INVALID_CURSOR' | 'INVALID_INDENT_UNIT' | 'INVALID_EOL'
     | 'INVALID_TRANSLATION_RESULT' | 'TARGET_LINE_NOT_BLANK'
     | 'TARGET_IN_COMMENT' | 'LEXICAL_CONTEXT_UNDETERMINED'
     | 'UNSUPPORTED_LINE_CONTINUATION' | 'UNSUPPORTED_TRIGRAPH'
@@ -33,7 +39,10 @@ export type PlacementPlan = {
   branchContext?: { indentUnit: string };
   /** Set for break/continue: the loop the transfer was proven to control. */
   loopTarget?: LoopTarget;
-  transferContext?: { indentUnit: string };
+  /** Set for a return: the function the line was proven to belong to. */
+  functionContext?: FunctionContext;
+  /** Captured when a contextual recognizer ran, so freshness can rebuild. */
+  recognizerContext?: { indentUnit: string };
   base: { documentId: string; revision: string | number; text: string };
   source: { text: string; instruction: Instruction };
   edits: Array<{ range: SourceRange; newText: string }>;
@@ -134,8 +143,10 @@ export function planPlacement(request: PlacementRequest): PlacementResult {
   const isBranch = canonical.instruction.kind === 'ELSE_IF' || canonical.instruction.kind === 'ELSE';
   const transfer = canonical.instruction.kind === 'BREAK' ? 'break'
     : canonical.instruction.kind === 'CONTINUE' ? 'continue' : undefined;
+  const returning = RETURN_KINDS.includes(canonical.instruction.kind);
   let attachment: Attachment | undefined;
   let loopTarget: LoopTarget | undefined;
+  let functionContext: FunctionContext | undefined;
   if (isBranch) {
     const resolved = resolveBranchTarget(text, lineStart, lineEnd, baseIndent);
     if (resolved.status === 'rejected') {
@@ -152,6 +163,26 @@ export function planPlacement(request: PlacementRequest): PlacementResult {
       return reject(issue.code, issue.reason, issue.message, issue.range);
     }
     loopTarget = resolved.target;
+  } else if (returning) {
+    // A return is placed only once the function it leaves is established, and
+    // only if the sentence agrees with the return type that function declares.
+    const resolved = resolveFunctionContext(text, lineStart);
+    if (resolved.status === 'rejected') {
+      const issue = resolved.diagnostic;
+      return reject(issue.code, issue.reason, issue.message, issue.range);
+    }
+    functionContext = resolved.context;
+    const isVoid = functionContext.returnType === 'void';
+    if (canonical.instruction.kind === 'RETURN' && !isVoid) {
+      return reject('RETURN_NEEDS_VALUE', 'unsafe-location',
+        `Cette fonction déclare retourner un ${functionContext.returnType} : « Retourne. » ne fournit aucune valeur.`,
+        { ...functionContext.nameRange });
+    }
+    if (canonical.instruction.kind !== 'RETURN' && isVoid) {
+      return reject('RETURN_IN_VOID_FUNCTION', 'unsafe-location',
+        'Cette fonction déclare ne rien retourner : elle ne peut pas retourner une valeur.',
+        { ...functionContext.nameRange });
+    }
   } else {
     const lexical = inspectPrefix(text.slice(0, lineStart));
     if (lexical) return reject(lexical.code, lexical.reason, lexical.message, lexical.range);
@@ -175,7 +206,9 @@ export function planPlacement(request: PlacementRequest): PlacementResult {
     status: 'planned', diagnostics: [],
     plan: {
       ...(attachment ? { attachment, branchContext: { indentUnit } } : {}),
-      ...(loopTarget ? { loopTarget, transferContext: { indentUnit } } : {}),
+      ...(loopTarget ? { loopTarget } : {}),
+      ...(functionContext ? { functionContext } : {}),
+      ...(loopTarget || functionContext ? { recognizerContext: { indentUnit } } : {}),
       base: { documentId: document.id, revision: document.revision, text },
       source: { text: canonical.source.text, instruction: canonical.instruction },
       edits: [{ range: { start: lineStart, end: lineEnd }, newText }],
@@ -193,14 +226,17 @@ export function validatePlan(plan: PlacementPlan, document: DocumentSnapshot): P
   if (plan.base.documentId !== document.id || plan.base.revision !== document.revision || plan.base.text !== document.text) {
     return reject('STALE_PLAN', 'stale-plan', 'Le document a changé : un nouveau plan et un nouvel aperçu sont nécessaires.');
   }
-  if (plan.loopTarget || plan.source.instruction.kind === 'BREAK' || plan.source.instruction.kind === 'CONTINUE') {
+  const contextual = plan.loopTarget || plan.functionContext
+    || plan.source.instruction.kind === 'BREAK' || plan.source.instruction.kind === 'CONTINUE'
+    || RETURN_KINDS.includes(plan.source.instruction.kind);
+  if (contextual) {
     const edit = plan.edits[0];
-    if (!edit || plan.edits.length !== 1 || !plan.transferContext) return reject('STALE_PLAN', 'stale-plan', 'Le plan de transfert n’est plus valide.');
+    if (!edit || plan.edits.length !== 1 || !plan.recognizerContext) return reject('STALE_PLAN', 'stale-plan', 'Le plan contextuel n’est plus valide.');
     const translation = translate(plan.source.text);
-    if (translation.status !== 'translated') return reject('STALE_PLAN', 'stale-plan', 'La traduction du plan de transfert a changé.');
+    if (translation.status !== 'translated') return reject('STALE_PLAN', 'stale-plan', 'La traduction du plan contextuel a changé.');
     const rebuilt = planPlacement({ document, cursorOffset: edit.range.start, translation,
-      indentUnit: plan.transferContext.indentUnit, fallbackEol: plan.eol });
-    // The target loop is re-established on exactly the confirmed line.
+      indentUnit: plan.recognizerContext.indentUnit, fallbackEol: plan.eol });
+    // The structure is re-established on exactly the confirmed line.
     if (rebuilt.status !== 'planned' || !sameData(plan, rebuilt.plan)) {
       return reject('STALE_PLAN', 'stale-plan', 'La structure englobante a changé : demandez un nouvel aperçu.');
     }

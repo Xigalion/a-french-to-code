@@ -2,9 +2,10 @@ import type { Condition } from './condition.ts';
 import type { SourceRange, TranslationResult } from './translate.ts';
 import { instructionCondition } from './translate.ts';
 
-export type ConditionInformation = {
+export type PedagogicalInformation = {
   code: 'SHORT_CIRCUIT_AND' | 'SHORT_CIRCUIT_OR' | 'LOGICAL_NOT'
-    | 'WHILE_PRETEST' | 'DO_WHILE_POSTTEST' | 'FOR_CLAUSE_ORDER';
+    | 'WHILE_PRETEST' | 'DO_WHILE_POSTTEST' | 'FOR_CLAUSE_ORDER'
+    | 'FUNCTION_SCOPE' | 'RETURN_ENDS_FUNCTION';
   severity: 'information';
   range: SourceRange;
   message: string;
@@ -13,7 +14,7 @@ export type ConditionInformation = {
 /** When each loop form evaluates its condition. Deliberately not a
  * termination, progression or iteration-count claim.
  */
-const MOMENT: Readonly<Record<string, { code: ConditionInformation['code']; message: string }>> = {
+const MOMENT: Readonly<Record<string, { code: PedagogicalInformation['code']; message: string }>> = {
   WHILE: { code: 'WHILE_PRETEST',
     message: 'La condition est testée avant chaque itération ; le corps peut ne jamais être exécuté. '
       + 'Aucune progression ni terminaison n’est déduite.' },
@@ -30,13 +31,25 @@ const MOMENT: Readonly<Record<string, { code: ConditionInformation['code']; mess
  * The loop entries state when the condition is evaluated and stay on the
  * passive information channel: they never become warnings.
  */
-export function explainConditions(result: TranslationResult): ConditionInformation[] {
-  const entries: ConditionInformation[] = [];
+export function explainInstruction(result: TranslationResult): PedagogicalInformation[] {
+  const entries: PedagogicalInformation[] = [];
   if (result.status !== 'translated') return entries;
+  const instruction = result.instruction;
+  if (instruction.kind === 'FUNC_DEF') {
+    return [{ code: 'FUNCTION_SCOPE', severity: 'information', range: { ...instruction.parameters.nameRange },
+      message: 'Le corps est créé vide : aucun return n’y est ajouté. Les variables qui y seront déclarées '
+        + 'n’existeront que pendant une exécution de cette fonction. Aucune portée n’est vérifiée.' }];
+  }
+  if (instruction.kind === 'RETURN' || instruction.kind === 'RETURN_INT'
+    || instruction.kind === 'RETURN_EXPRESSION' || instruction.kind === 'RETURN_NUMERIC') {
+    return [{ code: 'RETURN_ENDS_FUNCTION', severity: 'information', range: { ...instruction.parameters.keywordRange },
+      message: 'return termine immédiatement l’exécution de la fonction et rend la main à l’appelant ; '
+        + 'les instructions suivantes de son corps ne sont pas exécutées. Aucune accessibilité n’est analysée.' }];
+  }
   const condition = instructionCondition(result.instruction);
   if (!condition) return entries;
   const moment = MOMENT[result.instruction.kind];
-  const envelope: ConditionInformation[] = moment
+  const envelope: PedagogicalInformation[] = moment
     ? [{ code: moment.code, severity: 'information', range: { ...condition.range }, message: moment.message }]
     : [];
   const stack: Condition[] = [condition];

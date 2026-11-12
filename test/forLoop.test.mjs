@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { translate } from '../src/translate.ts';
 import { planPlacement, validatePlan } from '../src/planPlacement.ts';
-import { explainConditions } from '../src/conditionInformation.ts';
+import { explainInstruction } from '../src/pedagogicalInformation.ts';
 import { analyzeCalculations } from '../src/calculationAdvisories.ts';
 import { TranslationSession } from '../extension/out/extension/src/session.js';
 
@@ -287,7 +287,7 @@ for (const field of ['code', 'source', 'cursor', 'instruction']) {
 
 test('FOR_CLAUSE_ORDER : information passive sur l’ordre d’exécution', () => {
   const result = translated(standard);
-  const information = explainConditions(result);
+  const information = explainInstruction(result);
   assert.equal(information.length, 1);
   assert.equal(information[0].code, 'FOR_CLAUSE_ORDER');
   assert.equal(information[0].severity, 'information');
@@ -304,12 +304,12 @@ test('les trois formes de boucle ont trois informations de moment distinctes', (
     'Crée une boucle tant que "i < 3".',
     'Crée une boucle avec test final tant que "i < 3".',
     standard,
-  ].map(source => explainConditions(translated(source))[0].code);
+  ].map(source => explainInstruction(translated(source))[0].code);
   assert.deepEqual(codes, ['WHILE_PRETEST', 'DO_WHILE_POSTTEST', 'FOR_CLAUSE_ORDER']);
 });
 
 test('FOR_CLAUSE_ORDER précède les informations d’opérateurs', () => {
-  const information = explainConditions(translated(forLoop('i', '0', '!fini && (i < 3 || forcer)', 'i + 1')));
+  const information = explainInstruction(translated(forLoop('i', '0', '!fini && (i < 3 || forcer)', 'i + 1')));
   assert.deepEqual(information.map(entry => entry.code),
     ['FOR_CLAUSE_ORDER', 'LOGICAL_NOT', 'SHORT_CIRCUIT_AND', 'SHORT_CIRCUIT_OR']);
 });
@@ -326,7 +326,7 @@ for (const [[name, initial, condition, update], code, where] of advisoryCases) {
     const advisories = analyzeCalculations(result).advisories;
     assert.ok(advisories.some(advice => advice.code === code), JSON.stringify(advisories));
     assert.ok(advisories.every(advice => advice.severity === 'warning' && advice.category === 'calculation'));
-    assert.equal(explainConditions(result)[0].code, 'FOR_CLAUSE_ORDER');
+    assert.equal(explainInstruction(result)[0].code, 'FOR_CLAUSE_ORDER');
   });
 }
 
@@ -343,7 +343,7 @@ test('FOR : un avis par clause fautive, triés par position', () => {
 test('FOR : aucun avertissement de terminaison ou de nombre de tours', () => {
   for (const source of [standard, forLoop('i', '0', '1', 'i + 0'), forLoop('i', '0', 'i > 0', 'i + 1')]) {
     assert.deepEqual(analyzeCalculations(translated(source)).advisories, []);
-    assert.equal(explainConditions(translated(source)).length, 1);
+    assert.equal(explainInstruction(translated(source)).length, 1);
   }
 });
 
@@ -367,8 +367,8 @@ test('FOR : session, information passive et confirmation unique', () => {
 // Non-régression.
 // ---------------------------------------------------------------------------
 
-test('11C : switch et return restent non livrés', () => {
-  for (const source of ['Crée un bloc selon "i".', 'Retourne la valeur 0.']) {
+test('11C : switch reste non livré', () => {
+  for (const source of ['Crée un bloc selon "i".', 'Choisis selon "i".']) {
     assert.equal(translate(source).status, 'rejected', source);
   }
 });

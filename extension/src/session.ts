@@ -1,8 +1,8 @@
 import { translate } from '../../src/translate.ts';
 import { analyzeCalculations } from '../../src/calculationAdvisories.ts';
 import type { CalculationAdvisory } from '../../src/calculationAdvisories.ts';
-import { explainConditions } from '../../src/conditionInformation.ts';
-import type { ConditionInformation } from '../../src/conditionInformation.ts';
+import { explainInstruction } from '../../src/pedagogicalInformation.ts';
+import type { PedagogicalInformation } from '../../src/pedagogicalInformation.ts';
 import { planPlacement, validatePlan } from '../../src/planPlacement.ts';
 import type { DocumentSnapshot, PlacementPlan } from '../../src/planPlacement.ts';
 import type { SourceRange } from '../../src/translate.ts';
@@ -32,7 +32,7 @@ function integration(code: string, message: string): Failure {
 /** The native UI and a future persistent UI share this session, not their widgets. */
 export class TranslationSession {
   private readonly initial: TargetState;
-  private pending: { token: number; plan: PlacementPlan; after: string; advisories: CalculationAdvisory[]; information: ConditionInformation[] } | undefined;
+  private pending: { token: number; plan: PlacementPlan; after: string; advisories: CalculationAdvisory[]; information: PedagogicalInformation[] } | undefined;
   private counter = 0;
   private invalidation: string | undefined;
   private currentPhase: 'editing' | 'preparing' | 'review' | 'stale' | 'applying' | 'done' | 'cancelled' = 'editing';
@@ -45,18 +45,20 @@ export class TranslationSession {
 
   get phase(): string { return this.currentPhase; }
   get draft(): string { return this.text; }
-  get information(): ConditionInformation[] {
+  get information(): PedagogicalInformation[] {
     if (!['editing', 'preparing', 'review'].includes(this.currentPhase)) return [];
-    const values = this.pending?.information ?? explainConditions(translate(this.text));
+    const values = this.pending?.information ?? explainInstruction(translate(this.text));
     return values.map(value => ({ ...value, range: { ...value.range } }));
   }
   /** The line the plan was proven to relate to: an if chain root, or the loop
-   * a transfer controls. Shown for review, never used to choose a target.
+   * a transfer controls, or the function a return leaves. Shown for review,
+   * never used to choose a target.
    */
   get attachmentLabel(): string | undefined {
     const plan = this.pending?.plan;
-    if (!plan?.attachment && !plan?.loopTarget) return undefined;
-    const start = plan.attachment?.rootIfRange.start ?? plan.loopTarget!.keywordRange.start;
+    if (!plan?.attachment && !plan?.loopTarget && !plan?.functionContext) return undefined;
+    const start = plan.attachment?.rootIfRange.start ?? plan.loopTarget?.keywordRange.start
+      ?? plan.functionContext!.nameRange.start;
     const line = plan.base.text.slice(0, start).split('\n').length;
     const end = plan.base.text.indexOf('\n', start);
     return `Cible : ligne ${line} — ${plan.base.text.slice(start, end === -1 ? undefined : end).trim().slice(0, 120)}`;
@@ -130,7 +132,7 @@ export class TranslationSession {
     if (plan.edits.length !== 1 || !edit) return integration('INTERNAL_ERROR', 'Un plan à emplacement unique est requis.');
     const after = plan.base.text.slice(0, edit.range.start) + edit.newText + plan.base.text.slice(edit.range.end);
     const token = ++this.counter;
-    this.pending = { token, plan, after, advisories: analyzeCalculations(translated).advisories, information: explainConditions(translated) };
+    this.pending = { token, plan, after, advisories: analyzeCalculations(translated).advisories, information: explainInstruction(translated) };
     this.currentPhase = 'preparing';
     return { status: 'preview', preview: { token, before: plan.base.text, after, eol: plan.eol } };
   }
