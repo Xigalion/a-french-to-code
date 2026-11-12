@@ -17,8 +17,12 @@ export type NameValidator = (token: Token) => Diagnostic | undefined;
 export type ConditionResult = { status: 'parsed'; condition: Condition } | { status: 'rejected'; diagnostic: Diagnostic };
 const CAST_WORDS = new Set(['int', 'unsigned', 'float', 'double', 'signed', 'short', 'long', 'char', 'void', '_Bool', '_Complex', '_Imaginary', '_Atomic', 'const', 'volatile', 'restrict']);
 
-/** Dedicated bounded condition profile; historical numeric and integer parsers stay unchanged. */
-export function parseCondition(source: string, start: number, end: number, validateName: NameValidator): ConditionResult {
+/** Dedicated bounded condition profile; historical numeric and integer parsers stay unchanged.
+ * Only the empty-condition wording varies per envelope: the grammar, budgets,
+ * codes and ranges are identical for every intent that reuses this profile.
+ */
+export function parseCondition(source: string, start: number, end: number, validateName: NameValidator,
+  missingConditionMessage = 'Il manque la condition du bloc.'): ConditionResult {
   let position = start;
   let count = 0;
   const comparisonRanges = new Map<Node, SourceRange>();
@@ -220,7 +224,7 @@ export function parseCondition(source: string, start: number, end: number, valid
     return left;
   }
   const first = peek();
-  if (!first && !diagnostic) fail('MISSING_CONDITION', 'Il manque la condition du bloc.', { start: end, end });
+  if (!first && !diagnostic) fail('MISSING_CONDITION', missingConditionMessage, { start: end, end });
   const expression = diagnostic ? undefined : logicalOr(0);
   const extra = diagnostic ? undefined : peek();
   if (extra) {

@@ -186,7 +186,7 @@ Directions envisagées : **algorithmique et développement logiciel**, **systèm
 |---|---|---|
 | Fondations | 1 à 5, déjà développés | Instructions de base, VS Code, variables, affichage, diagnostics |
 | Expressions et calculs | 6 à 8 livrés ; recette complète du domaine ouverte | Opérateurs, priorités, types numériques, représentation, précision, conversions et fiabilité des calculs |
-| Décisions et répétitions | Lots 9 et 10 implémentés ; deux gestes du lot 9 confirmés ; recette lot 10 ouverte, à intégrer à la recette finale du domaine. **Lot 11 — découpage et contrat du premier incrément en préparation** | Comparaisons et branches livrées ; [11A while, 11B test final, 11C for, 11D transferts : proposition à valider](LOT11_CONTRAT_PROPOSE.md), aucune boucle livrée |
+| Décisions et répétitions | Lots 9, 10 et **11A implémentés** ; deux gestes du lot 9 confirmés ; recettes manuelles des lots 10 et 11A ouvertes, à intégrer à la recette finale du domaine | Comparaisons, branches et **boucle `while`** livrées ([bilan 11A](LOT11A_BILAN.md)) ; 11B test final, 11C for, 11D transferts : [contrats à rédiger](LOT11_CONTRAT_PROPOSE.md), non livrés |
 | Fonctions et décomposition | À définir | Paramètres, retours, portée et appels |
 | Tableaux, chaînes et pointeurs | À définir | Collections, accès et adresses |
 | Structures et mémoire dynamique | À définir | Données composées, allocation et durée de vie |
@@ -222,7 +222,19 @@ Le [contrat proposé des boucles](LOT11_CONTRAT_PROPOSE.md) recommande quatre in
 
 Seul le contrat du premier incrément est détaillé : un bloc WHILE complet vide, mêmes conditions que le lot 10, aucune initialisation/progression inventée, curseur intérieur et préservation documentaire. La terminaison reste un raisonnement de l'étudiant, sans preuve ni correction automatique par C-A. Les formulations ultérieures sont des candidates, non approuvées. **Aucun code applicatif ni test n'est modifié ou livré pendant cette préparation.** Les 1 983 tests Node/68 hôte du lot 10 restent des résultats historiques ; aucune nouvelle exécution revendiquée.
 
-Le projet de classification de petites valeurs décrit la progression, l'imbrication et les critères d'acquisition ; sa matrice de recette finale reprend la [recette manuelle du lot 10](RECETTE_LOT10.md), toujours ouverte. La recette GCC complète Expressions et calculs et la qualification mutex/N-API restent également ouvertes. Aucun incrément de boucles n'est implémenté.
+Le projet de classification de petites valeurs décrit la progression, l'imbrication et les critères d'acquisition ; sa matrice de recette finale reprend la [recette manuelle du lot 10](RECETTE_LOT10.md), toujours ouverte. La recette GCC complète Expressions et calculs et la qualification mutex/N-API restent également ouvertes.
+
+### Lot 11A — approuvé et implémenté le 12 novembre 2026
+
+Le porteur approuve le découpage en quatre incréments, la formulation `Crée une boucle tant que "{condition}".`, la réutilisation stricte de la condition du lot 10 et l'ajout d'un motif pédagogique passif. Le [bilan du lot 11A](LOT11A_BILAN.md) détaille la livraison.
+
+WHILE est implémenté : bloc complet vide, curseur intérieur, condition identique au lot 10 sans profil plus permissif, aucune initialisation ni progression inventée, `while (1)` traduit fidèlement. L'information `WHILE_PRETEST` indique **quand** la condition est évaluée et reste passive : elle n'incrémente pas le compteur d'avertissements et ne prétend rien sur la terminaison. Une branche `sinon` après une boucle reste refusée, sans remontée vers un `if` voisin.
+
+Bilan observé : **2 139 tests Node réussis, 0 échec, 0 ignoré, TypeScript sans diagnostic.** Les 1 983 tests du lot 10 sont inclus, inchangés.
+
+**La suite hôte VS Code n'a pas pu être exécutée** : une mise à jour de VS Code est en attente sur la machine et le mutex Inno Setup `vscode-updating` empêche tout démarrage d'hôte de développement. Les 68 tests hôte du lot 10 ne sont donc pas reconfirmés et les 9 tests hôte écrits pour le lot 11A n'ont jamais été exécutés. Aucun résultat hôte n'est revendiqué pour cette livraison.
+
+Restent ouverts : cette exécution hôte, la recette GCC Expressions et calculs, la recette manuelle du lot 10, la recette manuelle du lot 11A, la qualification mutex/N-API, et les contrats 11B à 11D. Aucune autre forme de boucle ni transfert de contrôle n'est livré.
 
 ## 10. Modèle de fiche pour chaque futur lot
 

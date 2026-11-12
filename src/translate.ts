@@ -13,6 +13,7 @@ export type Instruction = NumericInstruction
   | { kind: 'IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE_IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE'; parameters: Record<string, never> }
+  | { kind: 'WHILE'; parameters: { condition: Condition } }
   | { kind: 'MAIN'; parameters: Record<string, never> }
   | { kind: 'DECL_INT'; parameters: { name: string } }
   | { kind: 'INIT_INT'; parameters: { name: string; value: string } }
@@ -110,7 +111,7 @@ const C17_KEYWORDS = new Set([
 
 type Token = { text: string; range: SourceRange };
 type Parameter = { parameter: 'name' | 'value' | 'header' };
-type Rule = { kind: Exclude<Instruction['kind'], 'IF' | 'ELSE_IF' | 'ELSE' | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind']>; parts: (string | Parameter)[] };
+type Rule = { kind: Exclude<Instruction['kind'], 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind']>; parts: (string | Parameter)[] };
 
 const RULES: [Rule, ...Rule[]] = [
   { kind: 'MAIN', parts: ['Crée', 'la', 'fonction', 'principale'] },
@@ -141,6 +142,9 @@ function render(text: string, instruction: Instruction): TranslationResult {
     case 'IF': code = `if (${renderCondition(instruction.parameters.condition)}) {\n    \n}\n`; break;
     case 'ELSE_IF': code = `else if (${renderCondition(instruction.parameters.condition)}) {\n    \n}\n`; break;
     case 'ELSE': code = 'else {\n    \n}\n'; break;
+    // No semicolon after the header or the closing brace, and no counter,
+    // initialisation or progression is ever generated with the loop.
+    case 'WHILE': code = `while (${renderCondition(instruction.parameters.condition)}) {\n    \n}\n`; break;
     case 'DECL_INT': code = `int ${instruction.parameters.name};\n`; break;
     case 'INIT_INT': code = `int ${instruction.parameters.name} = ${instruction.parameters.value};\n`; break;
     case 'ASSIGN_INT': code = `${instruction.parameters.name} = ${instruction.parameters.value};\n`; break;
@@ -178,7 +182,7 @@ function render(text: string, instruction: Instruction): TranslationResult {
   const fragment: Fragment = {
     id: 'fragment-1', role: 'primary', comment, code, text: `${comment}\n${code}`,
   };
-  if (['MAIN', 'IF', 'ELSE_IF', 'ELSE'].includes(instruction.kind)) {
+  if (['MAIN', 'IF', 'ELSE_IF', 'ELSE', 'WHILE'].includes(instruction.kind)) {
     fragment.cursor = { offset: comment.length + 1 + code.indexOf('\n') + 1 + 4 };
   }
   return {
@@ -205,10 +209,15 @@ function identifierDiagnostic(token: Token): Diagnostic | undefined {
   return undefined;
 }
 
-/** IF envelope has its own delimiters; no changes to historical envelopes. */
-function translateIf(source: string, position: number, end: number, kind: 'IF' | 'ELSE_IF' = 'IF'): TranslationResult {
+/** IF envelope has its own delimiters; no changes to historical envelopes.
+ * WHILE reuses it unchanged, including the lot 10 condition profile: the loop
+ * never gets a more permissive grammar, and quotes delimit a condition, not a
+ * C string. Only the empty-condition wording differs.
+ */
+function translateIf(source: string, position: number, end: number, kind: 'IF' | 'ELSE_IF' | 'WHILE' = 'IF'): TranslationResult {
+  const missing = kind === 'WHILE' ? 'Il manque la condition de la boucle.' : 'Il manque la condition du bloc.';
   while (position < end && /[ \t]/u.test(source.charAt(position))) position++;
-  if (position === end) return reject(source, 'MISSING_CONDITION', 'Il manque la condition du bloc.', { start: end, end });
+  if (position === end) return reject(source, 'MISSING_CONDITION', missing, { start: end, end });
   if (source.charAt(position) !== '"') return reject(source, 'MISSING_CONDITION_DELIMITER',
     'La condition doit être entourée de guillemets ASCII.', { start: position, end: position });
   const opening = position;
@@ -222,7 +231,7 @@ function translateIf(source: string, position: number, end: number, kind: 'IF' |
   position = closing + 1;
   while (position < suffixEnd && /[ \t]/u.test(source.charAt(position))) position++;
   if (position < suffixEnd) return reject(source, 'UNEXPECTED_TEXT', 'Ce texte supplémentaire n’est pas accepté.', { start: position, end: suffixEnd });
-  const result = parseCondition(source, opening + 1, closing, identifierDiagnostic);
+  const result = parseCondition(source, opening + 1, closing, identifierDiagnostic, missing);
   if (result.status === 'rejected') return { status: 'rejected', source: { text: source }, diagnostics: [result.diagnostic] };
   return render(source, { kind, parameters: { condition: result.condition } });
 }
@@ -351,6 +360,20 @@ export function translate(text: string): TranslationResult {
 
   if (['crée', 'un', 'bloc', 'si'].every((word, index) => tokens[index]?.text.toLowerCase() === word)) {
     return translateIf(text, tokens[3]!.range.end, end);
+  }
+  // « tant que » is the only accepted loop wording. « jusqu’à » is refused on
+  // purpose: turning a stop condition into a continuation condition would mean
+  // applying a negation the user never wrote.
+  if (['crée', 'une', 'boucle'].every((word, index) => tokens[index]?.text.toLowerCase() === word)) {
+    if (tokens[3]?.text.toLowerCase() !== 'tant') {
+      return tokens[3]
+        ? reject(text, 'UNKNOWN_FORMULATION', 'Cette formulation n’appartient pas au catalogue C-A.', tokens[3].range)
+        : reject(text, 'INCOMPLETE_INSTRUCTION', 'Instruction incomplète : « tant que » attendu.', { start: end, end });
+    }
+    if (tokens[4]?.text.toLowerCase() === 'que') return translateIf(text, tokens[4].range.end, end, 'WHILE');
+    return tokens[4]
+      ? reject(text, 'UNKNOWN_FORMULATION', 'Cette formulation n’appartient pas au catalogue C-A.', tokens[4].range)
+      : reject(text, 'INCOMPLETE_INSTRUCTION', 'Instruction incomplète : « que » attendu.', { start: end, end });
   }
   if (['ajoute', 'une', 'branche', 'sinon'].every((word, index) => tokens[index]?.text.toLowerCase() === word)) {
     if (tokens[4]?.text.toLowerCase() === 'si') return translateIf(text, tokens[4].range.end, end, 'ELSE_IF');

@@ -32,7 +32,7 @@ export function analyzeCalculations(translation: TranslationResult): Calculation
   if (translation.status !== 'translated') return report;
   const instruction = translation.instruction;
   let stack: Node[];
-  if (instruction.kind === 'IF' || instruction.kind === 'ELSE_IF') {
+  if (instruction.kind === 'IF' || instruction.kind === 'ELSE_IF' || instruction.kind === 'WHILE') {
     const condition = instruction.parameters.condition;
     stack = conditionNumericRoots(condition).reverse();
   } else if (instruction.kind === 'ASSIGN_EXPRESSION' || instruction.kind === 'NUMERIC_INIT'

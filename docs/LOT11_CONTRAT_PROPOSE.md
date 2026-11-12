@@ -1,6 +1,8 @@
 # Lot 11 — Boucles et répétitions : découpage proposé et contrat du premier incrément
 
-**Statut au 7 novembre 2026 : proposition documentaire à valider, aucune implémentation autorisée ou commencée.** Les lots 1 à 10 restent les seuls livrés. Les résultats rapportés du lot 10 (1 983 tests Node et 68 hôte, aucun échec, TypeScript sans diagnostic) sont historiques, pas de nouveaux passages.
+**Statut au 12 novembre 2026 : découpage et contrat 11A approuvés par le porteur, 11A implémenté.** Voir le [bilan du lot 11A](LOT11A_BILAN.md). Les sections 1 à 3, 5, 7 à 9 de ce document constituent le contrat exécuté ; la section 4 reste une liste de candidates **non approuvées** et la section 6 décrit un travail **non commencé**. Les incréments 11B, 11C et 11D exigent chacun leur propre contrat, leur propre autorisation et leur propre bilan.
+
+*Statut d’origine, 7 novembre 2026 : proposition documentaire à valider, aucune implémentation autorisée ou commencée. Les lots 1 à 10 étaient alors les seuls livrés.* Les résultats rapportés du lot 10 (1 983 tests Node et 68 hôte, aucun échec, TypeScript sans diagnostic) sont historiques, pas de nouveaux passages.
 
 Trois travaux restent explicitement ouverts : la recette GCC complète Expressions et calculs ; la [recette manuelle du lot 10](RECETTE_LOT10.md), à intégrer à la recette finale du domaine 3 ; la qualification mutex/N-API de l'hôte VS Code. Aucun code applicatif, test, configuration, dépendance ou tâche VS Code n'est modifié pendant cette préparation.
 

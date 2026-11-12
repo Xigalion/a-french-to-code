@@ -156,7 +156,7 @@ class NativeSession {
     };
     input.title = 'C-A : instruction française';
     input.prompt = 'Entrée prépare l’aperçu uniquement. Échap annule.';
-    input.placeholder = 'Exemples : Crée un bloc si "actif && age >= 18". / Ajoute une branche sinon.';
+    input.placeholder = 'Exemples : Crée un bloc si "actif && age >= 18". / Ajoute une branche sinon. / Crée une boucle tant que "i < limite".';
     input.ignoreFocusOut = true;
     input.value = this.controller.draft;
     listeners.push(

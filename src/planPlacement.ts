@@ -143,7 +143,10 @@ export function planPlacement(request: PlacementRequest): PlacementResult {
   const eol: '\n' | '\r\n' = newline !== -1
     ? text.charAt(newline - 1) === '\r' ? '\r\n' : '\n'
     : lineStart > 0 ? text.charAt(lineStart - 2) === '\r' ? '\r\n' : '\n' : fallbackEol;
-  const isBlock = canonical.instruction.kind === 'MAIN' || canonical.instruction.kind === 'IF' || isBranch;
+  // WHILE renders the same three lines as IF: header, inner line, closing brace.
+  // No loop state is kept, and no general body analyser is needed.
+  const isBlock = canonical.instruction.kind === 'MAIN' || canonical.instruction.kind === 'IF'
+    || canonical.instruction.kind === 'WHILE' || isBranch;
   const codeLines = fragment.code.slice(0, -1).split('\n');
   const lines = [baseIndent + fragment.comment,
     ...codeLines.map((line, index) => baseIndent + (isBlock && index === 1 ? indentUnit : line))];

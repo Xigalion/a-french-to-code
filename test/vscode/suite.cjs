@@ -715,6 +715,107 @@ exports.run = async function run() {
       assert.equal(document.getText(), '');
       await cancel();
     });
+    for (const eol of ['\n', '\r\n']) {
+      await test(`lot 11A : boucle, curseur intérieur, annuler puis rétablir ${JSON.stringify(eol)}`, async () => {
+        const before = 'int main(void) {' + eol + '    int i = 0;' + eol + '    ' + eol + '    int apres = 9;' + eol + '}' + eol;
+        const { document, editor, file } = await fixture(before, before.indexOf('    ' + eol) + 4);
+        await preview('Crée une boucle tant que "i < limite".');
+        const after = await vscode.workspace.openTextDocument(vscode.Uri.parse(api.inspect().preview.after));
+        const expected = after.getText();
+        // The preview alone never touches the document.
+        assert.equal(document.getText(), before);
+        await inserted();
+        assert.equal(document.getText(), expected);
+        assert.ok(document.getText().includes('    while (i < limite) {'));
+        // Cursor is inside the empty body, one unit past the base indent.
+        assert.equal(editor.selection.active.character, 8);
+        const emptyLoop = document.getText();
+        // Body content is a separate, separately undoable operation.
+        await preview('Affiche le texte "tour".');
+        await inserted();
+        const filled = document.getText();
+        assert.ok(filled.includes('        printf("%s", "tour");'));
+        await vscode.commands.executeCommand('undo');
+        assert.equal(document.getText(), emptyLoop);
+        await vscode.commands.executeCommand('undo');
+        assert.equal(document.getText(), before);
+        await vscode.commands.executeCommand('redo');
+        await vscode.commands.executeCommand('redo');
+        assert.equal(document.getText(), filled);
+        // Nothing after the loop was absorbed, and nothing was written to disk.
+        assert.ok(document.getText().endsWith('    int apres = 9;' + eol + '}' + eol));
+        assert.equal(fs.readFileSync(file, 'utf8'), before);
+      });
+    }
+    await test('lot 11A : WHILE_PRETEST journalisé en information, sans Warning', async () => {
+      const { document } = await fixture();
+      await preview('Crée une boucle tant que "i < limite && !suspendu".');
+      assert.deepEqual(api.inspect().advisories, []);
+      assert.equal(api.inspect().information.length, 3);
+      assert.equal(api.inspect().information[0].code, 'WHILE_PRETEST');
+      assert.match(api.inspect().pedagogyEntry, /WHILE_PRETEST \[information\]/);
+      assert.match(api.inspect().pedagogyEntry, /SHORT_CIRCUIT_AND/);
+      // An information never becomes a warning on the confirmation title.
+      assert.ok(!api.inspect().confirmationTitle.includes('avertissement'));
+      assert.ok(!/boucle infinie|terminaison garantie/u.test(api.inspect().pedagogyEntry));
+      await inserted();
+      assert.ok(document.getText().includes('while (((i < limite) && (!suspendu))) {'));
+    });
+    await test('lot 11A : avis de calcul conservé dans la condition de boucle', async () => {
+      const { document } = await fixture();
+      await preview('Crée une boucle tant que "i < 10 / 0".');
+      assert.equal(api.inspect().advisories.length, 1);
+      assert.equal(api.inspect().advisories[0].code, 'INTEGER_ZERO_DIVISOR');
+      assert.match(api.inspect().confirmationTitle, /avertissement/);
+      assert.match(api.inspect().pedagogyEntry, /INTEGER_ZERO_DIVISOR/);
+      assert.match(api.inspect().pedagogyEntry, /WHILE_PRETEST/);
+      assert.equal(document.getText(), '');
+      await cancel();
+    });
+    for (const [phrase, code] of [
+      ['Crée une boucle tant que', 'MISSING_CONDITION'],
+      ['Crée une boucle tant que "i = 3".', 'ASSIGNMENT_IN_CONDITION'],
+      ['Crée une boucle jusqu’à "i == 3".', 'UNKNOWN_FORMULATION'],
+      ['Crée une boucle avec test final tant que "i < 3".', 'UNKNOWN_FORMULATION'],
+      ['Sors de la boucle la plus intérieure.', 'UNKNOWN_FORMULATION'],
+    ]) {
+      await test(`lot 11A refus sans insertion : ${code} ${phrase.slice(0, 32)}`, async () => {
+        const { document } = await fixture();
+        await start(phrase);
+        await accept();
+        assert.equal(api.inspect().ui, 'input');
+        assert.equal(api.inspect().diagnostic.stage, 'translation');
+        assert.equal(api.inspect().diagnostic.code, code);
+        assert.equal(document.getText(), '');
+        await cancel();
+      });
+    }
+    await test('lot 11A : boucles imbriquées puis branche refusée après la boucle', async () => {
+      const before = 'int main(void) {\n    \n}\n';
+      const { document, editor } = await fixture(before, before.indexOf('    \n') + 4);
+      await preview('Crée une boucle tant que "i < limite".');
+      await inserted();
+      await preview('Crée une boucle tant que "j < 2".');
+      await inserted();
+      assert.ok(document.getText().includes('    while (i < limite) {'));
+      assert.ok(document.getText().includes('        while (j < 2) {'));
+      assert.equal(editor.selection.active.character, 12);
+      // Returning to the outer body is an explicit student action.
+      const text = document.getText();
+      const closing = text.indexOf('        }\n');
+      const offset = closing + 10;
+      await editor.edit(builder => builder.insert(document.positionAt(offset), '        \n'));
+      const position = document.positionAt(offset + 8);
+      editor.selection = new vscode.Selection(position, position);
+      await delay(100);
+      // A loop is not an if chain: no else may attach to it, and C-A never
+      // climbs to some neighbouring if instead.
+      await start('Ajoute une branche sinon.');
+      await accept();
+      assert.equal(api.inspect().diagnostic.stage, 'placement');
+      assert.ok(!document.getText().includes('else'));
+      await cancel();
+    });
     await test('changer indentSize seul invalide le plan', async () => {
       const { editor } = await fixture();
       await preview('Crée la fonction principale');
