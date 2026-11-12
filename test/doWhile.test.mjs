@@ -326,7 +326,6 @@ test('DO_WHILE : session, information passive et confirmation unique', () => {
 
 test('11B : les formes non livrées restent refusées', () => {
   for (const source of [
-    'Crée une boucle pour i de valeur initiale "0" tant que "i < 3" avec mise à jour "i + 1".',
     'Sors de la boucle la plus intérieure.',
     'Passe à l’itération suivante de la boucle la plus intérieure.',
   ]) {

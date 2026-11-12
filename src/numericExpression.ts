@@ -14,10 +14,13 @@ export type NameValidator = (token: Token) => Diagnostic | undefined;
 export type NumericExpressionResult = { status: 'parsed'; expression: NumericExpression } | { status: 'rejected'; diagnostic: Diagnostic };
 const CAST_WORDS = new Set(['int', 'unsigned', 'float', 'double', 'signed', 'short', 'long', 'char', 'void', '_Bool', '_Complex', '_Imaginary', '_Atomic', 'const', 'volatile', 'restrict']);
 
-/** Independent syntax profile: never changes the integer parser or evaluates values. */
-export function parseNumericExpression(source: string, start: number, end: number, validateName: NameValidator): NumericExpressionResult {
+/** Independent syntax profile: never changes the integer parser or evaluates values.
+ * `budget` lets several sibling expressions of one instruction share a single
+ * token allowance, so a multi-clause envelope cannot reset the global limit.
+ */
+export function parseNumericExpression(source: string, start: number, end: number, validateName: NameValidator,
+  missingExpressionMessage = 'Il manque l’expression à calculer.', budget: { count: number } = { count: 0 }): NumericExpressionResult {
   let position = start;
-  let count = 0;
   let cached: Token | undefined;
   let diagnostic: Diagnostic | undefined;
   function fail(code: Diagnostic['code'], message: string, range: SourceRange): undefined {
@@ -49,7 +52,7 @@ export function parseNumericExpression(source: string, start: number, end: numbe
       if (position === beginning) position += source.codePointAt(position)! > 0xffff ? 2 : 1;
     }
     const token = { text: source.slice(beginning, position), range: { start: beginning, end: position } };
-    if (++count > MAX_EXPRESSION_TOKENS) return tooComplex(token);
+    if (++budget.count > MAX_EXPRESSION_TOKENS) return tooComplex(token);
     if (unsupported && !numeric) return fail('UNSUPPORTED_EXPRESSION_OPERATOR', 'Cet opérateur n’est pas pris en charge.', token.range);
     cached = token;
     return token;
@@ -153,7 +156,7 @@ export function parseNumericExpression(source: string, start: number, end: numbe
   }
 
   const first = peek();
-  if (!first && !diagnostic) fail('MISSING_EXPRESSION', 'Il manque l’expression à calculer.', { start: end, end });
+  if (!first && !diagnostic) fail('MISSING_EXPRESSION', missingExpressionMessage, { start: end, end });
   const expression = diagnostic ? undefined : sum(0);
   const extra = diagnostic ? undefined : peek();
   if (extra) {

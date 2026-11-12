@@ -3,7 +3,8 @@ import type { SourceRange, TranslationResult } from './translate.ts';
 import { instructionCondition } from './translate.ts';
 
 export type ConditionInformation = {
-  code: 'SHORT_CIRCUIT_AND' | 'SHORT_CIRCUIT_OR' | 'LOGICAL_NOT' | 'WHILE_PRETEST' | 'DO_WHILE_POSTTEST';
+  code: 'SHORT_CIRCUIT_AND' | 'SHORT_CIRCUIT_OR' | 'LOGICAL_NOT'
+    | 'WHILE_PRETEST' | 'DO_WHILE_POSTTEST' | 'FOR_CLAUSE_ORDER';
   severity: 'information';
   range: SourceRange;
   message: string;
@@ -19,6 +20,10 @@ const MOMENT: Readonly<Record<string, { code: ConditionInformation['code']; mess
   DO_WHILE: { code: 'DO_WHILE_POSTTEST',
     message: 'La condition est testée après chaque itération ; si la boucle est atteinte, le corps est exécuté '
       + 'au moins une fois. Aucune progression ni terminaison n’est déduite.' },
+  FOR: { code: 'FOR_CLAUSE_ORDER',
+    message: 'L’initialisation est exécutée une fois avant le premier test ; la condition est testée avant chaque '
+      + 'itération ; la mise à jour est exécutée après le corps, avant le test suivant. '
+      + 'Aucune progression ni terminaison n’est déduite.' },
 };
 
 /** Structural explanations, never a safety or reachability analysis.

@@ -537,7 +537,6 @@ test('WHILE : session périmée n’expose plus aucune information', () => {
 // ---------------------------------------------------------------------------
 
 const notDelivered = [
-  'Crée une boucle pour i de valeur initiale "0" tant que "i < 3" avec mise à jour "i + 1".',
   'Crée une boucle do while "i < 3".',
   'Sors de la boucle la plus intérieure.',
   'Passe à l’itération suivante de la boucle la plus intérieure.',

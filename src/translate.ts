@@ -1,6 +1,7 @@
 import { parseExpression, renderExpression } from './expression.ts';
 import type { Expression } from './expression.ts';
-import { renderNumericExpression } from './numericExpression.ts';
+import { renderNumericExpression, parseNumericExpression } from './numericExpression.ts';
+import type { NumericExpression } from './numericExpression.ts';
 import { analyzeNumericInstruction } from './numericInstructions.ts';
 import type { NumericInstruction } from './numericInstructions.ts';
 import { parseCondition, renderCondition } from './condition.ts';
@@ -15,6 +16,7 @@ export type Instruction = NumericInstruction
   | { kind: 'ELSE'; parameters: Record<string, never> }
   | { kind: 'WHILE'; parameters: { condition: Condition } }
   | { kind: 'DO_WHILE'; parameters: { condition: Condition } }
+  | { kind: 'FOR'; parameters: { name: string; initial: NumericExpression; condition: Condition; update: NumericExpression } }
   | { kind: 'MAIN'; parameters: Record<string, never> }
   | { kind: 'DECL_INT'; parameters: { name: string } }
   | { kind: 'INIT_INT'; parameters: { name: string; value: string } }
@@ -31,12 +33,12 @@ type DisplayFormat = 'decimal' | 'hexadecimal' | 'octal';
  * cursor placed inside. Shared by the translator and the placement planner so
  * both stay in step.
  */
-export const BLOCK_KINDS: readonly string[] = ['MAIN', 'IF', 'ELSE_IF', 'ELSE', 'WHILE', 'DO_WHILE'];
+export const BLOCK_KINDS: readonly string[] = ['MAIN', 'IF', 'ELSE_IF', 'ELSE', 'WHILE', 'DO_WHILE', 'FOR'];
 
 /** Intents whose only parameter is a bounded condition of the lot 10 profile. */
 export function instructionCondition(instruction: Instruction): Condition | undefined {
   switch (instruction.kind) {
-    case 'IF': case 'ELSE_IF': case 'WHILE': case 'DO_WHILE': return instruction.parameters.condition;
+    case 'IF': case 'ELSE_IF': case 'WHILE': case 'DO_WHILE': case 'FOR': return instruction.parameters.condition;
     default: return undefined;
   }
 }
@@ -126,7 +128,7 @@ const C17_KEYWORDS = new Set([
 
 type Token = { text: string; range: SourceRange };
 type Parameter = { parameter: 'name' | 'value' | 'header' };
-type Rule = { kind: Exclude<Instruction['kind'], 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind']>; parts: (string | Parameter)[] };
+type Rule = { kind: Exclude<Instruction['kind'], 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind']>; parts: (string | Parameter)[] };
 
 const RULES: [Rule, ...Rule[]] = [
   { kind: 'MAIN', parts: ['Crée', 'la', 'fonction', 'principale'] },
@@ -163,6 +165,14 @@ function render(text: string, instruction: Instruction): TranslationResult {
     // The semicolon after the final condition is C syntax, not an added
     // statement: do/while is generated whole or not at all.
     case 'DO_WHILE': code = `do {\n    \n} while (${renderCondition(instruction.parameters.condition)});\n`; break;
+    // The two header assignments render exactly the fields that were asked
+    // for: no ++, no default initial value and no clause left empty.
+    case 'FOR': {
+      const { name, initial, condition, update } = instruction.parameters;
+      code = `for (${name} = ${renderNumericExpression(initial)}; ${renderCondition(condition)}; `
+        + `${name} = ${renderNumericExpression(update)}) {\n    \n}\n`;
+      break;
+    }
     case 'DECL_INT': code = `int ${instruction.parameters.name};\n`; break;
     case 'INIT_INT': code = `int ${instruction.parameters.name} = ${instruction.parameters.value};\n`; break;
     case 'ASSIGN_INT': code = `${instruction.parameters.name} = ${instruction.parameters.value};\n`; break;
@@ -252,6 +262,93 @@ function translateIf(source: string, position: number, end: number, kind: 'IF' |
   const result = parseCondition(source, opening + 1, closing, identifierDiagnostic, missing);
   if (result.status === 'rejected') return { status: 'rejected', source: { text: source }, diagnostics: [result.diagnostic] };
   return render(source, { kind, parameters: { condition: result.condition } });
+}
+
+/** FOR envelope: three explicitly delimited clauses, all required.
+ * The counter must already be declared by the student: no declaration is
+ * generated in the header, so no type is ever invented and the counter keeps
+ * the scope the student gave it. The three clauses share one token budget, so
+ * splitting an expression across them cannot bypass the global limit.
+ */
+function translateFor(source: string, position: number, end: number): TranslationResult {
+  const budget = { count: 0 };
+  const skip = (): void => { while (position < end && /[ \t]/u.test(source.charAt(position))) position++; };
+  function word(expected: string): Diagnostic | undefined {
+    skip();
+    if (position === end) return {
+      code: 'INCOMPLETE_INSTRUCTION', category: 'understanding', severity: 'error',
+      message: `Instruction incomplète : « ${expected} » attendu.`, range: { start: end, end },
+    };
+    const start = position;
+    while (position < end && !/[ \t]/u.test(source.charAt(position))) position++;
+    if (source.slice(start, position).toLowerCase() !== expected) return {
+      code: 'UNKNOWN_FORMULATION', category: 'understanding', severity: 'error',
+      message: 'Cette formulation n’appartient pas au catalogue C-A.', range: { start, end: position },
+    };
+    return undefined;
+  }
+  /** One quoted clause. The optional period is only accepted on the last one. */
+  function clause(missingCode: DiagnosticCode, delimiterCode: DiagnosticCode, unterminatedCode: DiagnosticCode,
+    missingMessage: string, last: boolean): { opening: number; closing: number } | Diagnostic {
+    skip();
+    const useful = (): number => {
+      let value = last ? source.length : end;
+      while (value > position && /[ \t]/u.test(source.charAt(value - 1))) value--;
+      return value;
+    };
+    if (position === end) return { code: missingCode, category: 'understanding', severity: 'error', message: missingMessage, range: { start: end, end } };
+    if (source.charAt(position) !== '"') return { code: delimiterCode, category: 'understanding', severity: 'error',
+      message: 'Cette partie doit être entourée de guillemets ASCII.', range: { start: position, end: position } };
+    const opening = position;
+    const closing = source.indexOf('"', opening + 1);
+    if (closing === -1 || closing >= end) return { code: unterminatedCode, category: 'understanding', severity: 'error',
+      message: 'Il manque le guillemet fermant.', range: { start: opening, end: useful() } };
+    position = closing + 1;
+    return { opening, closing };
+  }
+  skip();
+  if (position === end) return reject(source, 'INCOMPLETE_INSTRUCTION', 'Il manque le nom du compteur.', { start: end, end });
+  const nameStart = position;
+  while (position < end && !/[ \t]/u.test(source.charAt(position))) position++;
+  const name = { text: source.slice(nameStart, position), range: { start: nameStart, end: position } };
+  const invalidName = identifierDiagnostic(name);
+  if (invalidName) return { status: 'rejected', source: { text: source }, diagnostics: [invalidName] };
+
+  const parts: ({ opening: number; closing: number } | undefined)[] = [];
+  for (const [index, words] of [['de', 'valeur', 'initiale'], ['tant', 'que'], ['avec', 'mise', 'à', 'jour']].entries()) {
+    for (const expected of words) {
+      const issue = word(expected);
+      if (issue) return { status: 'rejected', source: { text: source }, diagnostics: [issue] };
+    }
+    const descriptors = [
+      ['MISSING_EXPRESSION', 'MISSING_EXPRESSION_DELIMITER', 'UNTERMINATED_EXPRESSION', 'Il manque la valeur initiale du compteur.'],
+      ['MISSING_CONDITION', 'MISSING_CONDITION_DELIMITER', 'UNTERMINATED_CONDITION', 'Il manque la condition de la boucle.'],
+      ['MISSING_EXPRESSION', 'MISSING_EXPRESSION_DELIMITER', 'UNTERMINATED_EXPRESSION', 'Il manque la mise à jour du compteur.'],
+    ][index] as [DiagnosticCode, DiagnosticCode, DiagnosticCode, string];
+    const found = clause(descriptors[0], descriptors[1], descriptors[2], descriptors[3], index === 2);
+    if (!('opening' in found)) return { status: 'rejected', source: { text: source }, diagnostics: [found] };
+    parts.push(found);
+  }
+  // Only a period attached to the last closing quote belongs to this envelope.
+  let suffixEnd = source.length;
+  while (suffixEnd > position && /[ \t]/u.test(source.charAt(suffixEnd - 1))) suffixEnd--;
+  if (suffixEnd === position + 1 && source.charAt(position) === '.') suffixEnd--;
+  skip();
+  if (position < suffixEnd) return reject(source, 'UNEXPECTED_TEXT', 'Ce texte supplémentaire n’est pas accepté.', { start: position, end: suffixEnd });
+
+  const [initialPart, conditionPart, updatePart] = parts as [{ opening: number; closing: number },
+    { opening: number; closing: number }, { opening: number; closing: number }];
+  const initial = parseNumericExpression(source, initialPart.opening + 1, initialPart.closing, identifierDiagnostic,
+    'Il manque la valeur initiale du compteur.', budget);
+  if (initial.status === 'rejected') return { status: 'rejected', source: { text: source }, diagnostics: [initial.diagnostic] };
+  const condition = parseCondition(source, conditionPart.opening + 1, conditionPart.closing, identifierDiagnostic,
+    'Il manque la condition de la boucle.', budget);
+  if (condition.status === 'rejected') return { status: 'rejected', source: { text: source }, diagnostics: [condition.diagnostic] };
+  const update = parseNumericExpression(source, updatePart.opening + 1, updatePart.closing, identifierDiagnostic,
+    'Il manque la mise à jour du compteur.', budget);
+  if (update.status === 'rejected') return { status: 'rejected', source: { text: source }, diagnostics: [update.diagnostic] };
+  return render(source, { kind: 'FOR', parameters: { name: name.text, initial: initial.expression,
+    condition: condition.condition, update: update.expression } });
 }
 
 /** New envelope only; historical assignment grammar is intentionally untouched. */
@@ -383,6 +480,7 @@ export function translate(text: string): TranslationResult {
   // « jusqu’à » is refused on purpose: turning a stop condition into a
   // continuation condition would mean applying a negation the user never wrote.
   if (['crée', 'une', 'boucle'].every((word, index) => tokens[index]?.text.toLowerCase() === word)) {
+    if (tokens[3]?.text.toLowerCase() === 'pour') return translateFor(text, tokens[3].range.end, end);
     const forms = [
       { words: ['tant', 'que'], kind: 'WHILE' as const },
       { words: ['avec', 'test', 'final', 'tant', 'que'], kind: 'DO_WHILE' as const },

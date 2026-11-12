@@ -858,6 +858,61 @@ exports.run = async function run() {
       assert.equal(document.getText(), text);
       await cancel();
     });
+    for (const eol of ['\n', '\r\n']) {
+      await test(`lot 11C : for à trois clauses explicites ${JSON.stringify(eol)}`, async () => {
+        const before = 'int main(void) {' + eol + '    int i;' + eol + '    ' + eol + '}' + eol;
+        const { document, editor, file } = await fixture(before, before.indexOf('    ' + eol) + 4);
+        await preview('Crée une boucle pour i de valeur initiale "0" tant que "i < 3" avec mise à jour "i + 1".');
+        const after = await vscode.workspace.openTextDocument(vscode.Uri.parse(api.inspect().preview.after));
+        const expected = after.getText();
+        assert.equal(document.getText(), before);
+        await inserted();
+        assert.equal(document.getText(), expected);
+        assert.ok(document.getText().includes('    for (i = 0; i < 3; i = (i + 1)) {'));
+        // The declaration the student wrote is untouched, and none is added.
+        assert.ok(document.getText().includes('    int i;'));
+        assert.equal((document.getText().match(/int i;/gu) ?? []).length, 1);
+        assert.ok(!document.getText().includes('i++'));
+        assert.equal(editor.selection.active.character, 8);
+        await vscode.commands.executeCommand('undo');
+        assert.equal(document.getText(), before);
+        assert.equal(fs.readFileSync(file, 'utf8'), before);
+      });
+    }
+    await test('lot 11C : FOR_CLAUSE_ORDER journalisé, sans Warning', async () => {
+      await fixture();
+      await preview('Crée une boucle pour i de valeur initiale "0" tant que "i < n && actif" avec mise à jour "i + pas".');
+      assert.deepEqual(api.inspect().advisories, []);
+      assert.equal(api.inspect().information[0].code, 'FOR_CLAUSE_ORDER');
+      assert.match(api.inspect().pedagogyEntry, /FOR_CLAUSE_ORDER \[information\]/);
+      assert.ok(!api.inspect().confirmationTitle.includes('avertissement'));
+      await inserted();
+    });
+    await test('lot 11C : avis dans la clause de mise à jour, sans insertion forcée', async () => {
+      const { document } = await fixture();
+      await preview('Crée une boucle pour i de valeur initiale "0" tant que "i < 3" avec mise à jour "i + 10 / 0".');
+      assert.equal(api.inspect().advisories.length, 1);
+      assert.equal(api.inspect().advisories[0].code, 'INTEGER_ZERO_DIVISOR');
+      assert.match(api.inspect().confirmationTitle, /avertissement/);
+      assert.equal(document.getText(), '');
+      await cancel();
+    });
+    for (const [phrase, code] of [
+      ['Crée une boucle pour', 'INCOMPLETE_INSTRUCTION'],
+      ['Crée une boucle pour i de valeur initiale "0" tant que "i < 3" avec incrément "i + 1".', 'UNKNOWN_FORMULATION'],
+      ['Crée une boucle pour i de valeur initiale "0" tant que "" avec mise à jour "i + 1".', 'MISSING_CONDITION'],
+      ['Crée une boucle pour i de valeur initiale "0" tant que "i < 3" avec mise à jour "i++".', 'UNSUPPORTED_EXPRESSION_OPERATOR'],
+    ]) {
+      await test(`lot 11C refus sans insertion : ${code}`, async () => {
+        const { document } = await fixture();
+        await start(phrase);
+        await accept();
+        assert.equal(api.inspect().ui, 'input');
+        assert.equal(api.inspect().diagnostic.code, code);
+        assert.equal(document.getText(), '');
+        await cancel();
+      });
+    }
     await test('changer indentSize seul invalide le plan', async () => {
       const { editor } = await fixture();
       await preview('Crée la fonction principale');

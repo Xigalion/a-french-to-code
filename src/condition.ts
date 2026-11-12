@@ -22,9 +22,8 @@ const CAST_WORDS = new Set(['int', 'unsigned', 'float', 'double', 'signed', 'sho
  * codes and ranges are identical for every intent that reuses this profile.
  */
 export function parseCondition(source: string, start: number, end: number, validateName: NameValidator,
-  missingConditionMessage = 'Il manque la condition du bloc.'): ConditionResult {
+  missingConditionMessage = 'Il manque la condition du bloc.', budget: { count: number } = { count: 0 }): ConditionResult {
   let position = start;
-  let count = 0;
   const comparisonRanges = new Map<Node, SourceRange>();
   let cached: Token | undefined;
   let diagnostic: Diagnostic | undefined;
@@ -57,7 +56,7 @@ export function parseCondition(source: string, start: number, end: number, valid
       if (position === beginning) position += source.codePointAt(position)! > 0xffff ? 2 : 1;
     }
     const token = { text: source.slice(beginning, position), range: { start: beginning, end: position } };
-    if (++count > MAX_EXPRESSION_TOKENS) return tooComplex(token);
+    if (++budget.count > MAX_EXPRESSION_TOKENS) return tooComplex(token);
     if (unsupported && !numeric && !isComparison(token.text) && !['&&', '||', '!'].includes(token.text)) {
       return fail(token.text === '=' ? 'ASSIGNMENT_IN_CONDITION' : 'UNSUPPORTED_CONDITION_OPERATOR',
         token.text === '=' ? 'L’opérateur = effectue une affectation ; aucune affectation n’est prise en charge dans cette condition.'

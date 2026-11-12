@@ -34,7 +34,11 @@ export function analyzeCalculations(translation: TranslationResult): Calculation
   const instruction = translation.instruction;
   let stack: Node[];
   const condition = instructionCondition(instruction);
-  if (condition) {
+  if (instruction.kind === 'FOR') {
+    // All three clauses are inspected, not just the condition.
+    stack = [instruction.parameters.update, ...conditionNumericRoots(instruction.parameters.condition).reverse(),
+      instruction.parameters.initial];
+  } else if (condition) {
     stack = conditionNumericRoots(condition).reverse();
   } else if (instruction.kind === 'ASSIGN_EXPRESSION' || instruction.kind === 'NUMERIC_INIT'
     || instruction.kind === 'NUMERIC_ASSIGN') stack = [instruction.parameters.expression];
