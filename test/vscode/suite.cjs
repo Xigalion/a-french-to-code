@@ -1033,16 +1033,28 @@ exports.run = async function run() {
       assert.equal(api.inspect().diagnostic.code, 'FUNCTION_DEFINITION_NESTED');
       assert.equal(state.document.getText(), nested);
       await cancel();
-      // MAIN keeps its historical behaviour on the very same line.
+      // MAIN is aligned on the same rule, by the approved exception to its
+      // lot 2 contract: refused on the very same line.
       state = await fixture(nested, nested.indexOf('    \n') + 4);
-      await preview('Crée la fonction principale.');
-      await inserted();
-      assert.ok(state.document.getText().includes('    int main(void) {'));
-      // At file scope, the definition is accepted.
+      await start('Crée la fonction principale.');
+      await accept();
+      assert.equal(api.inspect().diagnostic.code, 'FUNCTION_DEFINITION_NESTED');
+      assert.equal(state.document.getText(), nested);
+      await cancel();
+      // At file scope, both definitions are accepted.
       state = await fixture('int x;\n\n', 7);
       await preview('Crée une fonction nommée f qui retourne un int.');
       await inserted();
       assert.ok(state.document.getText().includes('int f(void) {'));
+      state = await fixture('int x;\n\n', 7);
+      await preview('Crée la fonction principale.');
+      await inserted();
+      assert.ok(state.document.getText().includes('int main(void) {'));
+      // Other historical intentions still ignore braces entirely.
+      state = await fixture(nested, nested.indexOf('    \n') + 4);
+      await preview('Déclare un entier nommé age.');
+      await inserted();
+      assert.ok(state.document.getText().includes('    int age;'));
     });
     await test('changer indentSize seul invalide le plan', async () => {
       const { editor } = await fixture();

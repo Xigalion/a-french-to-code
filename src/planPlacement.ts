@@ -144,7 +144,10 @@ export function planPlacement(request: PlacementRequest): PlacementResult {
   const transfer = canonical.instruction.kind === 'BREAK' ? 'break'
     : canonical.instruction.kind === 'CONTINUE' ? 'continue' : undefined;
   const returning = RETURN_KINDS.includes(canonical.instruction.kind);
-  const defining = canonical.instruction.kind === 'FUNC_DEF';
+  // A C17 function definition belongs at file scope. MAIN is included by an
+  // explicitly approved exception to its lot 2 contract: its translation is
+  // untouched, only its placement rules are.
+  const defining = canonical.instruction.kind === 'FUNC_DEF' || canonical.instruction.kind === 'MAIN';
   let attachment: Attachment | undefined;
   let loopTarget: LoopTarget | undefined;
   let functionContext: FunctionContext | undefined;
@@ -165,8 +168,7 @@ export function planPlacement(request: PlacementRequest): PlacementResult {
     }
     loopTarget = resolved.target;
   } else if (defining) {
-    // C17 forbids nested function definitions. MAIN keeps its historical
-    // behaviour, examined separately; only this new intent is checked.
+    // C17 forbids nested function definitions, for MAIN as for any other.
     const scope = resolveFileScope(text, lineStart);
     if (scope.status === 'rejected') {
       const issue = scope.diagnostic;
@@ -237,7 +239,7 @@ export function validatePlan(plan: PlacementPlan, document: DocumentSnapshot): P
   }
   const contextual = plan.loopTarget || plan.functionContext
     || plan.source.instruction.kind === 'BREAK' || plan.source.instruction.kind === 'CONTINUE'
-    || plan.source.instruction.kind === 'FUNC_DEF'
+    || plan.source.instruction.kind === 'FUNC_DEF' || plan.source.instruction.kind === 'MAIN'
     || RETURN_KINDS.includes(plan.source.instruction.kind);
   if (contextual) {
     const edit = plan.edits[0];

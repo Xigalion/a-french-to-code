@@ -250,9 +250,20 @@ for (const directive of [
   });
 }
 
-for (const prefix of ['int main(void) {\n', '} } {\n', 'int main(void) {}\n', 'int age;\n']) {
+// Lot 2 deliberately checked no brace for any intent. By the exception the
+// founder approved on 12 November 2026, a C17 function definition — MAIN
+// included — is placed at file scope only. Every other historical intention
+// keeps the lot 2 behaviour untouched: braces are still not checked for them.
+const openBefore = ['int main(void) {\n', '} } {\n'];
+for (const prefix of [...openBefore, 'int main(void) {}\n', 'int age;\n']) {
   test(`erreurs C et accolades non contrôlées : ${prefix.trim()}`, () => {
-    planned(request(prefix, prefix.length, phrases[0]));
+    if (openBefore.includes(prefix)) {
+      rejected(request(prefix, prefix.length, phrases[0]),
+        prefix === '} } {\n' ? 'UNSUPPORTED_ENCLOSING_CONTEXT' : 'FUNCTION_DEFINITION_NESTED',
+        prefix === '} } {\n' ? 'unsupported-construct' : 'unsafe-location');
+    } else {
+      planned(request(prefix, prefix.length, phrases[0]));
+    }
     planned(request(prefix, prefix.length, phrases[3]));
   });
 }
@@ -374,10 +385,18 @@ test('validatePlan reste pur sur des instantanés gelés et des révisions opaqu
   assert.equal(validatePlan(plan, { id: '', revision: 0, text: '' }).diagnostics[0].code, 'INVALID_DOCUMENT');
 });
 
-test('MAIN imbriqué conserve uniquement l’indentation de la ligne cible', () => {
+// This case used to place MAIN inside main. MAIN is now refused there, so the
+// indentation coverage moves to a block intent that legitimately nests.
+test('bloc imbriqué conserve uniquement l’indentation de la ligne cible', () => {
   const prefix = 'int main(void) {\n';
-  const { document } = planned(request(prefix + '\t\n}', prefix.length + 1, phrases[0]));
-  assert.equal(document.text, prefix + '\t// ' + phrases[0] + '\n\tint main(void) {\n\t    \n\t}\n}');
+  const phrase = 'Crée un bloc si "a"';
+  const { document } = planned(request(prefix + '\t\n}', prefix.length + 1, phrase));
+  assert.equal(document.text, prefix + '\t// ' + phrase + '\n\tif (a) {\n\t    \n\t}\n}');
+});
+
+test('MAIN imbriqué est refusé, sans déduction d’indentation', () => {
+  const prefix = 'int main(void) {\n';
+  rejected(request(prefix + '\t\n}', prefix.length + 1, phrases[0]), 'FUNCTION_DEFINITION_NESTED', 'unsafe-location');
 });
 
 test('ligne vide non indentée dans un bloc : aucune indentation déduite', () => {

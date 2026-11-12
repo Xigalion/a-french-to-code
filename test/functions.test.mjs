@@ -412,13 +412,144 @@ test('FUNC_DEF : plan périmé si la ligne devient intérieure à une fonction',
   assert.equal(validation.diagnostics[0].code, 'STALE_PLAN');
 });
 
-test('MAIN conserve son comportement historique, inchangé', () => {
-  // Lot 2 decided deliberately that braces are not checked for MAIN, and
-  // test/placement.test.mjs asserts it under « erreurs C et accolades non
-  // contrôlées ». That approved contract is left untouched by this fix.
-  for (const text of ['int main(void) {\n', '} } {\n', 'int main(void) {}\n', 'int age;\n']) {
-    const result = planPlacement(input(text, 'Crée la fonction principale.'));
-    assert.equal(result.status, 'planned', text);
+// ---------------------------------------------------------------------------
+// MAIN aligné sur FUNC_DEF. Exception au contrat du lot 2, approuvée par le
+// porteur : la traduction est intacte, seules les règles de placement
+// changent. Même mécanisme resolveFileScope, aucun analyseur de portées.
+// ---------------------------------------------------------------------------
+
+const MAIN = 'Crée la fonction principale.';
+
+test('MAIN : la traduction historique est préservée à l’identique', () => {
+  // The only thing this alignment must not touch.
+  const result = translated(MAIN);
+  assert.equal(result.instruction.kind, 'MAIN');
+  assert.deepEqual(result.instruction.parameters, {});
+  assert.equal(result.fragments[0].code, 'int main(void) {\n    \n}\n');
+  assert.equal(result.fragments[0].id, 'fragment-1');
+  assert.equal(result.fragments[0].role, 'primary');
+  assert.equal(result.fragments[0].text, `// ${MAIN}\nint main(void) {\n    \n}\n`);
+  assert.equal(result.fragments[0].text.slice(result.fragments[0].cursor.offset), '\n}\n');
+  // Without a period, and with the historical spacing and case tolerance.
+  assert.equal(translated('Crée la fonction principale').fragments[0].code, 'int main(void) {\n    \n}\n');
+  assert.equal(translated('\tCRÉE\tla FONCTION\tprincipale. \t').fragments[0].code, 'int main(void) {\n    \n}\n');
+  assert.deepEqual(explainInstruction(result), []);
+  assert.deepEqual(analyzeCalculations(result).advisories, []);
+});
+
+for (const [text, label] of fileScope) {
+  test(`MAIN accepté à la portée fichier : ${label}`, () => {
+    const { text: after } = planned(input(text, MAIN));
+    assert.ok(after.includes('int main(void) {'));
+  });
+}
+for (const [text, label] of nested) {
+  test(`MAIN refusé car imbriqué : ${label}`, () => {
+    const result = planPlacement(input(text, MAIN));
+    assert.equal(result.status, 'rejected', JSON.stringify(result));
+    assert.equal(result.diagnostics[0].code, 'FUNCTION_DEFINITION_NESTED');
+    assert.equal(result.diagnostics[0].category, 'placement');
+    assert.equal(result.diagnostics[0].reason, 'unsafe-location');
+  });
+}
+for (const [text, label] of ambiguous) {
+  test(`MAIN refusé car contexte non établi : ${label}`, () => {
+    const result = planPlacement(input(text, MAIN));
+    assert.equal(result.status, 'rejected', JSON.stringify(result));
+    assert.equal(result.diagnostics[0].code, 'UNSUPPORTED_ENCLOSING_CONTEXT');
+  });
+}
+
+test('MAIN : accolades dans un commentaire, une chaîne ou un caractère', () => {
+  // A brace that only looks closed must not make the position seem valid.
+  for (const text of ['int g(void) { // }\n', 'int g(void) { /* } */\n',
+    'int g(void) { char c = \'}\';\n', 'int g(void) { const char* s = "} int main(void) {";\n']) {
+    const result = planPlacement(input(text, MAIN));
+    assert.equal(result.status, 'rejected', text);
+    assert.equal(result.diagnostics[0].code, 'FUNCTION_DEFINITION_NESTED', text);
+  }
+  // The same braces, genuinely closed, put the line back at file scope.
+  for (const text of ['int g(void) { /* } */ }\n', 'int g(void) { char c = \'}\'; }\n']) {
+    assert.equal(planPlacement(input(text, MAIN)).status, 'planned', text);
+  }
+});
+
+test('MAIN : une fonction refermée ne bloque pas la suivante', () => {
+  const { text } = planned(input('int g(void) {\n}\n', MAIN));
+  assert.ok(text.includes('int g(void) {'));
+  assert.ok(text.includes('int main(void) {'));
+  assert.ok(text.indexOf('int g(void)') < text.indexOf('int main(void)'));
+});
+
+for (const eol of ['\n', '\r\n']) {
+  for (const unit of ['  ', '    ', '\t']) {
+    test(`MAIN : placement, indentation et EOL inchangés ${JSON.stringify([eol, unit])}`, () => {
+      // Indentation and EOL rules are untouched by the alignment.
+      const { plan, text } = planned(input('', MAIN, unit, eol, 0));
+      assert.equal(text, '// ' + MAIN + eol + 'int main(void) {' + eol + unit + eol + '}' + eol);
+      assert.equal(plan.eol, eol);
+      assert.equal(text.slice(plan.cursorAfter - unit.length, plan.cursorAfter), unit);
+    });
+    test(`MAIN refusé dans un corps quels que soient l’EOL et l’indentation ${JSON.stringify([eol, unit])}`, () => {
+      const text = 'int g(void) {' + eol + unit + eol + '}' + eol;
+      const result = planPlacement(input(text, MAIN, unit, eol, text.indexOf(unit + eol) + unit.length));
+      assert.equal(result.status, 'rejected');
+      assert.equal(result.diagnostics[0].code, 'FUNCTION_DEFINITION_NESTED');
+    });
+  }
+}
+
+test('MAIN : les protections lexicales restent prioritaires', () => {
+  for (const [text, code] of [
+    ['/* ouvert\n', 'TARGET_IN_COMMENT'],
+    ['#define X 1\n', 'UNSUPPORTED_DIRECTIVE'],
+    ['??/\n', 'UNSUPPORTED_TRIGRAPH'],
+    ['int x;\\\n\n', 'UNSUPPORTED_LINE_CONTINUATION'],
+    ['int x =\n', 'NOT_A_STATEMENT_POSITION'],
+  ]) {
+    const result = planPlacement(input(text, MAIN, '    ', '\n', text.length));
+    assert.equal(result.status, 'rejected', text);
+    assert.equal(result.diagnostics[0].code, code, text);
+  }
+  // And the request-level checks come before any context recognition.
+  const occupied = planPlacement(input('int x;', MAIN, '    ', '\n', 6));
+  assert.equal(occupied.diagnostics[0].code, 'TARGET_LINE_NOT_BLANK');
+});
+
+test('MAIN : aperçu périmé si la ligne devient intérieure à une fonction', () => {
+  const text = 'int x;\n\n';
+  const request = input(text, MAIN, '    ', '\n', text.length - 1);
+  const { plan } = planned(request);
+  const altered = { ...request.document, revision: 1, text: 'int g(void) {\n\n' };
+  const validation = validatePlan(plan, altered);
+  assert.equal(validation.status, 'rejected');
+  assert.equal(validation.diagnostics[0].code, 'STALE_PLAN');
+});
+
+test('MAIN : un seul emplacement modifié, annulable, sans toucher au reste', () => {
+  const text = 'int g(void) {\n}\n\nint apres;\n';
+  const request = input(text, MAIN, '    ', '\n', text.indexOf('\n\n') + 1);
+  const { plan, text: after } = planned(request);
+  assert.equal(plan.edits.length, 1);
+  assert.ok(after.startsWith('int g(void) {\n}\n'));
+  assert.ok(after.endsWith('int apres;\n'));
+  assert.equal((after.match(/int main/gu) ?? []).length, 1);
+});
+
+test('MAIN : aucune résolution de symbole ni détection de doublon', () => {
+  // A second main is a C error the student must see; C-A resolves nothing.
+  const { text } = planned(input('int main(void) {\n}\n', MAIN));
+  assert.equal((text.match(/int main\(void\)/gu) ?? []).length, 2);
+});
+
+test('les autres intentions historiques ignorent toujours les accolades', () => {
+  // Only function definitions changed. Lot 2 behaviour stands for the rest.
+  for (const text of ['int main(void) {\n', '} } {\n', 'struct P { int x;\n']) {
+    for (const source of ['Déclare un entier nommé age.', 'Affecte la valeur 25 à age.',
+      'Affiche le texte "x".', 'Inclue la bibliothèque stdio.h.', 'Crée un bloc si "a".',
+      'Crée une boucle tant que "i < 3".']) {
+      assert.equal(planPlacement(input(text, source)).status, 'planned', `${text} / ${source}`);
+    }
   }
 });
 
