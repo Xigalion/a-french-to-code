@@ -257,9 +257,9 @@ hôte écrits pour le lot 12 **n'ont jamais été exécutés**, pas plus que les
 1. **Suite hôte VS Code inexécutable** — bloque la confirmation de 96 tests.
 2. Recette GCC complète du domaine « Expressions et calculs ».
 3. [Recette manuelle du domaine 3](RECETTE_DOMAINE3.md).
-4. **Recette manuelle du domaine 4**, à rédiger : définition, contrat de
-   retour, passage par valeur, décomposition, et le test final plus complexe
-   annoncé par le porteur.
+4. [Recette manuelle du domaine 4](RECETTE_DOMAINE4.md) : protocole rédigé,
+   **non effectuée**. Elle prépare le test final plus complexe annoncé par le
+   porteur.
 5. Qualification des avertissements hôte `mutex already exists`,
    DEP0168/N-API.
 6. Domaines 5 à 9 : aucun contrat.

@@ -266,7 +266,7 @@ Bilan observé : **2 583 tests Node réussis, 0 échec, 0 ignoré, TypeScript sa
 
 **Aucun résultat hôte n'est revendiqué.** La suite hôte VS Code est restée inexécutable pendant toute la session : une mise à jour de VS Code est en attente sur la machine et le mutex Inno Setup `vscode-updating`, détenu par l'instance en cours d'exécution, empêche tout démarrage d'hôte de développement. Trois tentatives. Les 96 tests hôte existants n'ont pas été exécutés.
 
-Restent ouverts : cette exécution hôte, la recette GCC Expressions et calculs, la [recette manuelle du domaine 3](RECETTE_DOMAINE3.md), la recette manuelle du domaine 4 à rédiger, la qualification mutex/N-API, les domaines 5 à 9 sans contrat, et la spécification du modèle moins restrictif.
+Le [catalogue complet](CATALOGUE.md) des formulations reconnues et de leurs sorties exactes est généré depuis le moteur ; il sert de référence pour concevoir une épreuve. Restent ouverts : cette exécution hôte, la recette GCC Expressions et calculs, les recettes manuelles des [domaines 3](RECETTE_DOMAINE3.md) et [4](RECETTE_DOMAINE4.md), la qualification mutex/N-API, les domaines 5 à 9 sans contrat, et la spécification du modèle moins restrictif.
 
 ## 10. Modèle de fiche pour chaque futur lot
 
