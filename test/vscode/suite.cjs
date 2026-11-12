@@ -913,6 +913,71 @@ exports.run = async function run() {
         await cancel();
       });
     }
+    await test('lot 11D : break dans une boucle, cible affichée et annulation', async () => {
+      const before = 'int main(void) {\n    while (actif) {\n        \n    }\n}\n';
+      const { document, editor, file } = await fixture(before, before.indexOf('        \n') + 8);
+      await preview('Sors de la boucle la plus intérieure.');
+      assert.match(api.inspect().attachmentLabel, /ligne 2/);
+      assert.deepEqual(api.inspect().information, []);
+      const after = await vscode.workspace.openTextDocument(vscode.Uri.parse(api.inspect().preview.after));
+      const expected = after.getText();
+      assert.equal(document.getText(), before);
+      await inserted();
+      assert.equal(document.getText(), expected);
+      assert.ok(document.getText().includes('        break;'));
+      assert.ok(!document.getText().includes('return'));
+      assert.ok(!document.getText().includes('goto'));
+      await vscode.commands.executeCommand('undo');
+      assert.equal(document.getText(), before);
+      assert.equal(fs.readFileSync(file, 'utf8'), before);
+      void editor;
+    });
+    await test('lot 11D : continue traverse un switch, break y est refusé', async () => {
+      const before = 'while (actif) {\n    switch (x) {\n    case 1:\n        \n    }\n}\n';
+      let state = await fixture(before, before.indexOf('        \n') + 8);
+      await start('Sors de la boucle la plus intérieure.');
+      await accept();
+      assert.equal(api.inspect().diagnostic.stage, 'placement');
+      assert.equal(api.inspect().diagnostic.code, 'BREAK_TARGET_IS_SWITCH');
+      assert.equal(state.document.getText(), before);
+      await cancel();
+      state = await fixture(before, before.indexOf('        \n') + 8);
+      await preview('Passe à l’itération suivante de la boucle la plus intérieure.');
+      assert.match(api.inspect().attachmentLabel, /ligne 1/);
+      await inserted();
+      assert.ok(state.document.getText().includes('        continue;'));
+    });
+    await test('lot 11D : un break intérieur ne sort pas de la boucle extérieure', async () => {
+      const before = 'while (outer) {\n    while (inner) {\n        \n    }\n}\n';
+      const { document } = await fixture(before, before.indexOf('        \n') + 8);
+      await preview('Sors de la boucle la plus intérieure.');
+      // The label names the inner loop, on line 2, never the outer one.
+      assert.match(api.inspect().attachmentLabel, /ligne 2/);
+      assert.match(api.inspect().attachmentLabel, /while \(inner\)/);
+      await inserted();
+      assert.ok(document.getText().includes('        break;'));
+    });
+    await test('lot 11D : transfert hors boucle et corps sans accolades refusés', async () => {
+      for (const [text, code] of [['int main(void) {\n    \n}\n', 'LOOP_TARGET_NOT_FOUND'],
+        ['while (actif)\n    \n', 'UNBRACED_LOOP_BODY']]) {
+        const { document } = await fixture(text, text.indexOf('    \n', 10) + 4);
+        await start('Sors de la boucle la plus intérieure.');
+        await accept();
+        assert.equal(api.inspect().diagnostic.code, code, text);
+        assert.equal(document.getText(), text);
+        await cancel();
+      }
+    });
+    await test('lot 11D : structure englobante modifiée après aperçu : plan périmé', async () => {
+      const before = 'while (actif) {\n    \n}\n';
+      const { document, editor } = await fixture(before, before.indexOf('    \n') + 4);
+      await preview('Sors de la boucle la plus intérieure.');
+      await editor.edit(builder => builder.replace(new vscode.Range(0, 0, 0, 5), 'switch'));
+      await waitFor(() => api.inspect()?.phase === 'stale', 'plan de transfert périmé');
+      assert.ok(!api.inspect().choices.includes('Insérer'));
+      await cancel();
+      assert.ok(!document.getText().includes('break'));
+    });
     await test('changer indentSize seul invalide le plan', async () => {
       const { editor } = await fixture();
       await preview('Crée la fonction principale');

@@ -50,10 +50,13 @@ export class TranslationSession {
     const values = this.pending?.information ?? explainConditions(translate(this.text));
     return values.map(value => ({ ...value, range: { ...value.range } }));
   }
+  /** The line the plan was proven to relate to: an if chain root, or the loop
+   * a transfer controls. Shown for review, never used to choose a target.
+   */
   get attachmentLabel(): string | undefined {
     const plan = this.pending?.plan;
-    if (!plan?.attachment) return undefined;
-    const start = plan.attachment.rootIfRange.start;
+    if (!plan?.attachment && !plan?.loopTarget) return undefined;
+    const start = plan.attachment?.rootIfRange.start ?? plan.loopTarget!.keywordRange.start;
     const line = plan.base.text.slice(0, start).split('\n').length;
     const end = plan.base.text.indexOf('\n', start);
     return `Cible : ligne ${line} — ${plan.base.text.slice(start, end === -1 ? undefined : end).trim().slice(0, 120)}`;

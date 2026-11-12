@@ -367,12 +367,8 @@ test('FOR : session, information passive et confirmation unique', () => {
 // Non-régression.
 // ---------------------------------------------------------------------------
 
-test('11C : les transferts de contrôle restent non livrés', () => {
-  for (const source of [
-    'Sors de la boucle la plus intérieure.',
-    'Passe à l’itération suivante de la boucle la plus intérieure.',
-    'Crée un bloc selon "i".',
-  ]) {
+test('11C : switch et return restent non livrés', () => {
+  for (const source of ['Crée un bloc selon "i".', 'Retourne la valeur 0.']) {
     assert.equal(translate(source).status, 'rejected', source);
   }
 });

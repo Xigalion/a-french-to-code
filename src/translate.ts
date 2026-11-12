@@ -17,6 +17,8 @@ export type Instruction = NumericInstruction
   | { kind: 'WHILE'; parameters: { condition: Condition } }
   | { kind: 'DO_WHILE'; parameters: { condition: Condition } }
   | { kind: 'FOR'; parameters: { name: string; initial: NumericExpression; condition: Condition; update: NumericExpression } }
+  | { kind: 'BREAK'; parameters: Record<string, never> }
+  | { kind: 'CONTINUE'; parameters: Record<string, never> }
   | { kind: 'MAIN'; parameters: Record<string, never> }
   | { kind: 'DECL_INT'; parameters: { name: string } }
   | { kind: 'INIT_INT'; parameters: { name: string; value: string } }
@@ -137,7 +139,18 @@ const RULES: [Rule, ...Rule[]] = [
   { kind: 'ASSIGN_INT', parts: ['Affecte', 'la', 'valeur', { parameter: 'value' }, 'à', { parameter: 'name' }] },
   { kind: 'INCLUDE_STDIO', parts: ['Inclue', 'la', 'bibliothèque', { parameter: 'header' }] },
   { kind: 'PRINT_INT', parts: ['Affiche', 'la', 'valeur', 'de', { parameter: 'name' }] },
+  { kind: 'BREAK', parts: ['Sors', 'de', 'la', 'boucle', 'la', 'plus', 'intérieure'] },
+  { kind: 'CONTINUE', parts: ['Passe', 'à', 'l’itération', 'suivante', 'de', 'la', 'boucle', 'la', 'plus', 'intérieure'] },
 ];
+
+/** Fixed words are compared case-insensitively, accents required. The two
+ * apostrophe characters are the same character for a reader and depend only on
+ * the keyboard layout, so they are not treated as a synonym tolerance.
+ */
+function sameWord(part: string, token: string): boolean {
+  const normalize = (value: string): string => value.toLowerCase().replace(/'/gu, '’');
+  return normalize(part) === normalize(token);
+}
 
 function reject(
   text: string,
@@ -186,6 +199,9 @@ function render(text: string, instruction: Instruction): TranslationResult {
       code = `printf("${format}", ${parameters.name});\n`;
       break;
     }
+    // Neither has the meaning of return: the transfer stays inside the loop.
+    case 'BREAK': code = 'break;\n'; break;
+    case 'CONTINUE': code = 'continue;\n'; break;
     case 'INCLUDE_STDIO': code = '#include <stdio.h>\n'; break;
     case 'PRINT_INT': code = `printf("%d", ${instruction.parameters.name});\n`; break;
     case 'PRINT_FORMATTED': {
@@ -526,7 +542,7 @@ export function translate(text: string): TranslationResult {
     for (const [i, part] of candidate.parts.entries()) {
       const token = tokens[i];
       if (!token) break;
-      if (typeof part === 'string' && part.toLowerCase() !== token.text.toLowerCase()) break;
+      if (typeof part === 'string' && !sameWord(part, token.text)) break;
       score++;
     }
     if (score > bestScore) { bestScore = score; rule = candidate; }
@@ -540,7 +556,7 @@ export function translate(text: string): TranslationResult {
       return reject(text, 'INCOMPLETE_INSTRUCTION', `Instruction incomplète : ${expected} attendu.`, { start: end, end });
     }
     if (typeof part === 'string') {
-      if (part.toLowerCase() !== token.text.toLowerCase()) {
+      if (!sameWord(part, token.text)) {
         return reject(text, 'UNKNOWN_FORMULATION', 'Cette formulation n’appartient pas au catalogue C-A.', token.range);
       }
     } else if (part.parameter === 'name') {
@@ -577,6 +593,8 @@ export function translate(text: string): TranslationResult {
     case 'ASSIGN_INT': return render(text, { kind: 'ASSIGN_INT', parameters: { name: requiredParameter(parameters.name), value: requiredParameter(parameters.value) } });
     case 'INCLUDE_STDIO': return render(text, { kind: 'INCLUDE_STDIO', parameters: {} });
     case 'PRINT_INT': return render(text, { kind: 'PRINT_INT', parameters: { name: requiredParameter(parameters.name) } });
+    case 'BREAK': return render(text, { kind: 'BREAK', parameters: {} });
+    case 'CONTINUE': return render(text, { kind: 'CONTINUE', parameters: {} });
   }
 }
 
