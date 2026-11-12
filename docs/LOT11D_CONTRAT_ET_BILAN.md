@@ -176,7 +176,7 @@ Transformer la boucle en `switch` après l'aperçu rend donc le plan périmé
 | `src/translate.ts` | intentions `BREAK` et `CONTINUE`, deux règles, normalisation de l'apostrophe |
 | `src/planPlacement.ts` | résolution de cible de transfert, `loopTarget` dans le plan, fraîcheur |
 | `extension/src/session.ts` | la cible affichée couvre aussi la boucle visée |
-| `test/transfer.test.mjs` | **nouveau** — 92 tests |
+| `test/transfer.test.mjs` | **nouveau** — 105 tests |
 | `test/loops.test.mjs`, `test/doWhile.test.mjs`, `test/forLoop.test.mjs` | les transferts quittent les listes « non livré » |
 | `test/vscode/suite.cjs` | 5 tests hôte ajoutés |
 | `package.json` | `test/transfer.test.mjs` ajouté à `npm test` |
@@ -192,13 +192,13 @@ régénéré.
 ```
 npm run check
   → aucun diagnostic TypeScript
-  ℹ tests 2389
-  ℹ pass 2389
+  ℹ tests 2402
+  ℹ pass 2402
   ℹ fail 0
   ℹ skipped 0
 ```
 
-**2 389 tests Node réussis.** Bases des lots 11A à 11C incluses et
+**2 402 tests Node réussis.** Bases des lots 11A à 11C incluses et
 inchangées.
 
 Couverture de `test/transfer.test.mjs` : quatre rendus exacts avec et sans
@@ -219,7 +219,11 @@ les trois formes ; progression manuelle non déplacée ; impossibilité de
 sortir de la boucle extérieure par un `break` intérieur ; parcours de
 session et session périmée ; `switch`, `return` et `goto` toujours non
 livrés ; onze sorties historiques réaffirmées ; une chaîne de branches
-toujours constructible.
+toujours constructible. S'y ajoutent **13 contextes adverses** : boucle
+intérieure refermée dans un `do`, chaîne `if`/`else if`/`else` complète,
+`for (;;)`, `while(a){` sans espaces, opérateur ternaire, commentaires de
+ligne et de bloc contenant une accolade, BOM, et enfin `goto` et étiquettes
+— qui ne changent pas le ciblage, celui-ci étant purement syntaxique.
 
 ### Non exécuté — toujours bloqué
 

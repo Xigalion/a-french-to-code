@@ -186,7 +186,7 @@ Directions envisagées : **algorithmique et développement logiciel**, **systèm
 |---|---|---|
 | Fondations | 1 à 5, déjà développés | Instructions de base, VS Code, variables, affichage, diagnostics |
 | Expressions et calculs | 6 à 8 livrés ; recette complète du domaine ouverte | Opérateurs, priorités, types numériques, représentation, précision, conversions et fiabilité des calculs |
-| Décisions et répétitions | Lots 9, 10 et **11A implémentés** ; deux gestes du lot 9 confirmés ; recettes manuelles des lots 10 et 11A ouvertes, à intégrer à la recette finale du domaine | Comparaisons, branches et **boucle `while`** livrées ([bilan 11A](LOT11A_BILAN.md)) ; 11B test final, 11C for, 11D transferts : [contrats à rédiger](LOT11_CONTRAT_PROPOSE.md), non livrés |
+| Décisions et répétitions | **Lots 9 à 11D implémentés : domaine complet côté moteur.** Deux gestes du lot 9 confirmés ; recette manuelle du domaine ouverte ([protocole](RECETTE_DOMAINE3.md)) | Comparaisons, branches, `while` ([11A](LOT11A_BILAN.md)), `do/while` ([11B](LOT11B_CONTRAT_ET_BILAN.md)), `for` ([11C](LOT11C_CONTRAT_ET_BILAN.md)), `break`/`continue` ([11D](LOT11D_CONTRAT_ET_BILAN.md)). `switch` et `return` non livrés |
 | Fonctions et décomposition | À définir | Paramètres, retours, portée et appels |
 | Tableaux, chaînes et pointeurs | À définir | Collections, accès et adresses |
 | Structures et mémoire dynamique | À définir | Données composées, allocation et durée de vie |
@@ -235,6 +235,22 @@ Bilan observé : **2 139 tests Node réussis, 0 échec, 0 ignoré, TypeScript sa
 **La suite hôte VS Code n'a pas pu être exécutée** : une mise à jour de VS Code est en attente sur la machine et le mutex Inno Setup `vscode-updating` empêche tout démarrage d'hôte de développement. Les 68 tests hôte du lot 10 ne sont donc pas reconfirmés et les 9 tests hôte écrits pour le lot 11A n'ont jamais été exécutés. Aucun résultat hôte n'est revendiqué pour cette livraison.
 
 Restent ouverts : cette exécution hôte, la recette GCC Expressions et calculs, la recette manuelle du lot 10, la recette manuelle du lot 11A, la qualification mutex/N-API, et les contrats 11B à 11D. Aucune autre forme de boucle ni transfert de contrôle n'est livré.
+
+### Lots 11B, 11C et 11D — implémentés le 12 novembre 2026
+
+Après le 11A, le porteur délègue l'exécution séquentielle des trois incréments restants sans validation intermédiaire. Chacun a son document de contrat exécuté et de bilan, qui liste les décisions prises pour relecture.
+
+**[Lot 11B — `do/while`](LOT11B_CONTRAT_ET_BILAN.md).** `Crée une boucle avec test final tant que "{condition}".` produit la structure complète ; le point-virgule final est syntaxique. La condition est donnée à la création : le moteur ne cherche jamais à fermer un `do` déjà ouvert dans le document. Information passive `DO_WHILE_POSTTEST`, distincte de celle du `while`. Une fermeture `} while (…);` ne peut pas être lue comme une fin de chaîne `if`.
+
+**[Lot 11C — `for`](LOT11C_CONTRAT_ET_BILAN.md).** Les quatre points laissés ouverts par le contrat du lot 11 sont tranchés : **aucune déclaration dans l'en-tête** — le compteur est déclaré par l'étudiant, donc A n'invente aucun type et la valeur survit à la boucle ; **les trois clauses sont obligatoires**, aucune clause vide n'est interprétée comme vraie ; **les trois clauses partagent un seul budget de 1 024 tokens**, donc découper une expression entre les champs ne contourne pas la limite, tandis que la profondeur de 64 niveaux reste propre à chaque clause ; un paramètre de budget partagé optionnel est ajouté aux deux parseurs, avec budget neuf par défaut, de sorte qu'aucune instruction historique ne change de limite. Jamais de `++` ni de valeur par défaut. Information passive `FOR_CLAUSE_ORDER` sur l'ordre d'exécution des clauses. Les avis du lot 8 sont recherchés dans les trois clauses.
+
+**[Lot 11D — `break` et `continue`](LOT11D_CONTRAT_ET_BILAN.md).** Nouveau module `src/loopTarget.ts`, distinct de `branchTarget.ts` comme le contrat l'exige. Il classifie chaque accolade ouvrante par les tokens qui la précèdent, ignore commentaires et littéraux, s'arrête à la fonction englobante, et refuse tout contexte qu'il ne sait pas établir — jamais une profondeur d'accolades, jamais le dernier mot `while` rencontré, jamais l'indentation. Application de la règle C17 : un `switch` entre le curseur et la boucle fait échouer la phrase « sors de la boucle », donc le cas est **refusé**, ni réécrit en `goto` ni traité en supposant `switch` absent ; `continue` traverse un `switch` et vise bien la boucle ; un corps sans accolades est refusé, et C-A n'ajoute pas d'accolades ; une boucle intérieure intercepte toujours le transfert. La cible résolue est affichée avant confirmation et re-établie à la validation.
+
+Bilan observé pour l'ensemble du lot 11 : **2 402 tests Node réussis, 0 échec, 0 ignoré, TypeScript sans diagnostic.** Les 1 983 tests du lot 10 sont inclus, inchangés.
+
+**Aucun résultat hôte n'est revendiqué pour aucun de ces incréments.** La suite hôte VS Code est restée inexécutable pendant toute la livraison : une mise à jour de VS Code est en attente sur la machine et le mutex Inno Setup `vscode-updating`, détenu par l'instance en cours d'exécution, empêche tout démarrage d'hôte de développement. Les 68 tests hôte du lot 10 ne sont pas reconfirmés, et les 25 tests hôte écrits pour le lot 11 n'ont jamais été exécutés. Reprise attendue : redémarrer VS Code, puis `npm run test:vscode`.
+
+Restent ouverts : cette exécution hôte, la recette GCC complète Expressions et calculs, la [recette manuelle du domaine 3](RECETTE_DOMAINE3.md) qui intègre celle du lot 10, et la qualification mutex/N-API. `switch`, `return` et `goto` ne sont ni générés ni interprétés ; `switch` est seulement **reconnu** s'il a été écrit à la main, parce qu'il change le sens de `break`.
 
 ## 10. Modèle de fiche pour chaque futur lot
 

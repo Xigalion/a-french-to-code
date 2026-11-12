@@ -211,6 +211,35 @@ test('la cible n’est pas le dernier mot « while » rencontré', () => {
   assert.equal(plan.loopTarget.form, 'for');
 });
 
+const adversarial = [
+  // A closed inner loop does not hide the enclosing do.
+  ['int main(void) {\n    do {\n        while (b) {\n        }\n', CONTINUE, 'do'],
+  ['while (a) { if (b) { } else if (c) { } else { }\n', BREAK, 'while'],
+  ['while (a) {\n    for (;;) {\n', BREAK, 'for'],
+  ['while(a){\n', BREAK, 'while'],
+  ['while (a) {\n    x = y > 0 ? 1 : 2;\n', BREAK, 'while'],
+  ['while (a) {\n    /* note */ if (b) {\n', CONTINUE, 'while'],
+  ['while (a) {\n    // }\n    if (b) {\n    }\n', BREAK, 'while'],
+  ['﻿while (a) {\n', BREAK, 'while'],
+  // Labels and goto do not change targeting: it is purely syntactic.
+  ['while (a) {\n    goto fin;\n', BREAK, 'while'],
+  ['fin:\nwhile (a) {\n', BREAK, 'while'],
+  ['while (a) {\n    fin:\n', BREAK, 'while'],
+];
+for (const [text, source, form] of adversarial) {
+  test(`contexte adverse résolu en ${form} ${JSON.stringify(text.slice(0, 32))}`, () => {
+    assert.equal(planned(input(text, source)).plan.loopTarget.form, form);
+  });
+}
+
+test('une boucle refermée, puis un else : aucune cible', () => {
+  placementRefused(input('while (a) {\n  } else {\n', BREAK), 'LOOP_TARGET_NOT_FOUND');
+});
+
+test('une définition de type ouverte dans un corps de boucle est refusée', () => {
+  placementRefused(input('while (a) { struct P { int x;\n', BREAK), 'UNSUPPORTED_LOOP_CONTEXT');
+});
+
 test('un do sans son while final est quand même une cible syntaxique', () => {
   // Incomplete C, but break/continue targeting is purely syntactic.
   const { plan } = planned(input('do {\n', BREAK));
