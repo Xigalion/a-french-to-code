@@ -1,28 +1,39 @@
 import type { Condition } from './condition.ts';
 import type { SourceRange, TranslationResult } from './translate.ts';
+import { instructionCondition } from './translate.ts';
 
 export type ConditionInformation = {
-  code: 'SHORT_CIRCUIT_AND' | 'SHORT_CIRCUIT_OR' | 'LOGICAL_NOT' | 'WHILE_PRETEST';
+  code: 'SHORT_CIRCUIT_AND' | 'SHORT_CIRCUIT_OR' | 'LOGICAL_NOT' | 'WHILE_PRETEST' | 'DO_WHILE_POSTTEST';
   severity: 'information';
   range: SourceRange;
   message: string;
 };
 
+/** When each loop form evaluates its condition. Deliberately not a
+ * termination, progression or iteration-count claim.
+ */
+const MOMENT: Readonly<Record<string, { code: ConditionInformation['code']; message: string }>> = {
+  WHILE: { code: 'WHILE_PRETEST',
+    message: 'La condition est testée avant chaque itération ; le corps peut ne jamais être exécuté. '
+      + 'Aucune progression ni terminaison n’est déduite.' },
+  DO_WHILE: { code: 'DO_WHILE_POSTTEST',
+    message: 'La condition est testée après chaque itération ; si la boucle est atteinte, le corps est exécuté '
+      + 'au moins une fois. Aucune progression ni terminaison n’est déduite.' },
+};
+
 /** Structural explanations, never a safety or reachability analysis.
- * WHILE_PRETEST states when the condition is evaluated. It is deliberately not
- * a termination, progression or iteration-count claim, and it stays on the
- * passive information channel: it never becomes a warning.
+ * The loop entries state when the condition is evaluated and stay on the
+ * passive information channel: they never become warnings.
  */
 export function explainConditions(result: TranslationResult): ConditionInformation[] {
   const entries: ConditionInformation[] = [];
-  if (result.status !== 'translated' || (result.instruction.kind !== 'IF'
-    && result.instruction.kind !== 'ELSE_IF' && result.instruction.kind !== 'WHILE')) return entries;
-  const condition = result.instruction.parameters.condition;
-  const pretest: ConditionInformation[] = result.instruction.kind === 'WHILE' ? [{
-    code: 'WHILE_PRETEST', severity: 'information', range: { ...condition.range },
-    message: 'La condition est testée avant chaque itération ; le corps peut ne jamais être exécuté. '
-      + 'Aucune progression ni terminaison n’est déduite.',
-  }] : [];
+  if (result.status !== 'translated') return entries;
+  const condition = instructionCondition(result.instruction);
+  if (!condition) return entries;
+  const moment = MOMENT[result.instruction.kind];
+  const envelope: ConditionInformation[] = moment
+    ? [{ code: moment.code, severity: 'information', range: { ...condition.range }, message: moment.message }]
+    : [];
   const stack: Condition[] = [condition];
   while (stack.length) {
     const node = stack.pop()!;
@@ -42,5 +53,5 @@ export function explainConditions(result: TranslationResult): ConditionInformati
   }
   // The envelope-level explanation comes first; operator entries stay ordered
   // by position, as the historical IF/ELSE_IF output already is.
-  return [...pretest, ...entries.sort((a, b) => a.range.start - b.range.start || a.range.end - b.range.end)];
+  return [...envelope, ...entries.sort((a, b) => a.range.start - b.range.start || a.range.end - b.range.end)];
 }

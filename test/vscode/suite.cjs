@@ -776,7 +776,7 @@ exports.run = async function run() {
       ['Crée une boucle tant que', 'MISSING_CONDITION'],
       ['Crée une boucle tant que "i = 3".', 'ASSIGNMENT_IN_CONDITION'],
       ['Crée une boucle jusqu’à "i == 3".', 'UNKNOWN_FORMULATION'],
-      ['Crée une boucle avec test final tant que "i < 3".', 'UNKNOWN_FORMULATION'],
+      ['Crée une boucle avec test finale tant que "i < 3".', 'UNKNOWN_FORMULATION'],
       ['Sors de la boucle la plus intérieure.', 'UNKNOWN_FORMULATION'],
     ]) {
       await test(`lot 11A refus sans insertion : ${code} ${phrase.slice(0, 32)}`, async () => {
@@ -814,6 +814,48 @@ exports.run = async function run() {
       await accept();
       assert.equal(api.inspect().diagnostic.stage, 'placement');
       assert.ok(!document.getText().includes('else'));
+      await cancel();
+    });
+    for (const eol of ['\n', '\r\n']) {
+      await test(`lot 11B : do/while, fermeture avec condition et annulation ${JSON.stringify(eol)}`, async () => {
+        const before = 'int main(void) {' + eol + '    ' + eol + '}' + eol;
+        const { document, editor, file } = await fixture(before, before.indexOf('    ' + eol) + 4);
+        await preview('Crée une boucle avec test final tant que "i < limite".');
+        const after = await vscode.workspace.openTextDocument(vscode.Uri.parse(api.inspect().preview.after));
+        const expected = after.getText();
+        assert.equal(document.getText(), before);
+        await inserted();
+        assert.equal(document.getText(), expected);
+        assert.ok(document.getText().includes('    do {'));
+        assert.ok(document.getText().includes('    } while (i < limite);'));
+        assert.equal(editor.selection.active.character, 8);
+        const empty = document.getText();
+        await preview('Affiche le texte "tour".');
+        await inserted();
+        await vscode.commands.executeCommand('undo');
+        assert.equal(document.getText(), empty);
+        await vscode.commands.executeCommand('undo');
+        assert.equal(document.getText(), before);
+        assert.equal(fs.readFileSync(file, 'utf8'), before);
+      });
+    }
+    await test('lot 11B : DO_WHILE_POSTTEST journalisé, sans Warning', async () => {
+      const { document } = await fixture();
+      await preview('Crée une boucle avec test final tant que "i < limite && !fini".');
+      assert.deepEqual(api.inspect().advisories, []);
+      assert.equal(api.inspect().information[0].code, 'DO_WHILE_POSTTEST');
+      assert.match(api.inspect().pedagogyEntry, /DO_WHILE_POSTTEST \[information\]/);
+      assert.ok(!api.inspect().confirmationTitle.includes('avertissement'));
+      await inserted();
+      assert.ok(document.getText().includes('} while (((i < limite) && (!fini)));'));
+    });
+    await test('lot 11B : aucune branche sinon ne se rattache à une fermeture do/while', async () => {
+      const text = 'do {\n} while (a);\n\n';
+      const { document } = await fixture(text, text.length);
+      await start('Ajoute une branche sinon.');
+      await accept();
+      assert.equal(api.inspect().diagnostic.stage, 'placement');
+      assert.equal(document.getText(), text);
       await cancel();
     });
     await test('changer indentSize seul invalide le plan', async () => {

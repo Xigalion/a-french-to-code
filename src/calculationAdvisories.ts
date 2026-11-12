@@ -1,6 +1,7 @@
 import type { Expression } from './expression.ts';
 import type { NumericExpression } from './numericExpression.ts';
 import type { SourceRange, TranslationResult } from './translate.ts';
+import { instructionCondition } from './translate.ts';
 import { conditionNumericRoots } from './condition.ts';
 
 export type CalculationAdvisory = {
@@ -32,8 +33,8 @@ export function analyzeCalculations(translation: TranslationResult): Calculation
   if (translation.status !== 'translated') return report;
   const instruction = translation.instruction;
   let stack: Node[];
-  if (instruction.kind === 'IF' || instruction.kind === 'ELSE_IF' || instruction.kind === 'WHILE') {
-    const condition = instruction.parameters.condition;
+  const condition = instructionCondition(instruction);
+  if (condition) {
     stack = conditionNumericRoots(condition).reverse();
   } else if (instruction.kind === 'ASSIGN_EXPRESSION' || instruction.kind === 'NUMERIC_INIT'
     || instruction.kind === 'NUMERIC_ASSIGN') stack = [instruction.parameters.expression];

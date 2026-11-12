@@ -14,6 +14,7 @@ export type Instruction = NumericInstruction
   | { kind: 'ELSE_IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE'; parameters: Record<string, never> }
   | { kind: 'WHILE'; parameters: { condition: Condition } }
+  | { kind: 'DO_WHILE'; parameters: { condition: Condition } }
   | { kind: 'MAIN'; parameters: Record<string, never> }
   | { kind: 'DECL_INT'; parameters: { name: string } }
   | { kind: 'INIT_INT'; parameters: { name: string; value: string } }
@@ -25,6 +26,20 @@ export type Instruction = NumericInstruction
   | { kind: 'PRINT_TEXT'; parameters: { text: string } };
 
 type DisplayFormat = 'decimal' | 'hexadecimal' | 'octal';
+
+/** Intents rendered as a three-line block whose body is left empty, with the
+ * cursor placed inside. Shared by the translator and the placement planner so
+ * both stay in step.
+ */
+export const BLOCK_KINDS: readonly string[] = ['MAIN', 'IF', 'ELSE_IF', 'ELSE', 'WHILE', 'DO_WHILE'];
+
+/** Intents whose only parameter is a bounded condition of the lot 10 profile. */
+export function instructionCondition(instruction: Instruction): Condition | undefined {
+  switch (instruction.kind) {
+    case 'IF': case 'ELSE_IF': case 'WHILE': case 'DO_WHILE': return instruction.parameters.condition;
+    default: return undefined;
+  }
+}
 
 export type DiagnosticCode =
   | 'CONDITION_FORM_NOT_SUPPORTED'
@@ -111,7 +126,7 @@ const C17_KEYWORDS = new Set([
 
 type Token = { text: string; range: SourceRange };
 type Parameter = { parameter: 'name' | 'value' | 'header' };
-type Rule = { kind: Exclude<Instruction['kind'], 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind']>; parts: (string | Parameter)[] };
+type Rule = { kind: Exclude<Instruction['kind'], 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind']>; parts: (string | Parameter)[] };
 
 const RULES: [Rule, ...Rule[]] = [
   { kind: 'MAIN', parts: ['Crée', 'la', 'fonction', 'principale'] },
@@ -145,6 +160,9 @@ function render(text: string, instruction: Instruction): TranslationResult {
     // No semicolon after the header or the closing brace, and no counter,
     // initialisation or progression is ever generated with the loop.
     case 'WHILE': code = `while (${renderCondition(instruction.parameters.condition)}) {\n    \n}\n`; break;
+    // The semicolon after the final condition is C syntax, not an added
+    // statement: do/while is generated whole or not at all.
+    case 'DO_WHILE': code = `do {\n    \n} while (${renderCondition(instruction.parameters.condition)});\n`; break;
     case 'DECL_INT': code = `int ${instruction.parameters.name};\n`; break;
     case 'INIT_INT': code = `int ${instruction.parameters.name} = ${instruction.parameters.value};\n`; break;
     case 'ASSIGN_INT': code = `${instruction.parameters.name} = ${instruction.parameters.value};\n`; break;
@@ -182,7 +200,7 @@ function render(text: string, instruction: Instruction): TranslationResult {
   const fragment: Fragment = {
     id: 'fragment-1', role: 'primary', comment, code, text: `${comment}\n${code}`,
   };
-  if (['MAIN', 'IF', 'ELSE_IF', 'ELSE', 'WHILE'].includes(instruction.kind)) {
+  if (BLOCK_KINDS.includes(instruction.kind)) {
     fragment.cursor = { offset: comment.length + 1 + code.indexOf('\n') + 1 + 4 };
   }
   return {
@@ -210,12 +228,12 @@ function identifierDiagnostic(token: Token): Diagnostic | undefined {
 }
 
 /** IF envelope has its own delimiters; no changes to historical envelopes.
- * WHILE reuses it unchanged, including the lot 10 condition profile: the loop
- * never gets a more permissive grammar, and quotes delimit a condition, not a
- * C string. Only the empty-condition wording differs.
+ * The loop intents reuse it unchanged, including the lot 10 condition profile:
+ * a loop never gets a more permissive grammar, and quotes delimit a condition,
+ * not a C string. Only the empty-condition wording differs.
  */
-function translateIf(source: string, position: number, end: number, kind: 'IF' | 'ELSE_IF' | 'WHILE' = 'IF'): TranslationResult {
-  const missing = kind === 'WHILE' ? 'Il manque la condition de la boucle.' : 'Il manque la condition du bloc.';
+function translateIf(source: string, position: number, end: number, kind: 'IF' | 'ELSE_IF' | 'WHILE' | 'DO_WHILE' = 'IF'): TranslationResult {
+  const missing = kind === 'IF' || kind === 'ELSE_IF' ? 'Il manque la condition du bloc.' : 'Il manque la condition de la boucle.';
   while (position < end && /[ \t]/u.test(source.charAt(position))) position++;
   if (position === end) return reject(source, 'MISSING_CONDITION', missing, { start: end, end });
   if (source.charAt(position) !== '"') return reject(source, 'MISSING_CONDITION_DELIMITER',
@@ -361,19 +379,28 @@ export function translate(text: string): TranslationResult {
   if (['crée', 'un', 'bloc', 'si'].every((word, index) => tokens[index]?.text.toLowerCase() === word)) {
     return translateIf(text, tokens[3]!.range.end, end);
   }
-  // « tant que » is the only accepted loop wording. « jusqu’à » is refused on
-  // purpose: turning a stop condition into a continuation condition would mean
-  // applying a negation the user never wrote.
+  // Each loop form is selected on its own fixed words, never on a synonym.
+  // « jusqu’à » is refused on purpose: turning a stop condition into a
+  // continuation condition would mean applying a negation the user never wrote.
   if (['crée', 'une', 'boucle'].every((word, index) => tokens[index]?.text.toLowerCase() === word)) {
-    if (tokens[3]?.text.toLowerCase() !== 'tant') {
+    const forms = [
+      { words: ['tant', 'que'], kind: 'WHILE' as const },
+      { words: ['avec', 'test', 'final', 'tant', 'que'], kind: 'DO_WHILE' as const },
+    ];
+    const form = forms.find(candidate => candidate.words[0] === tokens[3]?.text.toLowerCase());
+    if (!form) {
       return tokens[3]
         ? reject(text, 'UNKNOWN_FORMULATION', 'Cette formulation n’appartient pas au catalogue C-A.', tokens[3].range)
-        : reject(text, 'INCOMPLETE_INSTRUCTION', 'Instruction incomplète : « tant que » attendu.', { start: end, end });
+        : reject(text, 'INCOMPLETE_INSTRUCTION', 'Instruction incomplète : la forme de la boucle est attendue.', { start: end, end });
     }
-    if (tokens[4]?.text.toLowerCase() === 'que') return translateIf(text, tokens[4].range.end, end, 'WHILE');
-    return tokens[4]
-      ? reject(text, 'UNKNOWN_FORMULATION', 'Cette formulation n’appartient pas au catalogue C-A.', tokens[4].range)
-      : reject(text, 'INCOMPLETE_INSTRUCTION', 'Instruction incomplète : « que » attendu.', { start: end, end });
+    for (const [offset, word] of form.words.entries()) {
+      const token = tokens[3 + offset];
+      if (!token) return reject(text, 'INCOMPLETE_INSTRUCTION', `Instruction incomplète : « ${word} » attendu.`, { start: end, end });
+      if (token.text.toLowerCase() !== word) {
+        return reject(text, 'UNKNOWN_FORMULATION', 'Cette formulation n’appartient pas au catalogue C-A.', token.range);
+      }
+    }
+    return translateIf(text, tokens[2 + form.words.length]!.range.end, end, form.kind);
   }
   if (['ajoute', 'une', 'branche', 'sinon'].every((word, index) => tokens[index]?.text.toLowerCase() === word)) {
     if (tokens[4]?.text.toLowerCase() === 'si') return translateIf(text, tokens[4].range.end, end, 'ELSE_IF');

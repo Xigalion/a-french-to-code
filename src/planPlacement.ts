@@ -1,4 +1,4 @@
-import { translate } from './translate.ts';
+import { translate, BLOCK_KINDS } from './translate.ts';
 import type { Instruction, SourceRange, TranslationResult } from './translate.ts';
 import { inspectPrefix } from './placementLexical.ts';
 import { resolveBranchTarget } from './branchTarget.ts';
@@ -143,10 +143,9 @@ export function planPlacement(request: PlacementRequest): PlacementResult {
   const eol: '\n' | '\r\n' = newline !== -1
     ? text.charAt(newline - 1) === '\r' ? '\r\n' : '\n'
     : lineStart > 0 ? text.charAt(lineStart - 2) === '\r' ? '\r\n' : '\n' : fallbackEol;
-  // WHILE renders the same three lines as IF: header, inner line, closing brace.
-  // No loop state is kept, and no general body analyser is needed.
-  const isBlock = canonical.instruction.kind === 'MAIN' || canonical.instruction.kind === 'IF'
-    || canonical.instruction.kind === 'WHILE' || isBranch;
+  // Every block intent renders the same three lines: header, inner line and
+  // closing line. No loop state is kept, and no body analyser is needed.
+  const isBlock = BLOCK_KINDS.includes(canonical.instruction.kind);
   const codeLines = fragment.code.slice(0, -1).split('\n');
   const lines = [baseIndent + fragment.comment,
     ...codeLines.map((line, index) => baseIndent + (isBlock && index === 1 ? indentUnit : line))];
