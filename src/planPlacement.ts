@@ -6,7 +6,7 @@ import type { Attachment, BranchCode } from './branchTarget.ts';
 import { resolveLoopTarget } from './loopTarget.ts';
 import type { LoopTarget, TransferCode } from './loopTarget.ts';
 import type { ContextCode } from './enclosingStructures.ts';
-import { resolveFunctionContext } from './functionContext.ts';
+import { resolveFunctionContext, resolveFileScope } from './functionContext.ts';
 import type { FunctionContext, FunctionCode } from './functionContext.ts';
 
 export type SuccessfulTranslation = Extract<TranslationResult, { status: 'translated' }>;
@@ -144,6 +144,7 @@ export function planPlacement(request: PlacementRequest): PlacementResult {
   const transfer = canonical.instruction.kind === 'BREAK' ? 'break'
     : canonical.instruction.kind === 'CONTINUE' ? 'continue' : undefined;
   const returning = RETURN_KINDS.includes(canonical.instruction.kind);
+  const defining = canonical.instruction.kind === 'FUNC_DEF';
   let attachment: Attachment | undefined;
   let loopTarget: LoopTarget | undefined;
   let functionContext: FunctionContext | undefined;
@@ -163,6 +164,14 @@ export function planPlacement(request: PlacementRequest): PlacementResult {
       return reject(issue.code, issue.reason, issue.message, issue.range);
     }
     loopTarget = resolved.target;
+  } else if (defining) {
+    // C17 forbids nested function definitions. MAIN keeps its historical
+    // behaviour, examined separately; only this new intent is checked.
+    const scope = resolveFileScope(text, lineStart);
+    if (scope.status === 'rejected') {
+      const issue = scope.diagnostic;
+      return reject(issue.code, issue.reason, issue.message, issue.range);
+    }
   } else if (returning) {
     // A return is placed only once the function it leaves is established, and
     // only if the sentence agrees with the return type that function declares.
@@ -208,7 +217,7 @@ export function planPlacement(request: PlacementRequest): PlacementResult {
       ...(attachment ? { attachment, branchContext: { indentUnit } } : {}),
       ...(loopTarget ? { loopTarget } : {}),
       ...(functionContext ? { functionContext } : {}),
-      ...(loopTarget || functionContext ? { recognizerContext: { indentUnit } } : {}),
+      ...(loopTarget || functionContext || defining ? { recognizerContext: { indentUnit } } : {}),
       base: { documentId: document.id, revision: document.revision, text },
       source: { text: canonical.source.text, instruction: canonical.instruction },
       edits: [{ range: { start: lineStart, end: lineEnd }, newText }],
@@ -228,6 +237,7 @@ export function validatePlan(plan: PlacementPlan, document: DocumentSnapshot): P
   }
   const contextual = plan.loopTarget || plan.functionContext
     || plan.source.instruction.kind === 'BREAK' || plan.source.instruction.kind === 'CONTINUE'
+    || plan.source.instruction.kind === 'FUNC_DEF'
     || RETURN_KINDS.includes(plan.source.instruction.kind);
   if (contextual) {
     const edit = plan.edits[0];

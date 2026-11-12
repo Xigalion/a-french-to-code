@@ -4,7 +4,36 @@ import type { ContextIssue } from './enclosingStructures.ts';
 
 export type ReturnType = 'void' | 'int' | 'unsigned int' | 'float' | 'double';
 export type FunctionContext = { returnType: ReturnType; nameRange: SourceRange; braceRange: SourceRange };
-export type FunctionCode = 'NO_ENCLOSING_FUNCTION' | 'UNSUPPORTED_RETURN_TYPE';
+export type FunctionCode = 'NO_ENCLOSING_FUNCTION' | 'UNSUPPORTED_RETURN_TYPE' | 'FUNCTION_DEFINITION_NESTED';
+export type FileScopeResolution = { status: 'resolved' } | { status: 'rejected'; diagnostic: Issue };
+
+/** C17 has no nested function definitions, so a new definition belongs at file
+ * scope only: no brace may still be open before the target line. This is a
+ * local, structural check on one scan, not a scope analyser. Anything this
+ * recognizer cannot classify is refused rather than assumed to be valid.
+ */
+export function resolveFileScope(text: string, lineStart: number): FileScopeResolution {
+  const scan = scanEnclosing(text, lineStart);
+  if (scan.status === 'rejected') return { status: 'rejected', diagnostic: scan.diagnostic };
+  const position = checkStatementPosition(scan);
+  if (position) {
+    return { status: 'rejected', diagnostic: { code: 'NOT_A_STATEMENT_POSITION', reason: 'unsupported-construct',
+      message: position.message, range: position.range } };
+  }
+  const nested = scan.frames.find(frame => frame.kind === 'function');
+  if (nested) {
+    return { status: 'rejected', diagnostic: { code: 'FUNCTION_DEFINITION_NESTED', reason: 'unsafe-location',
+      message: 'En C17, une définition de fonction ne peut pas être imbriquée dans une autre : '
+        + 'placez-la en dehors de tout corps de fonction.', range: { ...nested.keywordRange } } };
+  }
+  const open = scan.frames[scan.frames.length - 1];
+  if (open) {
+    return { status: 'rejected', diagnostic: { code: 'UNSUPPORTED_ENCLOSING_CONTEXT', reason: 'unsupported-construct',
+      message: 'Une accolade encore ouverte précède cette ligne : la validité de cet emplacement '
+        + 'pour une définition de fonction ne peut pas être établie.', range: { ...open.braceRange } } };
+  }
+  return { status: 'resolved' };
+}
 type Issue = { code: FunctionCode; reason: 'unsafe-location' | 'unsupported-construct'; message: string; range: SourceRange } | ContextIssue;
 export type FunctionResolution = { status: 'resolved'; context: FunctionContext } | { status: 'rejected'; diagnostic: Issue };
 

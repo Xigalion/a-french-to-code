@@ -306,11 +306,128 @@ for (const eol of ['\n', '\r\n']) {
   }
 }
 
-test('une fonction peut être définie dans un corps : erreur C, pas refus de placement', () => {
-  // Consistent with « Crée la fonction principale. », which has never checked
-  // scope either. The student sees the C error; C-A invents nothing.
-  const { text } = planned(input('int main(void) {\n', define('f', 'int')));
-  assert.ok(text.includes('int f(void) {'));
+// ---------------------------------------------------------------------------
+// C17 n'a pas de fonction imbriquée : une nouvelle définition n'est placée
+// qu'à la portée fichier. Vérification locale et structurelle, pas un
+// analyseur de portées ; tout contexte non classifiable est refusé.
+// ---------------------------------------------------------------------------
+
+const fileScope = [
+  ['', 'fichier vide'],
+  ['int x;\n', 'après une déclaration'],
+  ['#include <stdio.h>\n', 'après une inclusion simple'],
+  ['int g(void) {\n}\n', 'après une fonction refermée'],
+  ['int g(void) {\n}\n\n', 'sur une ligne blanche après une fonction refermée'],
+  ['void g(void) {\n}\nint h(void) {\n}\n', 'après deux fonctions refermées'],
+  ['// commentaire\n', 'après un commentaire de ligne'],
+  ['/* bloc */\n', 'après un commentaire de bloc fermé'],
+];
+for (const [text, label] of fileScope) {
+  test(`FUNC_DEF accepté à la portée fichier : ${label}`, () => {
+    const { text: after } = planned(input(text, define('f', 'int')));
+    assert.ok(after.includes('int f(void) {'));
+    // Nothing before the target line was touched.
+    assert.ok(after.startsWith(text.slice(0, text.length - (text.endsWith('\n') ? 0 : 0))));
+  });
+}
+
+const nested = [
+  ['int main(void) {\n', 'directement dans main'],
+  ['int main(void) {\n    \n', 'sur une ligne indentée dans main'],
+  ['void g(void) {\n', 'dans une fonction void'],
+  ['void g(void) {\n    while (a) {\n', 'dans une boucle dans une fonction'],
+  ['void g(void) {\n    if (a) {\n', 'dans un bloc si dans une fonction'],
+  ['void g(void) {\n    switch (x) {\n    case 1:\n', 'dans un switch dans une fonction'],
+  ['int g(void) {\n}\nint h(void) {\n', 'dans la seconde de deux fonctions'],
+];
+for (const [text, label] of nested) {
+  test(`FUNC_DEF refusé car imbriqué : ${label}`, () => {
+    const result = planPlacement(input(text, define('f', 'int')));
+    assert.equal(result.status, 'rejected', JSON.stringify(result));
+    assert.equal(result.diagnostics[0].code, 'FUNCTION_DEFINITION_NESTED');
+    assert.equal(result.diagnostics[0].category, 'placement');
+    assert.equal(result.diagnostics[0].reason, 'unsafe-location');
+    assert.match(result.diagnostics[0].message, /ne peut pas être imbriquée/u);
+    // The range points at the enclosing function's name, which is the
+    // innermost one, not some outer or already closed function.
+    assert.equal(text.slice(result.diagnostics[0].range.start, result.diagnostics[0].range.end),
+      text.includes('int h(void)') ? 'h' : text.includes('void g(void)') ? 'g' : 'main');
+  });
+}
+
+const ambiguous = [
+  ['struct P { int x;\n', 'définition de type ouverte'],
+  ['{\n', 'bloc nu à la portée fichier'],
+  ['} } {\n', 'accolades déséquilibrées'],
+  ['int t[2] = {\n', 'initialisateur ouvert'],
+  ['enum E {\n', 'énumération ouverte'],
+];
+for (const [text, label] of ambiguous) {
+  test(`FUNC_DEF refusé car contexte non établi : ${label}`, () => {
+    const result = planPlacement(input(text, define('f', 'int')));
+    assert.equal(result.status, 'rejected', JSON.stringify(result));
+    assert.equal(result.diagnostics[0].code, 'UNSUPPORTED_ENCLOSING_CONTEXT');
+    assert.equal(result.diagnostics[0].reason, 'unsupported-construct');
+    // Either the brace could not be classified, or the delimiters do not
+    // pair up at all. Both are refusals, never an assumed-valid position.
+    assert.match(result.diagnostics[0].message, /ne peut pas être établie|n’a pas d’ouvrante/u);
+  });
+}
+
+test('FUNC_DEF : position hors instruction et contextes lexicaux refusés', () => {
+  for (const [text, code] of [
+    ['int x =\n', 'NOT_A_STATEMENT_POSITION'],
+    ['/* ouvert\n', 'TARGET_IN_COMMENT'],
+    ['#define X 1\n', 'UNSUPPORTED_DIRECTIVE'],
+    ['??/\n', 'UNSUPPORTED_TRIGRAPH'],
+  ]) {
+    const result = planPlacement(input(text, define('f', 'int')));
+    assert.equal(result.status, 'rejected', text);
+    assert.equal(result.diagnostics[0].code, code, text);
+  }
+});
+
+test('FUNC_DEF : accolades dans un commentaire ou une chaîne ne ferment rien', () => {
+  // A brace that only looks closed must not make the position seem valid.
+  for (const text of ['int g(void) { // }\n', 'int g(void) { /* } */\n', 'int g(void) { char c = \'}\';\n']) {
+    const result = planPlacement(input(text, define('f', 'int')));
+    assert.equal(result.status, 'rejected', text);
+    assert.equal(result.diagnostics[0].code, 'FUNCTION_DEFINITION_NESTED', text);
+  }
+});
+
+test('la traduction d’une définition ne dépend d’aucun document', () => {
+  // The sentence alone stays translatable: only placement knows the context,
+  // exactly as for branches, transfers and returns.
+  assert.equal(translate(define('f', 'int')).status, 'translated');
+});
+
+test('FUNC_DEF : plan périmé si la ligne devient intérieure à une fonction', () => {
+  const text = 'int x;\n\n';
+  const request = input(text, define('f', 'int'), '    ', '\n', text.length - 1);
+  const { plan } = planned(request);
+  const altered = { ...request.document, revision: 1, text: 'int g(void) {\n\n' };
+  const validation = validatePlan(plan, altered);
+  assert.equal(validation.status, 'rejected');
+  assert.equal(validation.diagnostics[0].code, 'STALE_PLAN');
+});
+
+test('MAIN conserve son comportement historique, inchangé', () => {
+  // Lot 2 decided deliberately that braces are not checked for MAIN, and
+  // test/placement.test.mjs asserts it under « erreurs C et accolades non
+  // contrôlées ». That approved contract is left untouched by this fix.
+  for (const text of ['int main(void) {\n', '} } {\n', 'int main(void) {}\n', 'int age;\n']) {
+    const result = planPlacement(input(text, 'Crée la fonction principale.'));
+    assert.equal(result.status, 'planned', text);
+  }
+});
+
+test('les retours et les transferts ne sont pas affectés par ce correctif', () => {
+  assert.equal(planPlacement(input('int main(void) {\n', 'Retourne la valeur 0.')).status, 'planned');
+  assert.equal(planPlacement(input('void g(void) {\n', 'Retourne.')).status, 'planned');
+  assert.equal(planPlacement(input('while (a) {\n', 'Sors de la boucle la plus intérieure.')).status, 'planned');
+  const chain = 'if (a) {\n}\n\n';
+  assert.equal(planPlacement(input(chain, 'Ajoute une branche sinon.', '    ', '\n', chain.length - 1)).status, 'planned');
 });
 
 test('définition puis retour : séquence complète, rien d’implicite', () => {

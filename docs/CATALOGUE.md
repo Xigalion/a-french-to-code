@@ -120,6 +120,7 @@ Types de retour et de paramètre : `int`, `unsigned int`, `float`,
 
 | Intention | Vérification au placement |
 |---|---|
+| `Crée une fonction nommée …` | doit être à la **portée fichier** : aucune accolade encore ouverte. Dans un corps de fonction → refusé ; tout autre contexte non classifiable → refusé. `Crée la fonction principale.` conserve son contrat historique et n'est **pas** vérifiée |
 | `Retourne.` | la fonction englobante doit déclarer `void` |
 | les trois retours de valeur | la fonction englobante ne doit **pas** déclarer `void` |
 | tous les retours | une fonction englobante bracée doit exister, avec un type de retour pris en charge écrit dans son en-tête |

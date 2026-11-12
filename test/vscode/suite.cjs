@@ -1024,6 +1024,26 @@ exports.run = async function run() {
       assert.match(api.inspect().confirmationTitle, /avertissement/);
       await cancel();
     });
+    await test('lot 12 : définition de fonction imbriquée refusée, MAIN inchangé', async () => {
+      const nested = 'int main(void) {\n    \n}\n';
+      let state = await fixture(nested, nested.indexOf('    \n') + 4);
+      await start('Crée une fonction nommée f qui retourne un int.');
+      await accept();
+      assert.equal(api.inspect().diagnostic.stage, 'placement');
+      assert.equal(api.inspect().diagnostic.code, 'FUNCTION_DEFINITION_NESTED');
+      assert.equal(state.document.getText(), nested);
+      await cancel();
+      // MAIN keeps its historical behaviour on the very same line.
+      state = await fixture(nested, nested.indexOf('    \n') + 4);
+      await preview('Crée la fonction principale.');
+      await inserted();
+      assert.ok(state.document.getText().includes('    int main(void) {'));
+      // At file scope, the definition is accepted.
+      state = await fixture('int x;\n\n', 7);
+      await preview('Crée une fonction nommée f qui retourne un int.');
+      await inserted();
+      assert.ok(state.document.getText().includes('int f(void) {'));
+    });
     await test('changer indentSize seul invalide le plan', async () => {
       const { editor } = await fixture();
       await preview('Crée la fonction principale');
