@@ -10,11 +10,13 @@ import { parseCondition, renderCondition } from './condition.ts';
 import type { Condition } from './condition.ts';
 import { analyzeCharacterInstruction } from './characterInstructions.ts';
 import type { CharacterInstruction } from './characterInstructions.ts';
+import { analyzeArrayInstruction } from './arrayInstructions.ts';
+import type { ArrayInstruction } from './arrayInstructions.ts';
 
 /** Half-open offsets in UTF-16 code units, relative to the original input. */
 export type SourceRange = { start: number; end: number };
 
-export type Instruction = NumericInstruction | FunctionInstruction | CharacterInstruction
+export type Instruction = NumericInstruction | FunctionInstruction | CharacterInstruction | ArrayInstruction
   | { kind: 'IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE_IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE'; parameters: Record<string, never> }
@@ -96,6 +98,11 @@ export type DiagnosticCode =
   | 'INVALID_CHARACTER'
   | 'INVALID_CHARACTER_ESCAPE'
   | 'UNSUPPORTED_CHARACTER_CONTENT'
+  | 'MISSING_INDEX'
+  | 'MISSING_CLOSING_BRACKET'
+  | 'UNSUPPORTED_ARRAY_DIMENSIONS'
+  | 'MISSING_ARRAY_DIMENSION'
+  | 'INVALID_ARRAY_DIMENSION'
   | 'UNEXPECTED_TEXT';
 
 export type Diagnostic = {
@@ -143,7 +150,7 @@ const C17_KEYWORDS = new Set([
 
 type Token = { text: string; range: SourceRange };
 type Parameter = { parameter: 'name' | 'value' | 'header' };
-type Rule = { kind: Exclude<Instruction['kind'], 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | FunctionInstruction['kind'] | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind'] | CharacterInstruction['kind']>; parts: (string | Parameter)[] };
+type Rule = { kind: Exclude<Instruction['kind'], 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | FunctionInstruction['kind'] | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind'] | CharacterInstruction['kind'] | ArrayInstruction['kind']>; parts: (string | Parameter)[] };
 
 const RULES: [Rule, ...Rule[]] = [
   { kind: 'MAIN', parts: ['Crée', 'la', 'fonction', 'principale'] },
@@ -238,6 +245,14 @@ function render(text: string, instruction: Instruction): TranslationResult {
     case 'INIT_CHAR': code = `char ${instruction.parameters.name} = ${instruction.parameters.literal};\n`; break;
     case 'ASSIGN_CHAR': code = `${instruction.parameters.name} = ${instruction.parameters.literal};\n`; break;
     case 'PRINT_CHAR': code = `printf("%c", ${instruction.parameters.name});\n`; break;
+    // A dimension is written exactly as it was given, and no initialiser is
+    // ever added: an array declared here holds no value yet.
+    case 'ARRAY_DECL': code = `${instruction.parameters.type} ${instruction.parameters.name}[${instruction.parameters.dimension}];\n`; break;
+    case 'ARRAY_ASSIGN_INT': code = `${renderNumericExpression(instruction.parameters.element)} = ${instruction.parameters.value};\n`; break;
+    case 'ARRAY_ASSIGN_CHAR': code = `${renderNumericExpression(instruction.parameters.element)} = ${instruction.parameters.literal};\n`; break;
+    case 'ARRAY_ASSIGN_EXPRESSION': code = `${renderNumericExpression(instruction.parameters.element)} `
+      + `= ${renderNumericExpression(instruction.parameters.expression)};\n`; break;
+    case 'ARRAY_PRINT': code = `printf("%d", ${renderNumericExpression(instruction.parameters.element)});\n`; break;
     case 'INCLUDE_STDIO': code = '#include <stdio.h>\n'; break;
     case 'PRINT_INT': code = `printf("%d", ${instruction.parameters.name});\n`; break;
     case 'PRINT_FORMATTED': {
@@ -557,6 +572,12 @@ export function translate(text: string): TranslationResult {
     if (tokens[4]) return reject(text, 'UNEXPECTED_TEXT', 'Ce texte supplémentaire n’est pas accepté après sinon.', { start: tokens[4].range.start, end });
     return render(text, { kind: 'ELSE', parameters: {} });
   }
+
+  // Before the character, numeric and display branches: a sentence that does
+  // not designate an array element is declined and reaches them untouched.
+  const arrays = analyzeArrayInstruction(text, tokens, end, identifierDiagnostic);
+  if (arrays?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [arrays.diagnostic] };
+  if (arrays?.status === 'recognized') return render(text, arrays.instruction);
 
   const characters = analyzeCharacterInstruction(text, tokens, end, identifierDiagnostic);
   if (characters?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [characters.diagnostic] };

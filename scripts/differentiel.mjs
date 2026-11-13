@@ -23,6 +23,20 @@ const reference = process.argv[2] ?? 'HEAD';
 // does not cover is a regression. The pattern used is recorded in the lot bilan.
 const flag = process.argv.indexOf('--extensions');
 const extensions = flag === -1 ? undefined : new RegExp(process.argv[flag + 1], 'u');
+// A pattern matched against the whole input over-captures: the random corpus
+// contains `[` and `]` as ordinary atoms, so an approved bucket cannot simply
+// be trusted. `--no-loss` audits what the bucket may contain: an extension is
+// allowed to turn a refusal into an acceptance or into another refusal, never
+// to take away something the previous engine accepted. Any entry whose BEFORE
+// side was accepted is printed and fails the run.
+// Stages a lot declares frozen: there, a matching input buys no indulgence and
+// every divergence is a regression. Without this, a capability leaking into a
+// profile the contract sealed would hide inside the approved bucket, because
+// the input that reveals the leak matches the extension pattern too.
+const frozenFlag = process.argv.indexOf('--frozen-stages');
+const frozen = frozenFlag === -1 ? undefined : new RegExp(process.argv[frozenFlag + 1], 'u');
+const noLoss = process.argv.includes('--no-loss');
+const accepted = /"status":"(?:translated|planned|parsed)"/u;
 const root = process.cwd();
 const extracted = mkdtempSync(join(tmpdir(), 'ca-differentiel-'));
 try {
@@ -77,8 +91,8 @@ const approved = [];
 function record(stage, input, a, b) {
   checked++;
   if (a === b) return;
-  const bucket = extensions?.test(input) ? approved : divergences;
-  bucket.push(bucket.length < 10 ? { stage, input, before: a, after: b } : { stage, input });
+  if (extensions?.test(input) && !frozen?.test(stage)) { approved.push({ stage, input, before: a, after: b }); return; }
+  divergences.push(divergences.length < 10 ? { stage, input, before: a, after: b } : { stage, input });
 }
 
 const ATOMS = [
@@ -146,6 +160,9 @@ const NAMES = ['age', 'x', 'n', 'i', 'total', 'resultat', 'int', 'while', '_v', 
 const EXPRESSIONS = ['2 + 3 * 4', 'a + b', '-a', '(a + b) * c', 'a / 0', 'a % b', '1e5', '2.5', '.5', '1e',
   '(double) 7 / 2', '(unsigned int) a', '(char) a', '(long) a', 'a[0]', "'A'", '"t"', 'a & b',
   '* a', '&a', 'p->x', 'a == b', 'a < b && c', '!a', 'a = b', 'f(a)', '', '  ', 'a a', '((a)',
+  // Lot 15 surface. Before that lot every index here is a refusal.
+  't[i]', 't[0]', 't[i + 1]', 't[u[i]]', 't[i][j]', 't[]', 't[ ]', 't[0', 't]', '1[t]', '(a + b)[0]',
+  't[1.5]', "t['A']", 't[(int) i]', 't[i < 3]', 't[a && b]', '&t[0]', '* t[0]', 't[i] + t[j]', 't [i]',
   'a +', '+ a', '1u', '2.5f', '0x1f', '12abc', 'a, b', 'a; b', '😀', 'a' + ' + a'.repeat(600)];
 const TYPES = ['int', 'unsigned int', 'float', 'double', 'char', 'long'];
 const FORMATS = ['décimal', 'hexadécimal', 'octal', 'décimal non signé', 'binaire'];
@@ -199,6 +216,28 @@ function* sentences() {
     "Affecte le caractère 'A' a c.", 'Déclare une variable de type unsigned char nommée c.',
     'Affecte à n le résultat numérique de "(char) 65".', 'Crée un bloc si "(char) a < 5".',
     'Affiche le caractere c.', 'Affiche le texte "A".'];
+  // Lot 15 surface. Before that lot every line here is a refusal too.
+  for (const type of [...TYPES, 'unsigned char', 'void']) {
+    for (const dimension of ['10', '1', '0', '-3', 'n', '3.5', '03', '']) {
+      yield `Déclare un tableau de type ${type} nommé t de dimension ${dimension}.`;
+    }
+  }
+  for (const index of ['0', 'i', 'i + 1', 'u[i]', '', ' ', '1.5', "'A'", '(int) i', 'i < 3', '1 / 0']) {
+    yield* [`Affecte la valeur 5 à l’élément "${index}" de t.`,
+      `Affecte la valeur 5 à l'élément "${index}" de t.`,
+      `Affecte le caractère 'A' à l’élément "${index}" de t.`,
+      `Affecte à l’élément "${index}" de t le résultat numérique de "a + 1".`,
+      `Affiche l’élément "${index}" de t.`];
+  }
+  yield* ['Déclare un tableau.', 'Déclare un tableau de type int nommé t.',
+    'Déclare un tableau de type nommé t de dimension 3.',
+    'Déclare un tableau de type int nommé int de dimension 3.',
+    'Déclare un tableau de type int nommé t de dimension 3 = {1, 2, 3}.',
+    'Affiche l’élément.', 'Affiche l’élément de t.', 'Affiche l’élément "0 de t.',
+    'Affiche l’élément "0" t.', 'Affiche l’élément "0" de.', 'Affiche l’élément "0" de t encore.',
+    'Affecte la valeur x à l’élément "0" de t.', 'Affecte à l’élément "0" de t le résultat de "1".',
+    "Affecte le caractère 'ab' à l’élément \"0\" de t.", "Affecte le caractère ' ' à l’élément \"0\" de t.",
+    'Affecte le tableau u à t.', 'Affiche la chaîne t.', 'Affiche l’element "0" de t.'];
   for (const digits of ['0', '2', '17', '99', 'x']) {
     yield `Affiche x en notation fixe avec ${digits} décimales.`;
     yield `Affiche x en notation scientifique avec ${digits} décimales.`;
@@ -227,7 +266,11 @@ const PLACED = ['Déclare un caractère nommé c.', "Affecte le caractère ' ' �
   'Affiche le caractère c.', 'Crée un entier nommé age de valeur 20.', 'Crée la fonction principale.',
   'Crée un bloc si "a < 3".', 'Ajoute une branche sinon.', 'Sors de la boucle la plus intérieure.',
   'Retourne la valeur 0.', 'Crée une fonction nommée f qui retourne un int.',
-  'Affecte à x le résultat de "a + b".', 'Crée une boucle tant que "i < 3".'];
+  'Affecte à x le résultat de "a + b".', 'Crée une boucle tant que "i < 3".',
+  'Déclare un tableau de type int nommé t de dimension 3.',
+  'Affecte la valeur 5 à l’élément "0" de t.', 'Affiche l’élément "i" de t.',
+  'Affecte à l’élément "i" de t le résultat numérique de "a + 1".',
+  'Crée un bloc si "t[i] > 0".'];
 
 for (const text of DOCUMENTS) {
   for (const offset of new Set([0, text.length, Math.max(0, text.length - 1), Math.floor(text.length / 2)])) {
@@ -247,6 +290,9 @@ console.log(`référence comparée     : ${reference}`);
 console.log(`comparaisons           : ${checked}`);
 if (extensions) console.log(`extensions approuvées  : ${approved.length}  (motif /${extensions.source}/)`);
 console.log(`régressions            : ${divergences.length}`);
+const unexplained = noLoss ? approved.filter(entry => accepted.test(entry.before)) : [];
+if (noLoss) console.log(`capacités perdues      : ${unexplained.length}  (extensions dont l’entrée était acceptée avant)`);
+for (const entry of unexplained.slice(0, 10)) console.log('PERTE ' + JSON.stringify(entry).slice(0, 1500));
 for (const divergence of divergences.slice(0, 10)) console.log('RÉGRESSION ' + JSON.stringify(divergence).slice(0, 1500));
 for (const extension of approved.slice(0, 6)) console.log('extension  ' + JSON.stringify(extension).slice(0, 600));
 // --all lists every divergent input, so an extension pattern can be audited
@@ -256,4 +302,4 @@ if (process.argv.includes('--all')) {
     for (const entry of list) console.log(`${label}\t${entry.stage}\t${JSON.stringify(entry.input)}`);
   }
 }
-process.exit(divergences.length ? 1 : 0);
+process.exit(divergences.length || unexplained.length ? 1 : 0);

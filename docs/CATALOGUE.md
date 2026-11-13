@@ -160,6 +160,46 @@ réservé au lot 16, où il est l'objet enseigné.
 
 ---
 
+## Domaine 5 — Tableaux et indexation (lot 15)
+
+Cinq formulations dédiées. Aucune dimension, valeur ni initialisation
+n'est inventée, et **aucune borne n'est vérifiée**.
+
+| Phrase française | Code C produit | Information |
+|---|---|---|
+| `Déclare un tableau de type int nommé t de dimension 10.` | `int t[10];` | ARRAY_NOT_ASSIGNABLE |
+| `Déclare un tableau de type char nommé t de dimension 10.` | `char t[10];` | ARRAY_NOT_ASSIGNABLE, CHAR_ARRAY_NOT_STRING |
+| `Affecte la valeur 5 à l'élément "0" de t.` | `t[0] = 5;` | INDEX_NOT_CHECKED |
+| `Affecte le caractère 'A' à l'élément "0" de t.` | `t[0] = 'A';` | INDEX_NOT_CHECKED |
+| `Affecte à l'élément "i" de t le résultat numérique de "a + 1".` | `t[i] = (a + 1);` | INDEX_NOT_CHECKED |
+| `Affiche l'élément "0" de t.` | `printf("%d", t[0]);` | INDEX_NOT_CHECKED |
+
+L'indexation est aussi devenue un **terme d'expression** dans les profils
+numérique et condition, sans enveloppe nouvelle :
+
+| Phrase française | Code C produit | Information |
+|---|---|---|
+| `Affecte à somme le résultat numérique de "somme + t[i]".` | `somme = (somme + t[i]);` | INDEX_NOT_CHECKED |
+| `Crée un bloc si "t[i] > 0".` | `if (t[i] > 0) { ⏎ ⏎ }` | INDEX_NOT_CHECKED |
+| `Retourne le résultat numérique de "t[0]".` | `return t[0];` | INDEX_NOT_CHECKED, RETURN_ENDS_FUNCTION |
+| `Appelle traiter avec "t[i]".` | `traiter(t[i]);` | INDEX_NOT_CHECKED, CALL_NOT_RESOLVED |
+
+Types de tableau : `int`, `unsigned int`, `float`, `double`, `char`.
+Dimension : un entier décimal **strictement positif** écrit en chiffres,
+jamais une expression ni un nom.
+
+Grammaire de l'indexation : `nom[indice]` seulement. L'indice est une
+**expression entière** quel que soit le profil englobant — ni flottant,
+ni conversion, ni comparaison, ni opérateur logique. `t[i][j]` est refusé
+(`UNSUPPORTED_ARRAY_DIMENSIONS`), `t[u[i]]` est accepté.
+
+Le **profil entier historique n'est pas ouvert** : `Affecte à x le
+résultat de "t[0]".` et `Retourne le résultat de "t[0]".` restent refusés.
+Aucune liste d'initialisation `{…}`, aucune affectation globale de
+tableau, aucun affichage `%s` ou `%c` d'un élément.
+
+---
+
 ## Limites de complexité
 
 | Limite | Valeur |
@@ -193,8 +233,9 @@ sous-expressions ni entre les clauses d'une même instruction.
 
 ## Non livré
 
-`switch`, `goto`, tableaux, chaînes de caractères, pointeurs, `struct`,
-mémoire dynamique, fichiers, compilation séparée. Types `long`, `short`,
-`unsigned char`, `signed char`, `static`, pointeurs : refusés. Un littéral
-caractère dans une expression : refusé. Paliers de liberté 2 et 3 : non
-spécifiés.
+`switch`, `goto`, chaînes de caractères, pointeurs, `struct`, mémoire
+dynamique, fichiers, compilation séparée. Tableaux à plusieurs dimensions,
+listes d'initialisation `{…}`, affectation globale d'un tableau. Types
+`long`, `short`, `unsigned char`, `signed char`, `static`, pointeurs :
+refusés. Un littéral caractère dans une expression : refusé. Paliers de
+liberté 2 et 3 : non spécifiés.

@@ -163,7 +163,9 @@ const failures = [
   ['a ** b', 'UNSUPPORTED_EXPRESSION_OPERATOR', '**', false],
   ['a--b', 'UNSUPPORTED_EXPRESSION_OPERATOR', '--', false],
   ['a++b', 'UNSUPPORTED_EXPRESSION_OPERATOR', '++', false],
-  ['f(a)', 'MISSING_OPERATOR', '(', true], ['a[0]', 'INVALID_EXPRESSION_TOKEN', '[', false],
+  // `a[0]` left this list at lot 15: indexing is an approved extension of the
+  // numeric profile. Its grammar, limits and refusals are in arrays.test.mjs.
+  ['f(a)', 'MISSING_OPERATOR', '(', true],
   ['a; b=3', 'INVALID_EXPRESSION_TOKEN', ';', false], ['a // b', 'UNSUPPORTED_EXPRESSION_OPERATOR', '//', false],
   ['a \\ b', 'INVALID_EXPRESSION_TOKEN', '\\', false], ['(DOUBLE) a', 'MISSING_OPERATOR', 'a', true],
 ];

@@ -44,7 +44,11 @@ export function analyzeCalculations(translation: TranslationResult): Calculation
     // Every argument is inspected; the final sort puts the advisories back in
     // source order whatever the evaluation order C17 leaves unspecified.
     stack = [...instruction.parameters.args].reverse();
-  } else if (instruction.kind === 'RETURN_EXPRESSION' || instruction.kind === 'RETURN_NUMERIC'
+  } else if (instruction.kind === 'ARRAY_ASSIGN_EXPRESSION') {
+    stack = [instruction.parameters.expression, instruction.parameters.element];
+  } else if (instruction.kind === 'ARRAY_ASSIGN_INT' || instruction.kind === 'ARRAY_ASSIGN_CHAR'
+    || instruction.kind === 'ARRAY_PRINT') stack = [instruction.parameters.element];
+  else if (instruction.kind === 'RETURN_EXPRESSION' || instruction.kind === 'RETURN_NUMERIC'
     || instruction.kind === 'ASSIGN_EXPRESSION' || instruction.kind === 'NUMERIC_INIT'
     || instruction.kind === 'NUMERIC_ASSIGN') stack = [instruction.parameters.expression];
   else return report;
@@ -52,6 +56,9 @@ export function analyzeCalculations(translation: TranslationResult): Calculation
     const node = stack.pop();
     if (!node) break;
     if (node.kind === 'negation' || node.kind === 'cast') { stack.push(node.operand); continue; }
+    // An index is an ordinary integer expression: a division by zero written
+    // inside it is the same local fact as anywhere else.
+    if (node.kind === 'index') { stack.push(node.index); continue; }
     if (node.kind !== 'binary') continue;
     stack.push(node.right, node.left);
     if (node.operator !== '/' && node.operator !== '%') continue;

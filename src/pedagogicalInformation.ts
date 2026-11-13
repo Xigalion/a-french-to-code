@@ -6,7 +6,8 @@ export type PedagogicalInformation = {
   code: 'SHORT_CIRCUIT_AND' | 'SHORT_CIRCUIT_OR' | 'LOGICAL_NOT'
     | 'WHILE_PRETEST' | 'DO_WHILE_POSTTEST' | 'FOR_CLAUSE_ORDER'
     | 'FUNCTION_SCOPE' | 'RETURN_ENDS_FUNCTION' | 'PARAMETERS_BY_VALUE' | 'CALL_NOT_RESOLVED'
-    | 'CHARACTER_IS_INTEGER' | 'CHARACTER_STORAGE' | 'CHARACTER_FORMAT';
+    | 'CHARACTER_IS_INTEGER' | 'CHARACTER_STORAGE' | 'CHARACTER_FORMAT'
+    | 'INDEX_NOT_CHECKED' | 'ARRAY_NOT_ASSIGNABLE' | 'CHAR_ARRAY_NOT_STRING';
   severity: 'information';
   range: SourceRange;
   message: string;
@@ -32,7 +33,45 @@ const MOMENT: Readonly<Record<string, { code: PedagogicalInformation['code']; me
  * The loop entries state when the condition is evaluated and stay on the
  * passive information channel: they never become warnings.
  */
+/** The first subscript delimiters found in an instruction's parameters, in
+ * source order. Walked structurally rather than per intent, so an envelope
+ * that later accepts an expression cannot silently lose the information. */
+function firstIndexRange(value: unknown): SourceRange | undefined {
+  if (Array.isArray(value)) {
+    for (const item of value) { const found = firstIndexRange(item); if (found) return found; }
+    return undefined;
+  }
+  if (typeof value !== 'object' || value === null) return undefined;
+  const node = value as { kind?: unknown; bracketRange?: unknown };
+  const bracket = node.bracketRange as SourceRange | undefined;
+  if (node.kind === 'index' && bracket && typeof bracket.start === 'number' && typeof bracket.end === 'number') return bracket;
+  for (const child of Object.values(value)) { const found = firstIndexRange(child); if (found) return found; }
+  return undefined;
+}
+
 export function explainInstruction(result: TranslationResult): PedagogicalInformation[] {
+  if (result.status !== 'translated') return [];
+  if (result.instruction.kind === 'ARRAY_DECL') {
+    const parameters = result.instruction.parameters;
+    const declared: PedagogicalInformation[] = [{ code: 'ARRAY_NOT_ASSIGNABLE', severity: 'information',
+      range: { ...parameters.nameRange },
+      message: 'Un tableau ne s’affecte pas globalement en C17 : après cette déclaration, « ' + parameters.name
+        + ' = … » n’existe pas, et chaque élément se remplit séparément. Aucune valeur initiale n’est écrite ici.' }];
+    if (parameters.type !== 'char') return declared;
+    return [...declared, { code: 'CHAR_ARRAY_NOT_STRING', severity: 'information',
+      range: { ...parameters.nameRange },
+      message: 'Un tableau de char contient des codes de caractères : il ne devient une chaîne C que si un caractère '
+        + 'nul en marque la fin, et aucun n’est écrit ici. C-A ne traite ce tableau comme une chaîne à aucun moment.' }];
+  }
+  const bracket = firstIndexRange(result.instruction.parameters);
+  if (!bracket) return explainStructure(result);
+  return [{ code: 'INDEX_NOT_CHECKED', severity: 'information', range: { ...bracket },
+    message: 'C-A ne vérifie pas les bornes de ce tableau : ni sa dimension, ni la valeur de cet indice ne sont '
+      + 'connues ici. En C17, lire ou écrire hors des bornes a un comportement indéfini, et rien ne le signale à '
+      + 'l’exécution. Aucun dépassement n’est ici détecté ni exclu.' }, ...explainStructure(result)];
+}
+
+function explainStructure(result: TranslationResult): PedagogicalInformation[] {
   const entries: PedagogicalInformation[] = [];
   if (result.status !== 'translated') return entries;
   const instruction = result.instruction;

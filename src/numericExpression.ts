@@ -1,15 +1,19 @@
 import type { Diagnostic, SourceRange } from './translate.ts';
-import { NUMERIC_CAPABILITIES, parseCore } from './expressionCore.ts';
+import { INDEX_CAPABILITIES, NUMERIC_CAPABILITIES, parseCore } from './expressionCore.ts';
 import type { CoreNameValidator, Token } from './expressionCore.ts';
 
 export type NumericType = 'int' | 'unsigned int' | 'float' | 'double' | 'char';
 export type NumericExpression =
   | { kind: 'literal'; value: string; range: SourceRange }
   | { kind: 'name'; name: string; range: SourceRange }
+  /** Only a name is indexable, which is why `array` is not the whole union. */
+  | { kind: 'index'; array: NumericName; index: NumericExpression; range: SourceRange; bracketRange: SourceRange }
   | { kind: 'negation'; operand: NumericExpression; range: SourceRange }
   | { kind: 'cast'; type: NumericType; operand: NumericExpression; range: SourceRange }
   | { kind: 'binary'; operator: '+' | '-' | '*' | '/' | '%'; left: NumericExpression; right: NumericExpression; range: SourceRange };
 
+export type NumericName = { kind: 'name'; name: string; range: SourceRange };
+export type IndexedElement = Extract<NumericExpression, { kind: 'index' }>;
 export type NameValidator = CoreNameValidator;
 export type NumericExpressionResult = { status: 'parsed'; expression: NumericExpression } | { status: 'rejected'; diagnostic: Diagnostic };
 export type { Token };
@@ -26,10 +30,21 @@ export function parseNumericExpression(source: string, start: number, end: numbe
   return { status: 'parsed', expression: result.node as unknown as NumericExpression };
 }
 
+/** Subscript grammar alone, for an envelope that designates an element
+ * outside any enclosing expression. Integer-only, as C17 requires. */
+export function parseIndexExpression(source: string, start: number, end: number, validateName: NameValidator,
+  missingIndexMessage = 'Il manque l’indice de l’élément.', budget: { count: number } = { count: 0 }): NumericExpressionResult {
+  const result = parseCore(source, start, end, validateName, INDEX_CAPABILITIES, missingIndexMessage, budget);
+  if (result.status === 'rejected') return result;
+  return { status: 'parsed', expression: result.node as unknown as NumericExpression };
+}
+
 export function renderNumericExpression(expression: NumericExpression): string {
   switch (expression.kind) {
     case 'literal': return expression.value;
     case 'name': return expression.name;
+    // No parentheses: `t[i]` is already a postfix designation in C17.
+    case 'index': return `${expression.array.name}[${renderNumericExpression(expression.index)}]`;
     case 'negation': return `(-${renderNumericExpression(expression.operand)})`;
     case 'cast': return `((${expression.type}) ${renderNumericExpression(expression.operand)})`;
     case 'binary': return `(${renderNumericExpression(expression.left)} ${expression.operator} ${renderNumericExpression(expression.right)})`;

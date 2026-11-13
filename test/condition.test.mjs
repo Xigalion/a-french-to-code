@@ -97,7 +97,9 @@ for (const operator of ['+=', '-=', '*=', '/=', '%=', '++', '--', '<<', '>>', '&
     refused(source, 'UNSUPPORTED_CONDITION_OPERATOR', { start: at, end: at + operator.length });
   });
 }
-for (const condition of ['f(a)', 'a[0]', '1,2', '"oui"', 'a; int injected', '(a < b) + 1', '(int)(a < b)', '-(a < b)', 'a == b == c']) {
+// `a[0]` left this list at lot 15: indexing is an approved extension of the
+// condition profile. Its grammar, limits and refusals are in arrays.test.mjs.
+for (const condition of ['f(a)', '1,2', '"oui"', 'a; int injected', '(a < b) + 1', '(int)(a < b)', '-(a < b)', 'a == b == c']) {
   test(`IF pas de syntaxe hors contrat ${condition}`, () => {
     assert.equal(translate(phrase(condition)).status, 'rejected');
   });

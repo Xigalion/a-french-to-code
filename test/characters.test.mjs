@@ -227,8 +227,9 @@ test('la conversion char est acceptée dans les deux profils qui déclarent la c
 // 5. Rien des lots 15 à 18 n’est ouvert
 // ---------------------------------------------------------------------------
 
+// `a[0]` left this list at lot 15, which opened indexing in the numeric
+// profile by an approved extension; see arrays.test.mjs.
 const STILL_REFUSED = [
-  ['a[0]', 'INVALID_EXPRESSION_TOKEN'],
   ['&a', 'UNSUPPORTED_EXPRESSION_OPERATOR'],
   ['* a', 'MISSING_OPERAND'],
   ['p->x', 'UNSUPPORTED_EXPRESSION_OPERATOR'],

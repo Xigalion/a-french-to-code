@@ -13,6 +13,9 @@ export type CoreNode =
   | { kind: 'integer'; value: string; range: SourceRange }
   | { kind: 'literal'; value: string; range: SourceRange }
   | { kind: 'name'; name: string; range: SourceRange }
+  /** `bracketRange` covers the subscript delimiters alone, so the passive
+   * pedagogy can point at the designation without the array name. */
+  | { kind: 'index'; array: CoreNode; index: CoreNode; range: SourceRange; bracketRange: SourceRange }
   | { kind: 'negation'; operand: CoreNode; range: SourceRange }
   | { kind: 'cast'; type: CoreNumericType; operand: CoreNode; range: SourceRange }
   | { kind: 'binary'; operator: '+' | '-' | '*' | '/' | '%'; left: CoreNode; right: CoreNode; range: SourceRange }
@@ -30,6 +33,13 @@ export type CoreResult = { status: 'parsed'; node: CoreNode } | { status: 'rejec
 export type ExpressionCapabilities = {
   /** `integer`: the lot 6 grammar. `numeric`: lot 7 literals and tokenizing. */
   readonly literals: 'integer' | 'numeric';
+  /** Node kind produced for a literal. Separate from the grammar because the
+   * subscript profile borrows the integer grammar while building the nodes of
+   * the numeric tree that encloses it. */
+  readonly literalKind: 'integer' | 'literal';
+  /** `nom[…]`. Off in the lot 6 profile, which therefore cannot build an
+   * index node at all; the narrowing in `expression.ts` relies on it. */
+  readonly indexing: boolean;
   /** Parenthesized conversions `(type) operand`. */
   readonly casts: boolean;
   /** The exact type designations a conversion accepts. Listed rather than
@@ -43,6 +53,8 @@ export type ExpressionCapabilities = {
 
 export const INTEGER_CAPABILITIES: ExpressionCapabilities = {
   literals: 'integer',
+  literalKind: 'integer',
+  indexing: false,
   casts: false,
   castTypes: [],
   logic: false,
@@ -52,6 +64,8 @@ export const INTEGER_CAPABILITIES: ExpressionCapabilities = {
 
 export const NUMERIC_CAPABILITIES: ExpressionCapabilities = {
   literals: 'numeric',
+  literalKind: 'literal',
+  indexing: true,
   casts: true,
   castTypes: ['int', 'unsigned int', 'float', 'double', 'char'],
   logic: false,
@@ -61,11 +75,29 @@ export const NUMERIC_CAPABILITIES: ExpressionCapabilities = {
 
 export const CONDITION_CAPABILITIES: ExpressionCapabilities = {
   literals: 'numeric',
+  literalKind: 'literal',
+  indexing: true,
   casts: true,
   castTypes: ['int', 'unsigned int', 'float', 'double', 'char'],
   logic: true,
   invalidTokenMessage: 'Cet élément n’appartient pas à une expression numérique prise en charge.',
   invariantMessage: 'Invariant interne : expression numérique analysée absente.',
+};
+
+/** The subscript profile of lot 15. Not a published profile: it is selected
+ * only between `[` and `]`, whatever the enclosing profile allows, because
+ * C17 requires an integer index. A float, a conversion or a logical result
+ * must not become a valid index merely by being written inside a numeric
+ * expression. */
+export const INDEX_CAPABILITIES: ExpressionCapabilities = {
+  literals: 'integer',
+  literalKind: 'literal',
+  indexing: true,
+  casts: false,
+  castTypes: [],
+  logic: false,
+  invalidTokenMessage: 'Cet élément n’appartient pas à un indice entier pris en charge.',
+  invariantMessage: 'Invariant interne : indice analysé absent.',
 };
 
 const CAST_WORDS = new Set(['int', 'unsigned', 'float', 'double', 'signed', 'short', 'long', 'char', 'void', '_Bool', '_Complex', '_Imaginary', '_Atomic', 'const', 'volatile', 'restrict']);
@@ -79,7 +111,9 @@ export function isComparison(text: string): text is ComparisonOperator {
  * instruction share a single token allowance, so a multi-clause envelope cannot
  * reset the global limit; depth stays per-expression. */
 export function parseCore(source: string, start: number, end: number, validateName: CoreNameValidator,
-  capabilities: ExpressionCapabilities, missingMessage: string, budget: { count: number } = { count: 0 }): CoreResult {
+  profile: ExpressionCapabilities, missingMessage: string, budget: { count: number } = { count: 0 }): CoreResult {
+  // Swapped only for the inside of a subscript, and always restored.
+  let capabilities = profile;
   let position = start;
   const comparisonRanges = new Map<CoreNode, SourceRange>();
   let cached: Token | undefined;
@@ -153,6 +187,40 @@ export function parseCore(source: string, start: number, end: number, validateNa
     const operand = asNumeric(unary(depth + 1));
     return operand && { kind: 'cast', type: typeText as CoreNumericType, operand, range: { start: opening.range.start, end: operand.range.end } };
   }
+  /** `nom '[' indice ']'`, attached to a name and to nothing else: neither a
+   * parenthesized group, nor a literal, nor a call result is indexable here.
+   * A second subscript is refused rather than parsed: two dimensions are a
+   * construction of their own, with no contract. */
+  function subscript(array: CoreNode, depth: number): CoreNode | undefined {
+    const opening = take()!;
+    if (depth === MAX_EXPRESSION_DEPTH) return tooComplex(opening);
+    const outer = capabilities;
+    capabilities = INDEX_CAPABILITIES;
+    let index: CoreNode | undefined;
+    try {
+      const first = peek();
+      if (diagnostic) return undefined;
+      if (!first || first.text === ']') {
+        const at = first?.range.start ?? end;
+        return fail('MISSING_INDEX', 'Il manque l’indice de l’élément.', { start: at, end: at });
+      }
+      index = sum(depth + 1);
+    } finally {
+      capabilities = outer;
+    }
+    if (!index) return undefined;
+    const closing = peek();
+    if (diagnostic) return undefined;
+    if (!closing) return fail('MISSING_CLOSING_BRACKET', 'Il manque le crochet fermant de l’indice.', { start: end, end });
+    if (closing.text !== ']') return missingOperator(closing);
+    take();
+    const after = peek();
+    if (diagnostic) return undefined;
+    if (after?.text === '[') return fail('UNSUPPORTED_ARRAY_DIMENSIONS',
+      'Les tableaux à plusieurs dimensions ne sont pas pris en charge.', after.range);
+    return { kind: 'index', array, index, range: { start: array.range.start, end: closing.range.end },
+      bracketRange: { start: opening.range.start, end: closing.range.end } };
+  }
   function unary(depth: number): CoreNode | undefined {
     const token = peek();
     if (diagnostic) return undefined;
@@ -190,7 +258,11 @@ export function parseCore(source: string, start: number, end: number, validateNa
       return grouped;
     }
     if (capabilities.literals === 'integer') {
-      if (/^(?:0|[1-9][0-9]*)$/u.test(token.text)) return { kind: 'integer', value: token.text, range: token.range };
+      if (/^(?:0|[1-9][0-9]*)$/u.test(token.text)) {
+        return capabilities.literalKind === 'integer'
+          ? { kind: 'integer', value: token.text, range: token.range }
+          : { kind: 'literal', value: token.text, range: token.range };
+      }
     } else if (/^[0-9.]/u.test(token.text)) {
       if (/^(?:0|[1-9][0-9]*)[uU]?$/u.test(token.text)
         || /^(?:(?:[0-9]+\.[0-9]*|\.[0-9]+)(?:[eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+)[fF]?$/u.test(token.text)) {
@@ -202,7 +274,12 @@ export function parseCore(source: string, start: number, end: number, validateNa
     }
     if (/^[\p{L}_]/u.test(token.text)) {
       diagnostic = validateName(token);
-      return diagnostic ? undefined : { kind: 'name', name: token.text, range: token.range };
+      if (diagnostic) return undefined;
+      const name: CoreNode = { kind: 'name', name: token.text, range: token.range };
+      if (!capabilities.indexing) return name;
+      const next = peek();
+      if (diagnostic) return undefined;
+      return next?.text === '[' ? subscript(name, depth) : name;
     }
     return fail('INVALID_EXPRESSION_TOKEN', capabilities.invalidTokenMessage, token.range);
   }

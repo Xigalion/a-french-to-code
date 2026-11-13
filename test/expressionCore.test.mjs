@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { INTEGER_CAPABILITIES, NUMERIC_CAPABILITIES, CONDITION_CAPABILITIES } from '../src/expressionCore.ts';
+import { INTEGER_CAPABILITIES, NUMERIC_CAPABILITIES, CONDITION_CAPABILITIES, INDEX_CAPABILITIES } from '../src/expressionCore.ts';
 import { parseExpression } from '../src/expression.ts';
 import { parseNumericExpression } from '../src/numericExpression.ts';
 import { parseCondition } from '../src/condition.ts';
@@ -18,31 +18,42 @@ const PROFILES = [
 
 // The capability records are the lot 13 contract. A future lot that needs a new
 // capability must add a field; it must never silently widen an existing profile.
-test('capacités déclarées des trois profils historiques', () => {
+test('capacités déclarées des quatre profils', () => {
+  // The lot 6 profile stays exactly as lot 13 sealed it: lot 15 added two
+  // fields, and left `indexing` off here on purpose.
   assert.deepEqual(INTEGER_CAPABILITIES, {
-    literals: 'integer', casts: false, castTypes: [], logic: false,
+    literals: 'integer', literalKind: 'integer', indexing: false, casts: false, castTypes: [], logic: false,
     invalidTokenMessage: 'Cet élément n’appartient pas à une expression entière prise en charge.',
     invariantMessage: 'Invariant interne : expression analysée absente.',
   });
-  // `char` entered castTypes at lot 14 by decision D2; it is the only change
-  // this record has undergone since lot 13 sealed it.
+  // `char` entered castTypes at lot 14 by decision D2; `indexing` was opened
+  // at lot 15 in these two profiles only, as an approved extension.
   assert.deepEqual(NUMERIC_CAPABILITIES, {
-    literals: 'numeric', casts: true, castTypes: ['int', 'unsigned int', 'float', 'double', 'char'], logic: false,
+    literals: 'numeric', literalKind: 'literal', indexing: true, casts: true,
+    castTypes: ['int', 'unsigned int', 'float', 'double', 'char'], logic: false,
     invalidTokenMessage: 'Cet élément n’appartient pas à une expression numérique prise en charge.',
     invariantMessage: 'Invariant interne : expression numérique analysée absente.',
   });
   assert.deepEqual(CONDITION_CAPABILITIES, {
-    literals: 'numeric', casts: true, castTypes: ['int', 'unsigned int', 'float', 'double', 'char'], logic: true,
+    literals: 'numeric', literalKind: 'literal', indexing: true, casts: true,
+    castTypes: ['int', 'unsigned int', 'float', 'double', 'char'], logic: true,
     invalidTokenMessage: 'Cet élément n’appartient pas à une expression numérique prise en charge.',
     invariantMessage: 'Invariant interne : expression numérique analysée absente.',
+  });
+  // Never published as a profile: selected only between `[` and `]`.
+  assert.deepEqual(INDEX_CAPABILITIES, {
+    literals: 'integer', literalKind: 'literal', indexing: true, casts: false, castTypes: [], logic: false,
+    invalidTokenMessage: 'Cet élément n’appartient pas à un indice entier pris en charge.',
+    invariantMessage: 'Invariant interne : indice analysé absent.',
   });
 });
 
 // Domain 5 constructions must still be refused, with the historical codes, until
 // the lot that introduces each one is itself contracted and approved.
+// `a[0]` and `t[i] + 1` left this list at lot 15: indexing is now an approved
+// extension of the numeric and condition profiles. Their refusal by the lot 6
+// profile is still locked, just below.
 const REFUSED = [
-  ['a[0]', 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN'],
-  ['t[i] + 1', 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN'],
   ['a & b', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_CONDITION_OPERATOR'],
   ['&a', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_CONDITION_OPERATOR'],
   ['* a', 'MISSING_OPERAND', 'MISSING_OPERAND', 'MISSING_OPERAND'],
@@ -58,6 +69,16 @@ for (const [source, ...codes] of REFUSED) {
       assert.equal(result.status, 'rejected', `${name} devrait refuser ${source}`);
       assert.equal(result.diagnostic.code, codes[index], `${name} / ${source}`);
     });
+  });
+}
+
+// The lot 6 profile declares no indexing capability, so it cannot build an
+// index node: `[` stays an invalid token there, exactly as before lot 15.
+for (const source of ['a[0]', 't[i] + 1', 't[]', 't[i][j]']) {
+  test(`le profil entier reste fermé à l’indexation : ${JSON.stringify(source)}`, () => {
+    const result = parseExpression(source, 0, source.length, validate);
+    assert.equal(result.status, 'rejected');
+    assert.equal(result.diagnostic.code, 'INVALID_EXPRESSION_TOKEN');
   });
 }
 
