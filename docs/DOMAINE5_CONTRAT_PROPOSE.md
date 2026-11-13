@@ -1,17 +1,22 @@
 # Domaine 5 — « Tableaux, chaînes et pointeurs » : découpage et contrat du premier lot
 
-**Statut au 13 novembre 2026 : proposition documentaire à valider. Aucune
-implémentation commencée, aucune ligne de code applicatif ou de test
-modifiée.** Les lots 1 à 12 restent les seuls livrés, avec **2 648 tests
-Node réussis** et **97 tests hôte VS Code non exécutés**.
+**Statut au 13 novembre 2026 : découpage approuvé, décisions D1 à D6
+validées, lot 13 livré.** Les lots 14 à 18 restent à implémenter et le lot
+14 attend la revue du lot 13. Dépôt : **2 662 tests Node réussis** et
+**97 tests hôte VS Code non exécutés**.
+
+Le bilan du lot 13 est dans `docs/LOT13_CONTRAT_ET_BILAN.md`. Le §4 de ce
+document-ci est le contrat qui y a été exécuté ; il est conservé tel qu'il
+a été approuvé, à titre de référence.
 
 Périmètre confirmé par le fondateur : **option B**, le modèle 1 couvre
 l'intégralité des neuf domaines. Les domaines 5 à 9 en font partie et ne
 sont pas reportés.
 
 Ce document propose un découpage, détaille le contrat du **premier lot**,
-et isole au §5 les **décisions réellement bloquantes**. Trois d'entre elles
-doivent être tranchées avant toute autorisation d'implémentation.
+et isole au §5 les **décisions réellement bloquantes**. Toutes ont été
+tranchées le 13 novembre 2026 ; chaque décision porte désormais son
+arbitrage.
 
 ---
 
@@ -232,7 +237,14 @@ affichage avec document final exact ; non-régression des sorties des lots 1
 
 ---
 
-## 4. Contrat du lot préparatoire — Lot 13, si D1 est approuvée
+## 4. Contrat du lot préparatoire — Lot 13 — **approuvé et livré**
+
+> **Livré le 13 novembre 2026.** Critère du §4.2 tenu : les 2 648 tests
+> existants passent **sans aucune modification**, et 14 tests nouveaux
+> s'y ajoutent. Le repli du §4.3 n'a pas été nécessaire. Équivalence avec
+> le moteur précédent démontrée sur **1 322 877 comparaisons
+> différentielles, zéro divergence**. Voir `docs/LOT13_CONTRAT_ET_BILAN.md`.
+
 
 **Aucune compétence pédagogique. Aucun changement de comportement
 observable.** Un seul objectif : rendre les quatre profils futurs
@@ -403,15 +415,20 @@ instrument de mesure de la complétion.
 
 ---
 
-## 8. Ce que j'attends pour commencer
+## 8. État des autorisations
 
-Pour **le lot 13** : la décision D1.
+| | État au 13 novembre 2026 |
+|---|---|
+| D1 — noyau unifié | **approuvée** |
+| D2 — `char` dans le système de types | **approuvée pour le lot 14** |
+| D3 — pointeurs, un niveau d'indirection | **approuvée**, non définitive |
+| D4 — `string.h` | **reportée**, à réexaminer |
+| D5 — `INDEX_NOT_CHECKED` au lot 15 | **approuvée** |
+| D6 — initialisateurs | **approuvée**, non définitive |
+| Lot 13 | **livré** |
+| Lot 14 | contrat approuvé, **implémentation suspendue à la revue du lot 13** |
+| Lots 15 à 18 | découpage approuvé, contrats à rédiger lot par lot |
 
-Pour **le lot 14** : les décisions D1 (seulement si l'option B est retenue,
-puisque 14 n'a aucun impact parseur) et D2, plus l'approbation du contrat
-du §3.
-
-Pour **les lots 15 à 18** : D3, D4, D5 et D6, qui peuvent être tranchées
-plus tard, au contrat de chaque lot.
-
-Aucune implémentation ne commencera avant validation du premier contrat.
+Les arbitrages D3, D4 et D6 sont explicitement **non définitifs** : ils
+fixent la progression pédagogique du domaine 5, pas les limites du modèle 1.
+Les domaines 6 à 9 pourront exiger d'autres constructions C17.
