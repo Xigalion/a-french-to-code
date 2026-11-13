@@ -95,6 +95,8 @@ function record(stage, input, a, b) {
   divergences.push(divergences.length < 10 ? { stage, input, before: a, after: b } : { stage, input });
 }
 
+const BS = String.fromCharCode(92);
+
 const ATOMS = [
   'a', 'b', '_x', 'int', 'char', 'unsigned', 'double', 'A', '1', '0', '2', '42', '007',
   '2.5', '.5', '5.', '1e', '1e+', '1e5', '1E-3', '1u', '1U', '1f', '2.5F', '12abc', '0x1f',
@@ -162,7 +164,8 @@ const EXPRESSIONS = ['2 + 3 * 4', 'a + b', '-a', '(a + b) * c', 'a / 0', 'a % b'
   '* a', '&a', 'p->x', 'a == b', 'a < b && c', '!a', 'a = b', 'f(a)', '', '  ', 'a a', '((a)',
   // Lot 15 surface. Before that lot every index here is a refusal.
   't[i]', 't[0]', 't[i + 1]', 't[u[i]]', 't[i][j]', 't[]', 't[ ]', 't[0', 't]', '1[t]', '(a + b)[0]',
-  't[1.5]', "t['A']", 't[(int) i]', 't[i < 3]', 't[a && b]', '&t[0]', '* t[0]', 't[i] + t[j]', 't [i]',
+  't[1.5]', "t['A']", "'A'", "' '", "'"+BS+"0'", "'z' - 'a'", "s[i] != '"+BS+"0'", "c == 'A'", "'ab'", "'"+BS+"q'",
+  "a 'A'", "'A' 'B'", "'a", "'", "t['"+BS+"0']", "-'A'", "('A')", "'A' + 1", 't[(int) i]', 't[i < 3]', 't[a && b]', '&t[0]', '* t[0]', 't[i] + t[j]', 't [i]',
   'a +', '+ a', '1u', '2.5f', '0x1f', '12abc', 'a, b', 'a; b', '😀', 'a' + ' + a'.repeat(600)];
 const TYPES = ['int', 'unsigned int', 'float', 'double', 'char', 'long'];
 const FORMATS = ['décimal', 'hexadécimal', 'octal', 'décimal non signé', 'binaire'];
@@ -195,10 +198,20 @@ function* sentences() {
       `Crée une boucle tant que "${expression}".`, `Crée une boucle avec test final tant que "${expression}".`,
       `Crée une boucle pour i de valeur initiale "0" tant que "${expression}" avec mise à jour "i + 1".`];
   }
-  for (const text of ['Bonjour\\n', 'a\\"b', 'a\\\\b', 'a\\tb', 'a\\qb', '']) yield `Affiche le texte "${text}".`;
+  // The text grammar is shared with the string initialiser since lot 16, so
+  // it is exercised widely: a thin corpus would not guard the refactor.
+  const TEXTS = ['Bonjour\\n', 'a\\"b', 'a\\\\b', 'a\\tb', 'a\\qb', '', 'a', ' ', '\\n', '\\t', '\\\\', '\\"',
+    '\\n\\t\\\\\\"', 'a\\tb\\nc', 'a??=b', 'a??/b', 'a?b', '??', 'é', '😀', 'a b c', '{}', '[]', "'", "a'b",
+    'a\\u0001b', 'a\u0001b', 'a\u007fb', 'a\ud800b', 'a\\', 'a\\0b', 'a\\rb', 'a\\vb', 'a\\xb', 'a\\1b'];
+  for (const text of TEXTS) {
+    yield `Affiche le texte "${text}".`;
+    yield `Affiche le texte "${text}"`;
+    yield `Affiche le texte "${text}" encore.`;
+    yield `Crée un tableau de type char nommé s de dimension 64 avec le texte "${text}".`;
+  }
+  yield* ['Affiche le texte.', 'Affiche le texte "a', 'Affiche le texte a".', 'Affiche le texte ""'];
   // Lot 14 surface. Before that lot every line here is a refusal, so each one
   // shows up as an approved extension rather than as silence.
-  const BS = String.fromCharCode(92);
   for (const literal of ["'A'", "'z'", "'0'", "' '", "'}'", "'" + BS + "n'", "'" + BS + "t'",
     "'" + BS + BS + "'", "'" + BS + "''", "''", "'ab'", "'" + BS + "q'", "'" + BS + "0'",
     "'é'", "'\u{1F600}'", "’A’", 'A', '"A"', "'a", "'"]) {
@@ -238,6 +251,38 @@ function* sentences() {
     'Affecte la valeur x à l’élément "0" de t.', 'Affecte à l’élément "0" de t le résultat de "1".',
     "Affecte le caractère 'ab' à l’élément \"0\" de t.", "Affecte le caractère ' ' à l’élément \"0\" de t.",
     'Affecte le tableau u à t.', 'Affiche la chaîne t.', 'Affiche l’element "0" de t.'];
+  // Lot 16 surface.
+  for (const type of ['char', 'int']) {
+    for (const dimension of ['6', '5', '7', '1', '0', 'n']) {
+      for (const content in { 'hello': 1, '': 1, 'a': 1 }) {
+        yield `Crée un tableau de type ${type} nommé s de dimension ${dimension} avec le texte "${content}".`;
+        yield `Déclare un tableau de type ${type} nommé s de dimension ${dimension} avec le texte "${content}".`;
+      }
+    }
+  }
+  for (const content of ['hello', '', 'a'+BS+'nb', 'a'+BS+'qb', 'a??=b', 'a"b', 'a'+BS+BS+'b', 'é', 'hello']) {
+    yield `Crée un tableau de type char nommé s de dimension 9 avec le texte "${content}".`;
+    yield `Affiche le texte "${content}".`;
+  }
+  for (const name of NAMES) {
+    yield* [`Affiche la chaîne ${name}.`, `Affiche le caractère de l’élément "0" de ${name}.`,
+      `Affiche le caractère de l'élément "i" de ${name}.`];
+  }
+  for (const literal of ["'"+BS+"0'", "'A'", "' '"]) {
+    yield* [`Crée un caractère nommé c de valeur ${literal}.`, `Affecte le caractère ${literal} à c.`,
+      `Affecte le caractère ${literal} à l’élément "0" de s.`,
+      `Crée un bloc si "s[i] != ${literal}".`, `Crée une boucle tant que "s[i] != ${literal}".`,
+      `Affecte à n le résultat numérique de ${JSON.stringify(literal)}.`];
+  }
+  yield* ['Crée un tableau de type char nommé s de dimension 6.',
+    'Crée un tableau de type char nommé s avec le texte "a".',
+    'Crée un tableau de type char nommé s de dimension 6 avec le texte hello.',
+    'Crée un tableau de type char nommé s de dimension 6 avec le texte.',
+    'Crée un tableau de type char nommé s de dimension 6 avec le texte "hello.',
+    'Affiche la chaîne.', 'Affiche la chaîne 1s.', 'Affiche la chaîne s encore.',
+    'Affiche la chaine s.', 'Affiche le caractère de l’élément.',
+    'Affiche le caractère de l’élément "0".', 'Affiche le tableau t.',
+    'Déclare une chaîne nommée s.', 'Inclue la bibliothèque string.h.'];
   for (const digits of ['0', '2', '17', '99', 'x']) {
     yield `Affiche x en notation fixe avec ${digits} décimales.`;
     yield `Affiche x en notation scientifique avec ${digits} décimales.`;
@@ -270,7 +315,10 @@ const PLACED = ['Déclare un caractère nommé c.', "Affecte le caractère ' ' �
   'Déclare un tableau de type int nommé t de dimension 3.',
   'Affecte la valeur 5 à l’élément "0" de t.', 'Affiche l’élément "i" de t.',
   'Affecte à l’élément "i" de t le résultat numérique de "a + 1".',
-  'Crée un bloc si "t[i] > 0".'];
+  'Crée un bloc si "t[i] > 0".',
+  'Crée un tableau de type char nommé s de dimension 6 avec le texte "hello".',
+  'Affiche la chaîne s.', 'Affiche le caractère de l’élément "i" de s.',
+  `Crée une boucle tant que "s[i] != '${BS}0'".`];
 
 for (const text of DOCUMENTS) {
   for (const offset of new Set([0, text.length, Math.max(0, text.length - 1), Math.floor(text.length / 2)])) {

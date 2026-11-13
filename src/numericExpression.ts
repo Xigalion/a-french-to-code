@@ -6,6 +6,7 @@ export type NumericType = 'int' | 'unsigned int' | 'float' | 'double' | 'char';
 export type NumericExpression =
   | { kind: 'literal'; value: string; range: SourceRange }
   | { kind: 'name'; name: string; range: SourceRange }
+  | { kind: 'character'; value: string; range: SourceRange }
   /** Only a name is indexable, which is why `array` is not the whole union. */
   | { kind: 'index'; array: NumericName; index: NumericExpression; range: SourceRange; bracketRange: SourceRange }
   | { kind: 'negation'; operand: NumericExpression; range: SourceRange }
@@ -43,6 +44,8 @@ export function renderNumericExpression(expression: NumericExpression): string {
   switch (expression.kind) {
     case 'literal': return expression.value;
     case 'name': return expression.name;
+    // The spelling the student wrote, never its numeric code.
+    case 'character': return expression.value;
     // No parentheses: `t[i]` is already a postfix designation in C17.
     case 'index': return `${expression.array.name}[${renderNumericExpression(expression.index)}]`;
     case 'negation': return `(-${renderNumericExpression(expression.operand)})`;

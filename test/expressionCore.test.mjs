@@ -22,27 +22,28 @@ test('capacités déclarées des quatre profils', () => {
   // The lot 6 profile stays exactly as lot 13 sealed it: lot 15 added two
   // fields, and left `indexing` off here on purpose.
   assert.deepEqual(INTEGER_CAPABILITIES, {
-    literals: 'integer', literalKind: 'integer', indexing: false, casts: false, castTypes: [], logic: false,
+    literals: 'integer', literalKind: 'integer', indexing: false, characters: false, casts: false, castTypes: [], logic: false,
     invalidTokenMessage: 'Cet élément n’appartient pas à une expression entière prise en charge.',
     invariantMessage: 'Invariant interne : expression analysée absente.',
   });
   // `char` entered castTypes at lot 14 by decision D2; `indexing` was opened
-  // at lot 15 in these two profiles only, as an approved extension.
+  // at lot 15 and `characters` at lot 16, in these two profiles only, each
+  // time as an approved and documented extension.
   assert.deepEqual(NUMERIC_CAPABILITIES, {
-    literals: 'numeric', literalKind: 'literal', indexing: true, casts: true,
+    literals: 'numeric', literalKind: 'literal', indexing: true, characters: true, casts: true,
     castTypes: ['int', 'unsigned int', 'float', 'double', 'char'], logic: false,
     invalidTokenMessage: 'Cet élément n’appartient pas à une expression numérique prise en charge.',
     invariantMessage: 'Invariant interne : expression numérique analysée absente.',
   });
   assert.deepEqual(CONDITION_CAPABILITIES, {
-    literals: 'numeric', literalKind: 'literal', indexing: true, casts: true,
+    literals: 'numeric', literalKind: 'literal', indexing: true, characters: true, casts: true,
     castTypes: ['int', 'unsigned int', 'float', 'double', 'char'], logic: true,
     invalidTokenMessage: 'Cet élément n’appartient pas à une expression numérique prise en charge.',
     invariantMessage: 'Invariant interne : expression numérique analysée absente.',
   });
   // Never published as a profile: selected only between `[` and `]`.
   assert.deepEqual(INDEX_CAPABILITIES, {
-    literals: 'integer', literalKind: 'literal', indexing: true, casts: false, castTypes: [], logic: false,
+    literals: 'integer', literalKind: 'literal', indexing: true, characters: false, casts: false, castTypes: [], logic: false,
     invalidTokenMessage: 'Cet élément n’appartient pas à un indice entier pris en charge.',
     invariantMessage: 'Invariant interne : indice analysé absent.',
   });
@@ -50,6 +51,9 @@ test('capacités déclarées des quatre profils', () => {
 
 // Domain 5 constructions must still be refused, with the historical codes, until
 // the lot that introduces each one is itself contracted and approved.
+// `'A'` left this list at lot 16, which opened character constants in the
+// numeric and condition profiles by decision 2; the lot 6 profile still
+// refuses it, which characters.test.mjs locks.
 // `a[0]` and `t[i] + 1` left this list at lot 15: indexing is now an approved
 // extension of the numeric and condition profiles. Their refusal by the lot 6
 // profile is still locked, just below.
@@ -58,7 +62,6 @@ const REFUSED = [
   ['&a', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_CONDITION_OPERATOR'],
   ['* a', 'MISSING_OPERAND', 'MISSING_OPERAND', 'MISSING_OPERAND'],
   ['a * * b', 'MISSING_OPERAND', 'MISSING_OPERAND', 'MISSING_OPERAND'],
-  ["'A'", 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN'],
   ['"texte"', 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN'],
   ['p->x', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_CONDITION_OPERATOR'],
 ];

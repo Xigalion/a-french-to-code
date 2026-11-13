@@ -1,9 +1,9 @@
 # Domaine 5 — « Tableaux, chaînes et pointeurs » : découpage et contrat du premier lot
 
 **Statut au 13 novembre 2026 : découpage approuvé, décisions D1 à D6
-validées, lots 13, 14 et 15 livrés.** Les lots 16 à 18 restent à
-implémenter et le lot 16 attend la revue du lot 15. Dépôt : **2 889 tests
-Node réussis** et **97 tests hôte VS Code non exécutés**.
+validées, lots 13 à 16 livrés.** Les lots 17 et 18 restent à implémenter
+et le lot 17 attend la revue du lot 16. Dépôt : **2 977 tests Node
+réussis** et **97 tests hôte VS Code non exécutés**.
 
 Le bilan du lot 13 est dans `docs/LOT13_CONTRAT_ET_BILAN.md`. Le §4 de ce
 document-ci est le contrat qui y a été exécuté ; il est conservé tel qu'il
@@ -435,7 +435,8 @@ instrument de mesure de la complétion.
 | Lot 13 | **livré** |
 | Lot 14 | **livré** |
 | Lot 15 | **livré** — contrat dans `docs/LOT15_CONTRAT_PROPOSE.md`, bilan dans `docs/LOT15_BILAN.md` |
-| Lots 16 à 18 | découpage approuvé, contrats à rédiger lot par lot |
+| Lot 16 | **livré** — contrat dans `docs/LOT16_CONTRAT_PROPOSE.md`, bilan dans `docs/LOT16_BILAN.md` |
+| Lots 17 et 18 | découpage approuvé, contrats à rédiger lot par lot |
 
 Les arbitrages D3, D4 et D6 sont explicitement **non définitifs** : ils
 fixent la progression pédagogique du domaine 5, pas les limites du modèle 1.

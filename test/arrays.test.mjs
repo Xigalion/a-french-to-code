@@ -234,6 +234,8 @@ for (const [source, code] of [
 // 6. Rien des lots 16 à 18 n’est ouvert
 // ---------------------------------------------------------------------------
 
+// `'A'` left this list at lot 16 by decision 2. `t['A']` stays: the subscript
+// profile declares no character capability, so an index stays an integer.
 // Codes differ between the two profiles for the operator families, exactly as
 // they did before lot 15; indexing changed neither of them.
 const STILL_REFUSED = [
@@ -241,7 +243,6 @@ const STILL_REFUSED = [
   ['&t[0]', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_CONDITION_OPERATOR'],
   ['* p', 'MISSING_OPERAND', 'MISSING_OPERAND'],
   ['p->x', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_CONDITION_OPERATOR'],
-  ["'A'", 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN'],
   ["t['A']", 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN'],
   ['"texte"', 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN'],
 ];
@@ -265,9 +266,10 @@ test('aucune enveloppe ne produit une affectation globale de tableau', () => {
   assert.equal(translated('Affecte à t le résultat numérique de "u".').fragments[0].code, 't = u;\n');
   for (const [, code] of EXACT) assert.ok(!/^[A-Za-z_]+ = /u.test(code) || code.includes('['), code);
 });
-test('aucun affichage de chaîne n’est ouvert par un tableau de char', () => {
-  refused('Affiche la chaîne t.', 'UNKNOWN_FORMULATION');
-  // %s is never produced: the element display is decimal, like PRINT_INT.
+// `Affiche la chaîne t.` became a formulation at lot 16. What lot 15 fixes is
+// that its own element display is decimal and never infers a string.
+test('l’affichage d’élément du lot 15 reste décimal', () => {
+  refused('Affiche le tableau t.', 'UNKNOWN_FORMULATION');
   assert.equal(translated('Affiche l’élément "0" de t.').fragments[0].code, 'printf("%d", t[0]);\n');
 });
 

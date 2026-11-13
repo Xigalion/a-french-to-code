@@ -1,4 +1,5 @@
 import type { Diagnostic, SourceRange } from './translate.ts';
+import { parseCharacterLiteral } from './characterLiteral.ts';
 
 export const MAX_EXPRESSION_TOKENS = 1024;
 export const MAX_EXPRESSION_DEPTH = 64;
@@ -13,6 +14,8 @@ export type CoreNode =
   | { kind: 'integer'; value: string; range: SourceRange }
   | { kind: 'literal'; value: string; range: SourceRange }
   | { kind: 'name'; name: string; range: SourceRange }
+  /** The exact C spelling, apostrophes included; never evaluated. */
+  | { kind: 'character'; value: string; range: SourceRange }
   /** `bracketRange` covers the subscript delimiters alone, so the passive
    * pedagogy can point at the designation without the array name. */
   | { kind: 'index'; array: CoreNode; index: CoreNode; range: SourceRange; bracketRange: SourceRange }
@@ -40,6 +43,9 @@ export type ExpressionCapabilities = {
   /** `nom[…]`. Off in the lot 6 profile, which therefore cannot build an
    * index node at all; the narrowing in `expression.ts` relies on it. */
   readonly indexing: boolean;
+  /** Character constants as a term. Off in the lot 6 and subscript profiles,
+   * which therefore cannot build a character node. */
+  readonly characters: boolean;
   /** Parenthesized conversions `(type) operand`. */
   readonly casts: boolean;
   /** The exact type designations a conversion accepts. Listed rather than
@@ -55,6 +61,7 @@ export const INTEGER_CAPABILITIES: ExpressionCapabilities = {
   literals: 'integer',
   literalKind: 'integer',
   indexing: false,
+  characters: false,
   casts: false,
   castTypes: [],
   logic: false,
@@ -66,6 +73,7 @@ export const NUMERIC_CAPABILITIES: ExpressionCapabilities = {
   literals: 'numeric',
   literalKind: 'literal',
   indexing: true,
+  characters: true,
   casts: true,
   castTypes: ['int', 'unsigned int', 'float', 'double', 'char'],
   logic: false,
@@ -77,6 +85,7 @@ export const CONDITION_CAPABILITIES: ExpressionCapabilities = {
   literals: 'numeric',
   literalKind: 'literal',
   indexing: true,
+  characters: true,
   casts: true,
   castTypes: ['int', 'unsigned int', 'float', 'double', 'char'],
   logic: true,
@@ -93,6 +102,7 @@ export const INDEX_CAPABILITIES: ExpressionCapabilities = {
   literals: 'integer',
   literalKind: 'literal',
   indexing: true,
+  characters: false,
   casts: false,
   castTypes: [],
   logic: false,
@@ -130,6 +140,20 @@ export function parseCore(source: string, start: number, end: number, validateNa
     while (position < end && /[ \t]/u.test(source.charAt(position))) position++;
     if (position === end) return undefined;
     const beginning = position;
+    // A character constant is scanned whole from the raw source: `' '` is a
+    // valid literal that the ordinary token split would cut in two.
+    if (capabilities.characters && source.charAt(position) === "'") {
+      const scanned = parseCharacterLiteral(source, position, end);
+      if (scanned.status === 'rejected') {
+        const { code, message, range } = scanned.diagnostic;
+        return fail(code, message, range);
+      }
+      position = scanned.end;
+      const literal = { text: scanned.literal.text, range: { ...scanned.literal.range } };
+      if (++budget.count > MAX_EXPRESSION_TOKENS) return tooComplex(literal);
+      cached = literal;
+      return literal;
+    }
     const unsupported = /^(?:>>=|<<=|->|\+\+|--|\*\*|\/\/|\/\*|\*\/|\+=|-=|\*=|\/=|%=|==|!=|<=|>=|&&|\|\||<<|>>|&=|\|=|\^=|[=<>!&|^~?:])/u.exec(source.slice(position, end));
     const numeric = capabilities.literals === 'numeric' && /[0-9.]/u.test(source.charAt(position));
     if (numeric) {
@@ -272,6 +296,11 @@ export function parseCore(source: string, start: number, end: number, validateNa
         'Il manque l’exposant du littéral numérique.', { start: token.range.end, end: token.range.end });
       return fail('UNSUPPORTED_NUMERIC_LITERAL', 'Cette écriture de littéral numérique n’est pas prise en charge.', token.range);
     }
+    // Written back exactly as typed: no numeric code is ever computed, and
+    // `'\0'` never becomes 0.
+    if (capabilities.characters && token.text.startsWith("'")) {
+      return { kind: 'character', value: token.text, range: token.range };
+    }
     if (/^[\p{L}_]/u.test(token.text)) {
       diagnostic = validateName(token);
       if (diagnostic) return undefined;
@@ -312,6 +341,11 @@ export function parseCore(source: string, start: number, end: number, validateNa
   function missingOperator(token: Token): undefined {
     if (capabilities.logic && isComparison(token.text)) return fail('CHAINED_COMPARISON',
       'Les comparaisons chaînées ne sont pas prises en charge.', token.range);
+    // A character constant is an operand, so a missing operator is the right
+    // diagnostic before one, exactly as before a name or a number.
+    if (capabilities.characters && token.text.startsWith("'")) {
+      return fail('MISSING_OPERATOR', 'Il manque un opérateur.', { start: token.range.start, end: token.range.start });
+    }
     const continues = capabilities.literals === 'numeric' ? /^(?:[A-Za-z_0-9.]|\()/u : /^(?:[A-Za-z_0-9]|\()/u;
     if (!continues.test(token.text)) return fail('INVALID_EXPRESSION_TOKEN', capabilities.invalidTokenMessage, token.range);
     return fail('MISSING_OPERATOR', 'Il manque un opérateur.', { start: token.range.start, end: token.range.start });

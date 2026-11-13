@@ -141,10 +141,9 @@ Les quatre formulations dédiées. Le littéral n'est **jamais évalué** :
 | `Crée un caractère nommé fin de valeur '\n'.` | `char fin = '\n';` | CHARACTER_IS_INTEGER |
 
 Littéral caractère : apostrophes **ASCII droites**, exactement un
-caractère **ASCII imprimable** (`0x20` à `0x7E`), ou l'un des quatre
-échappements `\'`, `\`, `\n`, `\t`. Tout le reste est refusé, y compris
-`''`, `'ab'`, `'é'`, `'😀'`, `’A’` et `'\0'` — le caractère nul est
-réservé au lot 16, où il est l'objet enseigné.
+caractère **ASCII imprimable** (`0x20` à `0x7E`), ou l'un des
+échappements `\'`, `\`, `\n`, `\t`, auxquels le **lot 16** a ajouté `\0`.
+Tout le reste est refusé, y compris `''`, `'ab'`, `'é'`, `'😀'` et `’A’`.
 
 `char` est aussi devenu un type à part entière (décision D2) :
 
@@ -156,7 +155,8 @@ réservé au lot 16, où il est l'objet enseigné.
 | `Affecte à n le résultat numérique de "(char) 65".` | `n = ((char) 65);` | — |
 
 `unsigned char` et `signed char` restent refusés. Un littéral caractère
-**dans une expression** reste refusé dans les trois profils.
+**dans une expression** a été ouvert au lot 16 pour les profils numérique
+et condition seulement.
 
 ---
 
@@ -200,6 +200,49 @@ tableau, aucun affichage `%s` ou `%c` d'un élément.
 
 ---
 
+## Domaine 5 — Chaînes C17 et caractère nul (lot 16)
+
+Trois formulations dédiées. Aucune dimension n'est déduite, aucun
+terminateur n'est vérifié dans un tableau existant.
+
+| Phrase française | Code C produit | Information |
+|---|---|---|
+| `Crée un tableau de type char nommé s de dimension 6 avec le texte "hello".` | `char s[6] = "hello";` | NULL_TERMINATOR, ARRAY_SIZE_VS_LENGTH |
+| `Affiche la chaîne s.` | `printf("%s", s);` | STRING_TERMINATOR_NOT_CHECKED |
+| `Affiche le caractère de l'élément "i" de s.` | `printf("%c", s[i]);` | INDEX_NOT_CHECKED, ELEMENT_CHARACTER_FORMAT |
+
+La **dimension est donnée par l'utilisateur** et doit loger le caractère
+nul final : `dimension ≥ longueur décodée + 1`. `… de dimension 5 avec le
+texte "hello".` est refusé (`INSUFFICIENT_ARRAY_DIMENSION`). C17
+autoriserait ce tableau sans terminateur ; le refus est **pédagogique** et
+le diagnostic le dit. Un texte n'initialise qu'un tableau de `char`
+(`STRING_REQUIRES_CHAR`). `Déclare` n'écrit aucune valeur, `Crée` en écrit
+une : les deux verbes gardent leur sens.
+
+`'\0'` rejoint la grammaire finie du littéral caractère, donc toutes les
+formulations des lots 14 et 15 :
+
+| Phrase française | Code C produit | Information |
+|---|---|---|
+| `Crée un caractère nommé fin de valeur '\0'.` | `char fin = '\0';` | CHARACTER_IS_INTEGER |
+| `Affecte le caractère '\0' à l'élément "5" de s.` | `s[5] = '\0';` | INDEX_NOT_CHECKED |
+
+Un littéral caractère est devenu un **terme d'expression** dans les
+profils numérique et condition :
+
+| Phrase française | Code C produit | Information |
+|---|---|---|
+| `Crée un bloc si "s[i] != '\0'".` | `if (s[i] != '\0') { ⏎ ⏎ }` | INDEX_NOT_CHECKED, CHARACTER_IS_INTEGER |
+| `Crée une boucle tant que "s[i] != '\0'".` | `while (s[i] != '\0') { ⏎ ⏎ }` | INDEX_NOT_CHECKED, CHARACTER_IS_INTEGER, WHILE_PRETEST |
+| `Affecte à n le résultat numérique de "'z' - 'a'".` | `n = ('z' - 'a');` | CHARACTER_IS_INTEGER |
+
+Le **parcours n'a pas de commande** : il s'écrit avec la boucle, la
+condition, l'indice et l'affichage déjà existants, et la boucle reste
+visible. Le profil entier et le profil d'indice restent fermés aux
+littéraux caractères : `t['A']` est refusé, un indice est entier.
+
+---
+
 ## Limites de complexité
 
 | Limite | Valeur |
@@ -233,9 +276,10 @@ sous-expressions ni entre les clauses d'une même instruction.
 
 ## Non livré
 
-`switch`, `goto`, chaînes de caractères, pointeurs, `struct`, mémoire
-dynamique, fichiers, compilation séparée. Tableaux à plusieurs dimensions,
-listes d'initialisation `{…}`, affectation globale d'un tableau. Types
+`switch`, `goto`, pointeurs, `struct`, mémoire dynamique, fichiers,
+compilation séparée, `string.h` et ses fonctions. Tableaux à plusieurs
+dimensions, listes d'initialisation `{…}`, affectation globale d'un
+tableau ou d'une chaîne, dimension déduite (`char s[] = "…"`). Types
 `long`, `short`, `unsigned char`, `signed char`, `static`, pointeurs :
 refusés. Un littéral caractère dans une expression : refusé. Paliers de
 liberté 2 et 3 : non spécifiés.

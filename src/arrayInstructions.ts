@@ -1,6 +1,7 @@
 import type { Diagnostic, SourceRange } from './translate.ts';
 import { parseCharacterLiteral } from './characterLiteral.ts';
 import { parseIndexExpression, parseNumericExpression } from './numericExpression.ts';
+import { parseStringLiteral } from './stringLiteral.ts';
 import type { IndexedElement, NumericExpression, NumericType } from './numericExpression.ts';
 
 /** An element designation is built as the very node an indexed expression
@@ -11,7 +12,12 @@ export type ArrayInstruction =
   | { kind: 'ARRAY_ASSIGN_INT'; parameters: { element: IndexedElement; value: string } }
   | { kind: 'ARRAY_ASSIGN_CHAR'; parameters: { element: IndexedElement; literal: string; literalRange: SourceRange } }
   | { kind: 'ARRAY_ASSIGN_EXPRESSION'; parameters: { element: IndexedElement; expression: NumericExpression } }
-  | { kind: 'ARRAY_PRINT'; parameters: { element: IndexedElement } };
+  | { kind: 'ARRAY_PRINT'; parameters: { element: IndexedElement } }
+  | { kind: 'ARRAY_PRINT_CHAR'; parameters: { element: IndexedElement } }
+  /** `text` is the decoded content; the C spelling is written back by the
+   * shared encoder, so a text reads and prints the same everywhere. */
+  | { kind: 'STRING_INIT'; parameters: { name: string; nameRange: SourceRange; dimension: string; dimensionRange: SourceRange; text: string; textRange: SourceRange } }
+  | { kind: 'PRINT_STRING'; parameters: { name: string; nameRange: SourceRange } };
 
 type Token = { text: string; range: SourceRange };
 type NameValidator = (token: Token) => Diagnostic | undefined;
@@ -107,7 +113,7 @@ export function analyzeArrayInstruction(source: string, tokens: Token[], end: nu
     };
   }
 
-  function declaration(): ArrayInstruction | undefined {
+  function declaration(initialised: boolean): ArrayInstruction | undefined {
     let i = 3;
     function fixed(expected: string, code: Diagnostic['code'], message: string): boolean {
       const token = tokens[i];
@@ -143,10 +149,49 @@ export function analyzeArrayInstruction(source: string, tokens: Token[], end: nu
     // written in digits here and never reused to check an index later.
     if (!/^[1-9][0-9]*$/u.test(size.text)) return fail('INVALID_ARRAY_DIMENSION',
       'Une dimension entière strictement positive, écrite en chiffres, est attendue.', size.range);
-    const extra = tokens[i + 1];
+    i++;
+    if (!initialised) {
+      const extra = tokens[i];
+      if (extra) return fail('UNEXPECTED_TEXT', 'Ce texte supplémentaire n’est pas accepté.', { start: extra.range.start, end });
+      return { kind: 'ARRAY_DECL', parameters: { type: text as NumericType, name: name.text,
+        nameRange: { ...name.range }, dimension: size.text, dimensionRange: { ...size.range } } };
+    }
+    if (!fixed('avec', 'INCOMPLETE_INSTRUCTION', 'Instruction incomplète : « avec » attendu.')) return undefined;
+    if (!fixed('le', 'INCOMPLETE_INSTRUCTION', 'Instruction incomplète : « le » attendu.')) return undefined;
+    if (!fixed('texte', 'INCOMPLETE_INSTRUCTION', 'Instruction incomplète : « texte » attendu.')) return undefined;
+    // The type is checked only here: a text initialiser is the only thing that
+    // makes a non-char array wrong, and the wrong word to point at is `char`.
+    if (text !== 'char') return fail('STRING_REQUIRES_CHAR',
+      'Seul un tableau de type char peut être initialisé par un texte.', { start: first.range.start, end: last.range.end });
+    const scanned = parseStringLiteral(source, tokens[i - 1]!.range.end, end);
+    if (scanned.status === 'rejected') { diagnostic = scanned.diagnostic; return undefined; }
+    if (!finish(scanned.end)) return undefined;
+    // The decoded length is what C stores: an escaped newline counts as one
+    // character, not two. No dimension is ever adjusted or deduced; an
+    // insufficient one is refused.
+    const length = scanned.literal.value.length;
+    if (Number(size.text) < length + 1) return fail('INSUFFICIENT_ARRAY_DIMENSION',
+      `La dimension doit aussi loger le caractère nul final : ce texte occupe ${length} caractère${length > 1 ? 's' : ''}, `
+      + `donc ${length + 1} au minimum.`, size.range);
+    return { kind: 'STRING_INIT', parameters: { name: name.text, nameRange: { ...name.range },
+      dimension: size.text, dimensionRange: { ...size.range },
+      text: scanned.literal.value, textRange: { ...scanned.literal.range } } };
+  }
+
+  function displayCharacter(): ArrayInstruction | undefined {
+    const target = designation(tokens[4]!.range.end);
+    if (!target) return undefined;
+    return finish(target.end) ? { kind: 'ARRAY_PRINT_CHAR', parameters: { element: target.element } } : undefined;
+  }
+
+  function displayString(): ArrayInstruction | undefined {
+    const name = tokens[3];
+    if (!name) return fail('INCOMPLETE_INSTRUCTION', 'Il manque le nom de la chaîne à afficher.', { start: end, end });
+    diagnostic = validateName(name);
+    if (diagnostic) return undefined;
+    const extra = tokens[4];
     if (extra) return fail('UNEXPECTED_TEXT', 'Ce texte supplémentaire n’est pas accepté.', { start: extra.range.start, end });
-    return { kind: 'ARRAY_DECL', parameters: { type: text as NumericType, name: name.text,
-      nameRange: { ...name.range }, dimension: size.text, dimensionRange: { ...size.range } } };
+    return { kind: 'PRINT_STRING', parameters: { name: name.text, nameRange: { ...name.range } } };
   }
 
   function assignInteger(): ArrayInstruction | undefined {
@@ -192,7 +237,9 @@ export function analyzeArrayInstruction(source: string, tokens: Token[], end: nu
   }
 
   let instruction: ArrayInstruction | undefined;
-  if (word(0) === 'déclare' && word(1) === 'un' && word(2) === 'tableau') instruction = declaration();
+  if (['déclare', 'crée'].includes(word(0) ?? '') && word(1) === 'un' && word(2) === 'tableau') instruction = declaration(word(0) === 'crée');
+  else if (word(0) === 'affiche' && word(1) === 'la' && word(2) === 'chaîne') instruction = displayString();
+  else if (word(0) === 'affiche' && word(1) === 'le' && word(2) === 'caractère' && word(3) === 'de' && element(4)) instruction = displayCharacter();
   else if (word(0) === 'affecte' && word(1) === 'la' && word(2) === 'valeur' && word(4) === 'à' && element(5)) instruction = assignInteger();
   else if (word(0) === 'affecte' && word(1) === 'à' && element(2)) instruction = assignExpression();
   else if (word(0) === 'affiche' && element(1)) instruction = display();

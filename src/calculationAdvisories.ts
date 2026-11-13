@@ -47,7 +47,7 @@ export function analyzeCalculations(translation: TranslationResult): Calculation
   } else if (instruction.kind === 'ARRAY_ASSIGN_EXPRESSION') {
     stack = [instruction.parameters.expression, instruction.parameters.element];
   } else if (instruction.kind === 'ARRAY_ASSIGN_INT' || instruction.kind === 'ARRAY_ASSIGN_CHAR'
-    || instruction.kind === 'ARRAY_PRINT') stack = [instruction.parameters.element];
+    || instruction.kind === 'ARRAY_PRINT' || instruction.kind === 'ARRAY_PRINT_CHAR') stack = [instruction.parameters.element];
   else if (instruction.kind === 'RETURN_EXPRESSION' || instruction.kind === 'RETURN_NUMERIC'
     || instruction.kind === 'ASSIGN_EXPRESSION' || instruction.kind === 'NUMERIC_INIT'
     || instruction.kind === 'NUMERIC_ASSIGN') stack = [instruction.parameters.expression];

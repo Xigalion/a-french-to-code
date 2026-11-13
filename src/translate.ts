@@ -12,6 +12,7 @@ import { analyzeCharacterInstruction } from './characterInstructions.ts';
 import type { CharacterInstruction } from './characterInstructions.ts';
 import { analyzeArrayInstruction } from './arrayInstructions.ts';
 import type { ArrayInstruction } from './arrayInstructions.ts';
+import { parseStringLiteral, renderStringLiteral } from './stringLiteral.ts';
 
 /** Half-open offsets in UTF-16 code units, relative to the original input. */
 export type SourceRange = { start: number; end: number };
@@ -103,6 +104,8 @@ export type DiagnosticCode =
   | 'UNSUPPORTED_ARRAY_DIMENSIONS'
   | 'MISSING_ARRAY_DIMENSION'
   | 'INVALID_ARRAY_DIMENSION'
+  | 'INSUFFICIENT_ARRAY_DIMENSION'
+  | 'STRING_REQUIRES_CHAR'
   | 'UNEXPECTED_TEXT';
 
 export type Diagnostic = {
@@ -253,6 +256,12 @@ function render(text: string, instruction: Instruction): TranslationResult {
     case 'ARRAY_ASSIGN_EXPRESSION': code = `${renderNumericExpression(instruction.parameters.element)} `
       + `= ${renderNumericExpression(instruction.parameters.expression)};\n`; break;
     case 'ARRAY_PRINT': code = `printf("%d", ${renderNumericExpression(instruction.parameters.element)});\n`; break;
+    case 'ARRAY_PRINT_CHAR': code = `printf("%c", ${renderNumericExpression(instruction.parameters.element)});\n`; break;
+    // The dimension is the one that was given, never one deduced from the
+    // text; the compiler writes the final null character inside it.
+    case 'STRING_INIT': code = `char ${instruction.parameters.name}[${instruction.parameters.dimension}] `
+      + `= ${renderStringLiteral(instruction.parameters.text)};\n`; break;
+    case 'PRINT_STRING': code = `printf("%s", ${instruction.parameters.name});\n`; break;
     case 'INCLUDE_STDIO': code = '#include <stdio.h>\n'; break;
     case 'PRINT_INT': code = `printf("%d", ${instruction.parameters.name});\n`; break;
     case 'PRINT_FORMATTED': {
@@ -260,18 +269,7 @@ function render(text: string, instruction: Instruction): TranslationResult {
       code = `printf("${specifiers[instruction.parameters.format]}", ${instruction.parameters.name});\n`;
       break;
     }
-    case 'PRINT_TEXT': {
-      const literal = instruction.parameters.text.replace(/[\\"\n\t]/gu, character => {
-        switch (character) {
-          case '\\': return '\\\\';
-          case '"': return '\\"';
-          case '\n': return '\\n';
-          default: return '\\t';
-        }
-      });
-      code = `printf("%s", "${literal}");\n`;
-      break;
-    }
+    case 'PRINT_TEXT': code = `printf("%s", ${renderStringLiteral(instruction.parameters.text)});\n`; break;
   }
   const comment = `// ${text}`;
   const fragment: Fragment = {
@@ -663,48 +661,13 @@ export function translate(text: string): TranslationResult {
   }
 }
 
-/** Finite escape grammar; all ranges refer to the untouched UTF-16 source. */
+/** Envelope only: the text grammar itself moved to `stringLiteral.ts` at lot
+ * 16, unchanged, so the string initialiser reads texts the same way. */
 function translateLiteral(source: string, position: number, end: number): TranslationResult {
-  while (position < end && /[ \t]/u.test(source.charAt(position))) position++;
-  if (position === end) {
-    return reject(source, 'INCOMPLETE_INSTRUCTION', 'Un texte entre guillemets ASCII est attendu.', { start: end, end });
-  }
-  if (source.charAt(position) !== '"') {
-    const width = source.codePointAt(position)! > 0xffff ? 2 : 1;
-    return reject(source, 'UNKNOWN_FORMULATION', 'Le texte doit être entouré de guillemets ASCII.', { start: position, end: position + width });
-  }
-  const opening = position++;
-  let value = '';
-  while (position < end) {
-    const current = source.charAt(position);
-    if (current === '"') {
-      position++;
-      while (position < end && /[ \t]/u.test(source.charAt(position))) position++;
-      if (position !== end) return reject(source, 'UNEXPECTED_TEXT', 'Ce texte supplémentaire n’est pas accepté.', { start: position, end });
-      return render(source, { kind: 'PRINT_TEXT', parameters: { text: value } });
-    }
-    if (/^\?\?[=/'()!<>-]/u.test(source.slice(position, position + 3))) {
-      return reject(source, 'UNSUPPORTED_STRING_CONTENT', 'Les trigraphes C ne sont pas pris en charge dans les textes.', { start: position, end: position + 3 });
-    }
-    if (current === '\\') {
-      const next = source.charAt(position + 1);
-      const escapes: Readonly<Record<string, string>> = { '"': '"', '\\': '\\', n: '\n', t: '\t' };
-      const decoded = escapes[next];
-      if (decoded === undefined) {
-        const width = (source.codePointAt(position + 1) ?? 0) > 0xffff ? 2 : 1;
-        return reject(source, 'INVALID_STRING_ESCAPE', 'Échappement attendu : \\" , \\\\ , \\n ou \\t.', { start: position, end: Math.min(position + 1 + width, end) });
-      }
-      value += decoded;
-      position += 2;
-      continue;
-    }
-    const point = source.codePointAt(position)!;
-    const width = point > 0xffff ? 2 : 1;
-    if (point <= 0x1f || (point >= 0x7f && point <= 0x9f) || (point >= 0xd800 && point <= 0xdfff)) {
-      return reject(source, 'UNSUPPORTED_STRING_CONTENT', 'Caractère de contrôle ou Unicode invalide dans le texte.', { start: position, end: position + width });
-    }
-    value += source.slice(position, position + width);
-    position += width;
-  }
-  return reject(source, 'UNTERMINATED_STRING', 'Le guillemet fermant du texte est absent.', { start: opening, end });
+  const scanned = parseStringLiteral(source, position, end);
+  if (scanned.status === 'rejected') return { status: 'rejected', source: { text: source }, diagnostics: [scanned.diagnostic] };
+  let after = scanned.end;
+  while (after < end && /[ \t]/u.test(source.charAt(after))) after++;
+  if (after !== end) return reject(source, 'UNEXPECTED_TEXT', 'Ce texte supplémentaire n’est pas accepté.', { start: after, end });
+  return render(source, { kind: 'PRINT_TEXT', parameters: { text: scanned.literal.value } });
 }

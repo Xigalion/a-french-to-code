@@ -1,8 +1,9 @@
 import type { Diagnostic, SourceRange } from './translate.ts';
 
-/** The finite escape grammar of lot 14. `\0` is deliberately absent: the null
- * character belongs to lot 16, where it is the subject being taught. */
-const ESCAPES: Readonly<Record<string, true>> = { "'": true, '\\': true, n: true, t: true };
+/** The finite escape grammar of lot 14, which lot 16 extended with `\0` by
+ * decision 2: the null character is the subject that lot teaches. It stays a
+ * spelling here and is never turned into the number zero. */
+const ESCAPES: Readonly<Record<string, true>> = { "'": true, '\\': true, n: true, t: true, 0: true };
 
 export type CharacterLiteral = {
   /** The exact C spelling, apostrophes included. Never evaluated: `'A'` is
@@ -47,7 +48,7 @@ export function parseCharacterLiteral(source: string, start: number, end: number
     if (position + 1 >= end) return reject('UNTERMINATED_CHARACTER', 'Il manque l’apostrophe fermante du caractère.', { start: opening, end });
     if (!ESCAPES[escape]) {
       const width = (source.codePointAt(position + 1) ?? 0) > 0xffff ? 2 : 1;
-      return reject('INVALID_CHARACTER_ESCAPE', 'Échappement attendu : \\\' , \\\\ , \\n ou \\t.',
+      return reject('INVALID_CHARACTER_ESCAPE', 'Échappement attendu : \\\' , \\\\ , \\n , \\t ou \\0.',
         { start: position, end: Math.min(position + 1 + width, end) });
     }
     contentEnd = position + 2;

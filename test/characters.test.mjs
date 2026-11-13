@@ -93,7 +93,6 @@ const LITERAL_REFUSALS = [
   ["'ab'", 'INVALID_CHARACTER', 4],
   ["'abc'", 'INVALID_CHARACTER', 5],
   [`'${B}q'`, 'INVALID_CHARACTER_ESCAPE', 2, 1],
-  [`'${B}0'`, 'INVALID_CHARACTER_ESCAPE', 2, 1],
   [`'${B}r'`, 'INVALID_CHARACTER_ESCAPE', 2, 1],
   [`'${B}"'`, 'INVALID_CHARACTER_ESCAPE', 2, 1],
   ["'é'", 'UNSUPPORTED_CHARACTER_CONTENT', 1, 1],
@@ -233,12 +232,13 @@ const STILL_REFUSED = [
   ['&a', 'UNSUPPORTED_EXPRESSION_OPERATOR'],
   ['* a', 'MISSING_OPERAND'],
   ['p->x', 'UNSUPPORTED_EXPRESSION_OPERATOR'],
-  ["'A'", 'INVALID_EXPRESSION_TOKEN'],
-  [`'${B}n'`, 'INVALID_EXPRESSION_TOKEN'],
   ['"texte"', 'INVALID_EXPRESSION_TOKEN'],
 ];
+// The character literals left the shared loop at lot 16, which opened them in
+// the numeric profile by decision 2; the lot 6 profile keeps refusing them,
+// which is checked just below.
 for (const [expression, code] of STILL_REFUSED) {
-  test(`lots 15 à 18 toujours fermés dans les expressions : ${expression}`, () => {
+  test(`lots 17 et 18 toujours fermés dans les expressions : ${expression}`, () => {
     for (const parse of [parseExpression, parseNumericExpression]) {
       const result = parse(expression, 0, expression.length, () => undefined);
       assert.equal(result.status, 'rejected', expression);
@@ -247,21 +247,28 @@ for (const [expression, code] of STILL_REFUSED) {
   });
 }
 
-test('un littéral caractère reste refusé dans toutes les enveloppes d’expression', () => {
+// Lot 16 opened the character literal in the numeric and condition profiles
+// by decision 2. The two envelopes built on the lot 6 profile still refuse it;
+// the accepted forms are covered by strings.test.mjs.
+test('un littéral caractère reste refusé dans le profil entier', () => {
   for (const source of [
     `Affecte à x le résultat de "'A'".`,
-    `Affecte à x le résultat numérique de "'A'".`,
-    `Crée un bloc si "c == 'A'".`,
     `Retourne le résultat de "'A'".`,
-    `Appelle f avec "'A'".`,
   ]) {
     refused(source, 'INVALID_EXPRESSION_TOKEN');
   }
+  for (const literal of ["'A'", `'${B}n'`, `'${B}0'`]) {
+    const result = parseExpression(literal, 0, literal.length, () => undefined);
+    assert.equal(result.status, 'rejected', literal);
+    assert.equal(result.diagnostic.code, 'INVALID_EXPRESSION_TOKEN', literal);
+  }
 });
 
-test('aucune formulation de chaîne n’est ouverte par le lot 14', () => {
+// `Affiche la chaîne s.` became a formulation at lot 16; the declaration
+// without a dimension is still outside the catalogue.
+test('aucune déclaration de chaîne sans dimension n’existe', () => {
   refused('Déclare une chaîne nommée s.', 'UNKNOWN_FORMULATION');
-  refused('Affiche la chaîne s.', 'UNKNOWN_FORMULATION');
+  refused('Crée une chaîne nommée s avec le texte "a".', 'UNKNOWN_FORMULATION');
 });
 
 // ---------------------------------------------------------------------------

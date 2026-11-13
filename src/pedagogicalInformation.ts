@@ -7,7 +7,9 @@ export type PedagogicalInformation = {
     | 'WHILE_PRETEST' | 'DO_WHILE_POSTTEST' | 'FOR_CLAUSE_ORDER'
     | 'FUNCTION_SCOPE' | 'RETURN_ENDS_FUNCTION' | 'PARAMETERS_BY_VALUE' | 'CALL_NOT_RESOLVED'
     | 'CHARACTER_IS_INTEGER' | 'CHARACTER_STORAGE' | 'CHARACTER_FORMAT'
-    | 'INDEX_NOT_CHECKED' | 'ARRAY_NOT_ASSIGNABLE' | 'CHAR_ARRAY_NOT_STRING';
+    | 'INDEX_NOT_CHECKED' | 'ARRAY_NOT_ASSIGNABLE' | 'CHAR_ARRAY_NOT_STRING'
+    | 'NULL_TERMINATOR' | 'ARRAY_SIZE_VS_LENGTH' | 'STRING_TERMINATOR_NOT_CHECKED'
+    | 'ELEMENT_CHARACTER_FORMAT';
   severity: 'information';
   range: SourceRange;
   message: string;
@@ -49,8 +51,44 @@ function firstIndexRange(value: unknown): SourceRange | undefined {
   return undefined;
 }
 
+/** The first character constant written inside an expression. Walked the same
+ * structural way as the subscripts, and for the same reason. */
+function firstCharacterRange(value: unknown): SourceRange | undefined {
+  if (Array.isArray(value)) {
+    for (const item of value) { const found = firstCharacterRange(item); if (found) return found; }
+    return undefined;
+  }
+  if (typeof value !== 'object' || value === null) return undefined;
+  const node = value as { kind?: unknown; range?: unknown };
+  const range = node.range as SourceRange | undefined;
+  if (node.kind === 'character' && range && typeof range.start === 'number') return range;
+  for (const child of Object.values(value)) { const found = firstCharacterRange(child); if (found) return found; }
+  return undefined;
+}
+
 export function explainInstruction(result: TranslationResult): PedagogicalInformation[] {
   if (result.status !== 'translated') return [];
+  // A text initialiser IS a string, so CHAR_ARRAY_NOT_STRING must not fire
+  // here: the two declarations teach opposite halves of the same fact.
+  if (result.instruction.kind === 'STRING_INIT') {
+    const parameters = result.instruction.parameters;
+    return [
+      { code: 'NULL_TERMINATOR', severity: 'information', range: { ...parameters.textRange },
+        message: 'Le compilateur ajoute un caractère nul, de code zéro, à la fin de ce texte. C’est lui, et non la '
+          + 'dimension, qui marque la fin de la chaîne : toute fonction qui lit une chaîne s’arrête dessus.' },
+      { code: 'ARRAY_SIZE_VS_LENGTH', severity: 'information', range: { ...parameters.dimensionRange },
+        message: `La dimension ${parameters.dimension} est la place réservée ; la longueur de la chaîne est le nombre `
+          + `de caractères avant le nul, ici ${parameters.text.length}. Les deux ne sont pas la même chose, et C-A `
+          + 'ne recalcule ni l’une ni l’autre par la suite.' },
+    ];
+  }
+  if (result.instruction.kind === 'PRINT_STRING') {
+    return [{ code: 'STRING_TERMINATOR_NOT_CHECKED', severity: 'information',
+      range: { ...result.instruction.parameters.nameRange },
+      message: '%s lit les caractères un à un jusqu’au premier caractère nul. C-A ne vérifie ni que ce tableau '
+        + 'existe, ni qu’il en contient un : sans terminateur, la lecture dépasse le tableau, et C17 n’en définit '
+        + 'alors pas le comportement.' }];
+  }
   if (result.instruction.kind === 'ARRAY_DECL') {
     const parameters = result.instruction.parameters;
     const declared: PedagogicalInformation[] = [{ code: 'ARRAY_NOT_ASSIGNABLE', severity: 'information',
@@ -63,12 +101,29 @@ export function explainInstruction(result: TranslationResult): PedagogicalInform
       message: 'Un tableau de char contient des codes de caractères : il ne devient une chaîne C que si un caractère '
         + 'nul en marque la fin, et aucun n’est écrit ici. C-A ne traite ce tableau comme une chaîne à aucun moment.' }];
   }
+  const entries: PedagogicalInformation[] = [];
   const bracket = firstIndexRange(result.instruction.parameters);
-  if (!bracket) return explainStructure(result);
-  return [{ code: 'INDEX_NOT_CHECKED', severity: 'information', range: { ...bracket },
-    message: 'C-A ne vérifie pas les bornes de ce tableau : ni sa dimension, ni la valeur de cet indice ne sont '
-      + 'connues ici. En C17, lire ou écrire hors des bornes a un comportement indéfini, et rien ne le signale à '
-      + 'l’exécution. Aucun dépassement n’est ici détecté ni exclu.' }, ...explainStructure(result)];
+  if (bracket) {
+    entries.push({ code: 'INDEX_NOT_CHECKED', severity: 'information', range: { ...bracket },
+      message: 'C-A ne vérifie pas les bornes de ce tableau : ni sa dimension, ni la valeur de cet indice ne sont '
+        + 'connues ici. En C17, lire ou écrire hors des bornes a un comportement indéfini, et rien ne le signale à '
+        + 'l’exécution. Aucun dépassement n’est ici détecté ni exclu.' });
+  }
+  if (result.instruction.kind === 'ARRAY_PRINT_CHAR') {
+    entries.push({ code: 'ELEMENT_CHARACTER_FORMAT', severity: 'information',
+      range: { ...result.instruction.parameters.element.bracketRange },
+      message: '%c affiche le caractère dont le code est rangé dans cet élément ; %d afficherait ce code en '
+        + 'décimal. C-A ne vérifie ni que ce tableau est de type char, ni que cet élément a été écrit.' });
+  }
+  // A character constant written inside an expression carries the same fact
+  // as one written in a dedicated envelope: its type is int.
+  const character = firstCharacterRange(result.instruction.parameters);
+  if (character) {
+    entries.push({ code: 'CHARACTER_IS_INTEGER', severity: 'information', range: { ...character },
+      message: 'En C17, une constante caractère comme celle-ci a le type int, pas char : sa valeur est le code du '
+        + 'caractère dans le jeu d’exécution, que le standard ne fixe pas. Aucune valeur n’est calculée ici.' });
+  }
+  return [...entries, ...explainStructure(result)];
 }
 
 function explainStructure(result: TranslationResult): PedagogicalInformation[] {
