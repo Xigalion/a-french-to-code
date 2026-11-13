@@ -9,7 +9,9 @@ export type PedagogicalInformation = {
     | 'CHARACTER_IS_INTEGER' | 'CHARACTER_STORAGE' | 'CHARACTER_FORMAT'
     | 'INDEX_NOT_CHECKED' | 'ARRAY_NOT_ASSIGNABLE' | 'CHAR_ARRAY_NOT_STRING'
     | 'NULL_TERMINATOR' | 'ARRAY_SIZE_VS_LENGTH' | 'STRING_TERMINATOR_NOT_CHECKED'
-    | 'ELEMENT_CHARACTER_FORMAT';
+    | 'ELEMENT_CHARACTER_FORMAT'
+    | 'ADDRESS_OF' | 'POINTER_VS_OBJECT' | 'DEREFERENCE_MEANING'
+    | 'UNINITIALIZED_POINTER' | 'ADDRESS_NOT_CHECKED';
   severity: 'information';
   range: SourceRange;
   message: string;
@@ -50,6 +52,35 @@ function firstIndexRange(value: unknown): SourceRange | undefined {
   for (const child of Object.values(value)) { const found = firstIndexRange(child); if (found) return found; }
   return undefined;
 }
+
+/** The first node of a given kind written inside an expression, with the
+ * range the pedagogy should point at. Walked structurally, like the subscripts
+ * and the character constants, so a later envelope cannot lose it. */
+function firstNodeRange(value: unknown, kind: string, field: 'range' | 'operatorRange'): SourceRange | undefined {
+  if (Array.isArray(value)) {
+    for (const item of value) { const found = firstNodeRange(item, kind, field); if (found) return found; }
+    return undefined;
+  }
+  if (typeof value !== 'object' || value === null) return undefined;
+  const node = value as Record<string, unknown>;
+  const range = node[field] as SourceRange | undefined;
+  if (node.kind === kind && range && typeof range.start === 'number') return range;
+  for (const child of Object.values(value)) { const found = firstNodeRange(child, kind, field); if (found) return found; }
+  return undefined;
+}
+
+const POINTER_MESSAGES = {
+  ADDRESS_OF: 'Une adresse désigne l’emplacement d’un objet en mémoire, pas sa valeur. L’écrire ne copie rien : '
+    + 'le pointeur qui la reçoit et la variable visée restent deux objets distincts.',
+  POINTER_VS_OBJECT: 'Un pointeur et l’objet pointé sont deux choses différentes : « p » contient une adresse, '
+    + '« *p » désigne l’objet rangé à cette adresse. Modifier l’un n’est pas modifier l’autre.',
+  DEREFERENCE_MEANING: 'Le déréférencement désigne l’objet dont ce pointeur contient l’adresse, en lecture comme '
+    + 'en écriture : écrire dans « *p » écrit dans cet objet, pas dans le pointeur.',
+  UNINITIALIZED_POINTER: 'Aucune adresse n’est écrite ici : la valeur de ce pointeur est indéterminée tant qu’il '
+    + 'n’en reçoit pas une. Le déréférencer avant cela a, en C17, un comportement indéfini.',
+  ADDRESS_NOT_CHECKED: 'C-A ne vérifie ni que ce pointeur a reçu une adresse, ni qu’elle est encore valide, ni '
+    + 'qu’elle désigne bien le type attendu. Aucune mémoire n’est analysée ici.',
+} as const;
 
 /** The first character constant written inside an expression. Walked the same
  * structural way as the subscripts, and for the same reason. */
@@ -102,6 +133,28 @@ export function explainInstruction(result: TranslationResult): PedagogicalInform
         + 'nul en marque la fin, et aucun n’est écrit ici. C-A ne traite ce tableau comme une chaîne à aucun moment.' }];
   }
   const entries: PedagogicalInformation[] = [];
+  const kind = result.instruction.kind;
+  const parameters: unknown = result.instruction.parameters;
+  if (kind === 'DECL_POINTER' || kind === 'INIT_POINTER' || kind === 'ASSIGN_ADDRESS') {
+    const anchor = (result.instruction.parameters as { nameRange: SourceRange }).nameRange;
+    const object: PedagogicalInformation = { code: 'POINTER_VS_OBJECT', severity: 'information',
+      range: { ...anchor }, message: POINTER_MESSAGES.POINTER_VS_OBJECT };
+    if (kind === 'DECL_POINTER') {
+      return [{ code: 'UNINITIALIZED_POINTER', severity: 'information', range: { ...anchor },
+        message: POINTER_MESSAGES.UNINITIALIZED_POINTER }, object];
+    }
+    const target = (result.instruction.parameters as { targetRange: SourceRange }).targetRange;
+    return [{ code: 'ADDRESS_OF', severity: 'information', range: { ...target },
+      message: POINTER_MESSAGES.ADDRESS_OF }, object];
+  }
+  if (kind === 'PRINT_POINTED' || kind === 'ASSIGN_POINTED_INT' || kind === 'ASSIGN_POINTED_EXPRESSION') {
+    const anchor = (result.instruction.parameters as { nameRange: SourceRange }).nameRange;
+    return [
+      { code: 'DEREFERENCE_MEANING', severity: 'information', range: { ...anchor }, message: POINTER_MESSAGES.DEREFERENCE_MEANING },
+      { code: 'ADDRESS_NOT_CHECKED', severity: 'information', range: { ...anchor }, message: POINTER_MESSAGES.ADDRESS_NOT_CHECKED },
+      ...explainStructure(result),
+    ];
+  }
   const bracket = firstIndexRange(result.instruction.parameters);
   if (bracket) {
     entries.push({ code: 'INDEX_NOT_CHECKED', severity: 'information', range: { ...bracket },
@@ -114,6 +167,20 @@ export function explainInstruction(result: TranslationResult): PedagogicalInform
       range: { ...result.instruction.parameters.element.bracketRange },
       message: '%c affiche le caractère dont le code est rangé dans cet élément ; %d afficherait ce code en '
         + 'décimal. C-A ne vérifie ni que ce tableau est de type char, ni que cet élément a été écrit.' });
+  }
+  // The two unary operators written inside an expression carry the same facts
+  // as the dedicated envelopes do.
+  const dereferenced = firstNodeRange(parameters, 'dereference', 'operatorRange');
+  if (dereferenced) {
+    entries.push({ code: 'DEREFERENCE_MEANING', severity: 'information', range: { ...dereferenced },
+      message: POINTER_MESSAGES.DEREFERENCE_MEANING });
+    entries.push({ code: 'ADDRESS_NOT_CHECKED', severity: 'information', range: { ...dereferenced },
+      message: POINTER_MESSAGES.ADDRESS_NOT_CHECKED });
+  }
+  const addressed = firstNodeRange(parameters, 'address', 'operatorRange');
+  if (addressed) {
+    entries.push({ code: 'ADDRESS_OF', severity: 'information', range: { ...addressed },
+      message: POINTER_MESSAGES.ADDRESS_OF });
   }
   // A character constant written inside an expression carries the same fact
   // as one written in a dedicated envelope: its type is int.

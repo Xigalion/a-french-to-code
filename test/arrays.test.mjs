@@ -239,9 +239,7 @@ for (const [source, code] of [
 // Codes differ between the two profiles for the operator families, exactly as
 // they did before lot 15; indexing changed neither of them.
 const STILL_REFUSED = [
-  ['&a', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_CONDITION_OPERATOR'],
-  ['&t[0]', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_CONDITION_OPERATOR'],
-  ['* p', 'MISSING_OPERAND', 'MISSING_OPERAND'],
+  // `&a`, `&t[0]` and `* p` left this list at lot 17 by decision D4.
   ['p->x', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_CONDITION_OPERATOR'],
   ["t['A']", 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN'],
   ['"texte"', 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN'],

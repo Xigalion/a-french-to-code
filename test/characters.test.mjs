@@ -228,9 +228,9 @@ test('la conversion char est acceptée dans les deux profils qui déclarent la c
 
 // `a[0]` left this list at lot 15, which opened indexing in the numeric
 // profile by an approved extension; see arrays.test.mjs.
+// `&a` and `* a` left this list at lot 17 by decision D4; the lot 6 profile
+// still refuses them, which expressionCore.test.mjs locks.
 const STILL_REFUSED = [
-  ['&a', 'UNSUPPORTED_EXPRESSION_OPERATOR'],
-  ['* a', 'MISSING_OPERAND'],
   ['p->x', 'UNSUPPORTED_EXPRESSION_OPERATOR'],
   ['"texte"', 'INVALID_EXPRESSION_TOKEN'],
 ];

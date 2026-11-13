@@ -7,6 +7,8 @@ export type NumericExpression =
   | { kind: 'literal'; value: string; range: SourceRange }
   | { kind: 'name'; name: string; range: SourceRange }
   | { kind: 'character'; value: string; range: SourceRange }
+  | { kind: 'address'; operand: NumericName | IndexedElement; range: SourceRange; operatorRange: SourceRange }
+  | { kind: 'dereference'; operand: NumericName; range: SourceRange; operatorRange: SourceRange }
   /** Only a name is indexable, which is why `array` is not the whole union. */
   | { kind: 'index'; array: NumericName; index: NumericExpression; range: SourceRange; bracketRange: SourceRange }
   | { kind: 'negation'; operand: NumericExpression; range: SourceRange }
@@ -46,6 +48,10 @@ export function renderNumericExpression(expression: NumericExpression): string {
     case 'name': return expression.name;
     // The spelling the student wrote, never its numeric code.
     case 'character': return expression.value;
+    // Parenthesized like the negation since lot 6: the priority the student
+    // reads is the priority that applies, so `*p + 1` can never be `*(p + 1)`.
+    case 'address': return `(&${renderNumericExpression(expression.operand)})`;
+    case 'dereference': return `(*${expression.operand.name})`;
     // No parentheses: `t[i]` is already a postfix designation in C17.
     case 'index': return `${expression.array.name}[${renderNumericExpression(expression.index)}]`;
     case 'negation': return `(-${renderNumericExpression(expression.operand)})`;

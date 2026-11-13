@@ -13,11 +13,13 @@ import type { CharacterInstruction } from './characterInstructions.ts';
 import { analyzeArrayInstruction } from './arrayInstructions.ts';
 import type { ArrayInstruction } from './arrayInstructions.ts';
 import { parseStringLiteral, renderStringLiteral } from './stringLiteral.ts';
+import { analyzePointerInstruction } from './pointerInstructions.ts';
+import type { PointerInstruction } from './pointerInstructions.ts';
 
 /** Half-open offsets in UTF-16 code units, relative to the original input. */
 export type SourceRange = { start: number; end: number };
 
-export type Instruction = NumericInstruction | FunctionInstruction | CharacterInstruction | ArrayInstruction
+export type Instruction = NumericInstruction | FunctionInstruction | CharacterInstruction | ArrayInstruction | PointerInstruction
   | { kind: 'IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE_IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE'; parameters: Record<string, never> }
@@ -106,6 +108,9 @@ export type DiagnosticCode =
   | 'INVALID_ARRAY_DIMENSION'
   | 'INSUFFICIENT_ARRAY_DIMENSION'
   | 'STRING_REQUIRES_CHAR'
+  | 'INVALID_ADDRESS_OPERAND'
+  | 'INVALID_DEREFERENCE_OPERAND'
+  | 'UNSUPPORTED_INDIRECTION_LEVEL'
   | 'UNEXPECTED_TEXT';
 
 export type Diagnostic = {
@@ -153,7 +158,7 @@ const C17_KEYWORDS = new Set([
 
 type Token = { text: string; range: SourceRange };
 type Parameter = { parameter: 'name' | 'value' | 'header' };
-type Rule = { kind: Exclude<Instruction['kind'], 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | FunctionInstruction['kind'] | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind'] | CharacterInstruction['kind'] | ArrayInstruction['kind']>; parts: (string | Parameter)[] };
+type Rule = { kind: Exclude<Instruction['kind'], 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | FunctionInstruction['kind'] | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind'] | CharacterInstruction['kind'] | ArrayInstruction['kind'] | PointerInstruction['kind']>; parts: (string | Parameter)[] };
 
 const RULES: [Rule, ...Rule[]] = [
   { kind: 'MAIN', parts: ['Crée', 'la', 'fonction', 'principale'] },
@@ -262,6 +267,15 @@ function render(text: string, instruction: Instruction): TranslationResult {
     case 'STRING_INIT': code = `char ${instruction.parameters.name}[${instruction.parameters.dimension}] `
       + `= ${renderStringLiteral(instruction.parameters.text)};\n`; break;
     case 'PRINT_STRING': code = `printf("%s", ${instruction.parameters.name});\n`; break;
+    // The star is written against the name, not against the type: it belongs
+    // to the declarator, and the produced C is what the student reads.
+    case 'DECL_POINTER': code = `${instruction.parameters.type} *${instruction.parameters.name};\n`; break;
+    case 'INIT_POINTER': code = `${instruction.parameters.type} *${instruction.parameters.name} = &${instruction.parameters.target};\n`; break;
+    case 'ASSIGN_ADDRESS': code = `${instruction.parameters.name} = &${instruction.parameters.target};\n`; break;
+    case 'PRINT_POINTED': code = `printf("%d", *${instruction.parameters.name});\n`; break;
+    case 'ASSIGN_POINTED_INT': code = `*${instruction.parameters.name} = ${instruction.parameters.value};\n`; break;
+    case 'ASSIGN_POINTED_EXPRESSION': code = `*${instruction.parameters.name} `
+      + `= ${renderNumericExpression(instruction.parameters.expression)};\n`; break;
     case 'INCLUDE_STDIO': code = '#include <stdio.h>\n'; break;
     case 'PRINT_INT': code = `printf("%d", ${instruction.parameters.name});\n`; break;
     case 'PRINT_FORMATTED': {
@@ -576,6 +590,10 @@ export function translate(text: string): TranslationResult {
   const arrays = analyzeArrayInstruction(text, tokens, end, identifierDiagnostic);
   if (arrays?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [arrays.diagnostic] };
   if (arrays?.status === 'recognized') return render(text, arrays.instruction);
+
+  const pointers = analyzePointerInstruction(text, tokens, end, identifierDiagnostic);
+  if (pointers?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [pointers.diagnostic] };
+  if (pointers?.status === 'recognized') return render(text, pointers.instruction);
 
   const characters = analyzeCharacterInstruction(text, tokens, end, identifierDiagnostic);
   if (characters?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [characters.diagnostic] };

@@ -283,8 +283,7 @@ test('les plages sont absolues dans la phrase d’origine', () => {
 // ---------------------------------------------------------------------------
 
 for (const [expression, numeric, condition] of [
-  ['&s[0]', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_CONDITION_OPERATOR'],
-  ['* p', 'MISSING_OPERAND', 'MISSING_OPERAND'],
+  // `&s[0]` and `* p` left this list at lot 17 by decision D4.
   ['p->x', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_CONDITION_OPERATOR'],
   ['"texte"', 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN'],
 ]) {

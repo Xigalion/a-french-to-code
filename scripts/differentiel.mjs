@@ -166,6 +166,10 @@ const EXPRESSIONS = ['2 + 3 * 4', 'a + b', '-a', '(a + b) * c', 'a / 0', 'a % b'
   't[i]', 't[0]', 't[i + 1]', 't[u[i]]', 't[i][j]', 't[]', 't[ ]', 't[0', 't]', '1[t]', '(a + b)[0]',
   't[1.5]', "t['A']", "'A'", "' '", "'"+BS+"0'", "'z' - 'a'", "s[i] != '"+BS+"0'", "c == 'A'", "'ab'", "'"+BS+"q'",
   "a 'A'", "'A' 'B'", "'a", "'", "t['"+BS+"0']", "-'A'", "('A')", "'A' + 1", 't[(int) i]', 't[i < 3]', 't[a && b]', '&t[0]', '* t[0]', 't[i] + t[j]', 't [i]',
+  // Lot 17 surface.
+  '&x', '*p', '&t[0]', '&t[i + 1]', '* *p', '& &x', '&*p', '*&x', '&5', '&(a + b)', '&-x', "&'A'",
+  '*5', '*(p + 1)', '*t[0]', '*(p)', '(*p)', '&', '*', '*p + 1', '&x + 1', 'a * *b', '-*p', '!*p',
+  '&&x', '**p', 'a & b', 'a && b', 'a ** b', '*p * 2', '&x == &y', '*p != 0',
   'a +', '+ a', '1u', '2.5f', '0x1f', '12abc', 'a, b', 'a; b', '😀', 'a' + ' + a'.repeat(600)];
 const TYPES = ['int', 'unsigned int', 'float', 'double', 'char', 'long'];
 const FORMATS = ['décimal', 'hexadécimal', 'octal', 'décimal non signé', 'binaire'];
@@ -283,6 +287,33 @@ function* sentences() {
     'Affiche la chaine s.', 'Affiche le caractère de l’élément.',
     'Affiche le caractère de l’élément "0".', 'Affiche le tableau t.',
     'Déclare une chaîne nommée s.', 'Inclue la bibliothèque string.h.'];
+  // Lot 17 surface.
+  for (const type of [...TYPES, 'unsigned char', 'void', '']) {
+    for (const name of ['p', 'int', '1p', '']) {
+      yield `Déclare un pointeur de type ${type} nommé ${name}.`;
+      yield `Crée un pointeur de type ${type} nommé ${name} avec l’adresse de x.`;
+    }
+  }
+  for (const name of NAMES) {
+    yield* [`Déclare un pointeur de type int nommé ${name}.`,
+      `Affecte l’adresse de ${name} à p.`, `Affecte l'adresse de ${name} à p.`,
+      `Affiche la valeur pointée par ${name}.`,
+      `Affecte la valeur 5 à la valeur pointée par ${name}.`,
+      `Affecte à la valeur pointée par ${name} le résultat numérique de "a + 1".`];
+  }
+  yield* ['Déclare un pointeur.', 'Déclare un pointeur de type int nommé.',
+    'Déclare un pointeur de type nommé p.', 'Déclare un pointeur nommé p.',
+    'Déclare un pointeur de type int * nommé p.', 'Déclare un pointeur de pointeur de type int nommé p.',
+    'Crée un pointeur de type int nommé p.', 'Crée un pointeur de type int nommé p avec l’adresse.',
+    'Crée un pointeur de type int nommé p avec l’adresse de.',
+    'Affecte l’adresse de x à.', 'Affecte l’adresse à p.', 'Affecte l’adresse.',
+    'Affiche la valeur pointée par.', 'Affiche la valeur pointee par p.',
+    'Affiche la valeur pointée par p encore.', 'Affiche la valeur pointée.',
+    'Affecte la valeur 5 à la valeur pointée par.', 'Affecte la valeur x à la valeur pointée par p.',
+    'Affecte à la valeur pointée par p le résultat de "a".',
+    'Affecte à la valeur pointée par p le résultat numérique de.',
+    'Inclue la bibliothèque stddef.h.', 'Affecte à p le résultat numérique de "NULL".',
+    'Crée une fonction nommée f qui retourne un pointeur de type int.'];
   for (const digits of ['0', '2', '17', '99', 'x']) {
     yield `Affiche x en notation fixe avec ${digits} décimales.`;
     yield `Affiche x en notation scientifique avec ${digits} décimales.`;
@@ -318,7 +349,10 @@ const PLACED = ['Déclare un caractère nommé c.', "Affecte le caractère ' ' �
   'Crée un bloc si "t[i] > 0".',
   'Crée un tableau de type char nommé s de dimension 6 avec le texte "hello".',
   'Affiche la chaîne s.', 'Affiche le caractère de l’élément "i" de s.',
-  `Crée une boucle tant que "s[i] != '${BS}0'".`];
+  `Crée une boucle tant que "s[i] != '${BS}0'".`,
+  'Déclare un pointeur de type int nommé p.', 'Affecte l’adresse de x à p.',
+  'Affecte la valeur 5 à la valeur pointée par p.', 'Affiche la valeur pointée par p.',
+  'Affecte à n le résultat numérique de "*p + 1".'];
 
 for (const text of DOCUMENTS) {
   for (const offset of new Set([0, text.length, Math.max(0, text.length - 1), Math.floor(text.length / 2)])) {

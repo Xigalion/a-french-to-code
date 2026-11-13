@@ -50,7 +50,8 @@ export function analyzeCalculations(translation: TranslationResult): Calculation
     || instruction.kind === 'ARRAY_PRINT' || instruction.kind === 'ARRAY_PRINT_CHAR') stack = [instruction.parameters.element];
   else if (instruction.kind === 'RETURN_EXPRESSION' || instruction.kind === 'RETURN_NUMERIC'
     || instruction.kind === 'ASSIGN_EXPRESSION' || instruction.kind === 'NUMERIC_INIT'
-    || instruction.kind === 'NUMERIC_ASSIGN') stack = [instruction.parameters.expression];
+    || instruction.kind === 'NUMERIC_ASSIGN'
+    || instruction.kind === 'ASSIGN_POINTED_EXPRESSION') stack = [instruction.parameters.expression];
   else return report;
   while (stack.length) {
     const node = stack.pop();
@@ -59,6 +60,9 @@ export function analyzeCalculations(translation: TranslationResult): Calculation
     // An index is an ordinary integer expression: a division by zero written
     // inside it is the same local fact as anywhere else.
     if (node.kind === 'index') { stack.push(node.index); continue; }
+    // The two unary operators are transparent: a division written under them
+    // is the same local fact as anywhere else.
+    if (node.kind === 'address' || node.kind === 'dereference') { stack.push(node.operand); continue; }
     if (node.kind !== 'binary') continue;
     stack.push(node.right, node.left);
     if (node.operator !== '/' && node.operator !== '%') continue;

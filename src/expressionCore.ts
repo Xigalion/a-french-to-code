@@ -16,6 +16,10 @@ export type CoreNode =
   | { kind: 'name'; name: string; range: SourceRange }
   /** The exact C spelling, apostrophes included; never evaluated. */
   | { kind: 'character'; value: string; range: SourceRange }
+  /** `operatorRange` is the `&` or `*` alone, so the passive pedagogy can
+   * point at the operator rather than at the whole operand. */
+  | { kind: 'address'; operand: CoreNode; range: SourceRange; operatorRange: SourceRange }
+  | { kind: 'dereference'; operand: CoreNode; range: SourceRange; operatorRange: SourceRange }
   /** `bracketRange` covers the subscript delimiters alone, so the passive
    * pedagogy can point at the designation without the array name. */
   | { kind: 'index'; array: CoreNode; index: CoreNode; range: SourceRange; bracketRange: SourceRange }
@@ -46,6 +50,12 @@ export type ExpressionCapabilities = {
   /** Character constants as a term. Off in the lot 6 and subscript profiles,
    * which therefore cannot build a character node. */
   readonly characters: boolean;
+  /** Unary `&` in operand position only; the binary `&` keeps its historical
+   * refusal whatever this flag says. */
+  readonly addressOf: boolean;
+  /** Unary `*` in operand position only; the binary `*` is consumed by the
+   * product rule before any operand is read, so it is unaffected. */
+  readonly dereference: boolean;
   /** Parenthesized conversions `(type) operand`. */
   readonly casts: boolean;
   /** The exact type designations a conversion accepts. Listed rather than
@@ -62,6 +72,8 @@ export const INTEGER_CAPABILITIES: ExpressionCapabilities = {
   literalKind: 'integer',
   indexing: false,
   characters: false,
+  addressOf: false,
+  dereference: false,
   casts: false,
   castTypes: [],
   logic: false,
@@ -74,6 +86,8 @@ export const NUMERIC_CAPABILITIES: ExpressionCapabilities = {
   literalKind: 'literal',
   indexing: true,
   characters: true,
+  addressOf: true,
+  dereference: true,
   casts: true,
   castTypes: ['int', 'unsigned int', 'float', 'double', 'char'],
   logic: false,
@@ -86,6 +100,8 @@ export const CONDITION_CAPABILITIES: ExpressionCapabilities = {
   literalKind: 'literal',
   indexing: true,
   characters: true,
+  addressOf: true,
+  dereference: true,
   casts: true,
   castTypes: ['int', 'unsigned int', 'float', 'double', 'char'],
   logic: true,
@@ -103,6 +119,8 @@ export const INDEX_CAPABILITIES: ExpressionCapabilities = {
   literalKind: 'literal',
   indexing: true,
   characters: false,
+  addressOf: false,
+  dereference: false,
   casts: false,
   castTypes: [],
   logic: false,
@@ -173,7 +191,10 @@ export function parseCore(source: string, start: number, end: number, validateNa
     }
     const token = { text: source.slice(beginning, position), range: { start: beginning, end: position } };
     if (++budget.count > MAX_EXPRESSION_TOKENS) return tooComplex(token);
-    if (unsupported && !numeric) {
+    // A bare `&` is let through so the parser can decide: in operand position
+    // it is the address operator, anywhere else it keeps its historical
+    // refusal, emitted by `missingOperator`. `&&` is unaffected.
+    if (unsupported && !numeric && !(capabilities.addressOf && token.text === '&')) {
       if (!capabilities.logic) return fail('UNSUPPORTED_EXPRESSION_OPERATOR', 'Cet opérateur n’est pas pris en charge.', token.range);
       if (!isComparison(token.text) && !['&&', '||', '!'].includes(token.text)) {
         return fail(token.text === '=' ? 'ASSIGNMENT_IN_CONDITION' : 'UNSUPPORTED_CONDITION_OPERATOR',
@@ -245,16 +266,39 @@ export function parseCore(source: string, start: number, end: number, validateNa
     return { kind: 'index', array, index, range: { start: array.range.start, end: closing.range.end },
       bracketRange: { start: opening.range.start, end: closing.range.end } };
   }
+  /** `&` and `*` in operand position. Both accept one operand shape only,
+   * which is what closes a second level of indirection and, under a `*`,
+   * pointer arithmetic: neither belongs to this lot. */
+  function indirection(opening: Token, depth: number, kind: 'address' | 'dereference'): CoreNode | undefined {
+    if (depth === MAX_EXPRESSION_DEPTH) return tooComplex(opening);
+    const operand = unary(depth + 1);
+    if (!operand) return undefined;
+    if (operand.kind === 'address' || operand.kind === 'dereference') {
+      return fail('UNSUPPORTED_INDIRECTION_LEVEL', 'Un seul niveau d’indirection est pris en charge.',
+        { start: opening.range.start, end: operand.range.end });
+    }
+    const allowed = kind === 'address' ? ['name', 'index'] : ['name'];
+    if (!allowed.includes(operand.kind)) {
+      return fail(kind === 'address' ? 'INVALID_ADDRESS_OPERAND' : 'INVALID_DEREFERENCE_OPERAND',
+        kind === 'address' ? 'L’adresse ne peut être prise que d’une variable ou d’un élément de tableau.'
+          : 'Le déréférencement porte sur un pointeur nommé, et sur rien d’autre.', operand.range);
+    }
+    return { kind, operand, range: { start: opening.range.start, end: operand.range.end },
+      operatorRange: { ...opening.range } };
+  }
   function unary(depth: number): CoreNode | undefined {
     const token = peek();
     if (diagnostic) return undefined;
-    const blocking = !token || ['+', '*', '/', '%', ')'].includes(token.text)
+    const unaryStar = capabilities.dereference && token?.text === '*';
+    const blocking = !token || (['+', '*', '/', '%', ')'].includes(token.text) && !unaryStar)
       || (capabilities.logic && (['&&', '||'].includes(token.text) || isComparison(token.text)));
     if (blocking || !token) {
       const at = token?.range.start ?? end;
       return fail('MISSING_OPERAND', 'Il manque un opérande.', { start: at, end: at });
     }
     take();
+    if (unaryStar) return indirection(token, depth, 'dereference');
+    if (capabilities.addressOf && token.text === '&') return indirection(token, depth, 'address');
     if (token.text === '-' || token.text === '(' || (capabilities.logic && token.text === '!')) {
       if (depth === MAX_EXPRESSION_DEPTH) return tooComplex(token);
       if (token.text === '!') {
@@ -339,6 +383,13 @@ export function parseCore(source: string, start: number, end: number, validateNa
     return left;
   }
   function missingOperator(token: Token): undefined {
+    // The binary `&` is not the address operator: outside operand position it
+    // keeps the exact diagnostic it had before this lot.
+    if (capabilities.addressOf && token.text === '&') {
+      return fail(capabilities.logic ? 'UNSUPPORTED_CONDITION_OPERATOR' : 'UNSUPPORTED_EXPRESSION_OPERATOR',
+        capabilities.logic ? 'Cet opérateur n’est pas pris en charge dans les conditions du lot 9.'
+          : 'Cet opérateur n’est pas pris en charge.', token.range);
+    }
     if (capabilities.logic && isComparison(token.text)) return fail('CHAINED_COMPARISON',
       'Les comparaisons chaînées ne sont pas prises en charge.', token.range);
     // A character constant is an operand, so a missing operator is the right

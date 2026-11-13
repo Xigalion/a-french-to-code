@@ -243,6 +243,49 @@ littéraux caractères : `t['A']` est refusé, un indice est entier.
 
 ---
 
+## Domaine 5 — Adresses et pointeurs (lot 17)
+
+Six formulations dédiées, **un seul niveau d'indirection**. Le déclarateur
+s'écrit `int *p` : l'étoile appartient au déclarateur, pas au type.
+
+| Phrase française | Code C produit | Information |
+|---|---|---|
+| `Déclare un pointeur de type int nommé p.` | `int *p;` | UNINITIALIZED_POINTER, POINTER_VS_OBJECT |
+| `Crée un pointeur de type int nommé p avec l'adresse de x.` | `int *p = &x;` | ADDRESS_OF, POINTER_VS_OBJECT |
+| `Affecte l'adresse de x à p.` | `p = &x;` | ADDRESS_OF, POINTER_VS_OBJECT |
+| `Affiche la valeur pointée par p.` | `printf("%d", *p);` | DEREFERENCE_MEANING, ADDRESS_NOT_CHECKED |
+| `Affecte la valeur 5 à la valeur pointée par p.` | `*p = 5;` | DEREFERENCE_MEANING, ADDRESS_NOT_CHECKED |
+| `Affecte à la valeur pointée par p le résultat numérique de "a + 1".` | `*p = (a + 1);` | DEREFERENCE_MEANING, ADDRESS_NOT_CHECKED |
+
+`&` et `*` unaires sont aussi des **termes d'expression** dans les profils
+numérique et condition :
+
+| Phrase française | Code C produit | Information |
+|---|---|---|
+| `Affecte à n le résultat numérique de "*p + 1".` | `n = ((*p) + 1);` | DEREFERENCE_MEANING, ADDRESS_NOT_CHECKED |
+| `Crée un bloc si "*p > 0".` | `if ((*p) > 0) { ⏎ ⏎ }` | DEREFERENCE_MEANING, ADDRESS_NOT_CHECKED |
+| `Appelle lire avec "&x".` | `lire((&x));` | ADDRESS_OF, CALL_NOT_RESOLVED |
+| `Affecte à q le résultat numérique de "&t[0]".` | `q = (&t[0]);` | INDEX_NOT_CHECKED, ADDRESS_OF |
+
+Chaque opérateur unaire est **parenthésé** dans le C produit, comme la
+négation depuis le lot 6 : `*p + 1` devient `((*p) + 1)` et jamais
+`*(p + 1)`.
+
+**Grammaire.** `&` porte sur une variable nommée ou un élément de tableau ;
+`*` porte sur un pointeur nommé, et sur rien d'autre. Refusés :
+`&5`, `&(a + b)`, `&-x` (`INVALID_ADDRESS_OPERAND`) ; `*5`, `*(p + 1)`,
+`*t[0]` (`INVALID_DEREFERENCE_OPERAND`) ; `* *p`, `& &x`, `*&x`
+(`UNSUPPORTED_INDIRECTION_LEVEL`). `*(p)` est accepté et rend `(*p)`.
+
+**Les opérateurs binaires ne sont pas confondus avec les unaires.**
+`a & b`, `a && b`, `a * b` et `a ** b` gardent exactement leurs
+diagnostics et leurs sorties d'avant le lot. `a * *b` devient `(a * (*b))`,
+là où le lot 16 répondait `MISSING_OPERAND`.
+
+Le profil entier et le profil d'indice restent fermés aux deux opérateurs.
+
+---
+
 ## Limites de complexité
 
 | Limite | Valeur |
@@ -276,10 +319,13 @@ sous-expressions ni entre les clauses d'une même instruction.
 
 ## Non livré
 
-`switch`, `goto`, pointeurs, `struct`, mémoire dynamique, fichiers,
-compilation séparée, `string.h` et ses fonctions. Tableaux à plusieurs
+`switch`, `goto`, `struct`, mémoire dynamique, fichiers, compilation
+séparée, `string.h`, `stddef.h` et `NULL`. Tableaux à plusieurs
 dimensions, listes d'initialisation `{…}`, affectation globale d'un
-tableau ou d'une chaîne, dimension déduite (`char s[] = "…"`). Types
-`long`, `short`, `unsigned char`, `signed char`, `static`, pointeurs :
-refusés. Un littéral caractère dans une expression : refusé. Paliers de
-liberté 2 et 3 : non spécifiés.
+tableau ou d'une chaîne, dimension déduite (`char s[] = "…"`). Pointeurs :
+un seul niveau d'indirection, ni pointeur de fonction, ni `void *`, ni
+retour ou paramètre de type pointeur, ni arithmétique de pointeurs. Types
+`long`, `short`, `unsigned char`, `signed char`, `static` : refusés. Le
+profil d'expression entier reste fermé à l'indexation, aux littéraux
+caractères et aux deux opérateurs de pointeur. Paliers de liberté 2 et 3 :
+non spécifiés.

@@ -22,28 +22,30 @@ test('capacités déclarées des quatre profils', () => {
   // The lot 6 profile stays exactly as lot 13 sealed it: lot 15 added two
   // fields, and left `indexing` off here on purpose.
   assert.deepEqual(INTEGER_CAPABILITIES, {
-    literals: 'integer', literalKind: 'integer', indexing: false, characters: false, casts: false, castTypes: [], logic: false,
+    literals: 'integer', literalKind: 'integer', indexing: false, characters: false, addressOf: false, dereference: false,
+    casts: false, castTypes: [], logic: false,
     invalidTokenMessage: 'Cet élément n’appartient pas à une expression entière prise en charge.',
     invariantMessage: 'Invariant interne : expression analysée absente.',
   });
   // `char` entered castTypes at lot 14 by decision D2; `indexing` was opened
-  // at lot 15 and `characters` at lot 16, in these two profiles only, each
-  // time as an approved and documented extension.
+  // at lot 15, `characters` at lot 16, `addressOf` and `dereference` at lot
+  // 17, in these two profiles only, each time as an approved extension.
   assert.deepEqual(NUMERIC_CAPABILITIES, {
-    literals: 'numeric', literalKind: 'literal', indexing: true, characters: true, casts: true,
-    castTypes: ['int', 'unsigned int', 'float', 'double', 'char'], logic: false,
+    literals: 'numeric', literalKind: 'literal', indexing: true, characters: true, addressOf: true, dereference: true,
+    casts: true, castTypes: ['int', 'unsigned int', 'float', 'double', 'char'], logic: false,
     invalidTokenMessage: 'Cet élément n’appartient pas à une expression numérique prise en charge.',
     invariantMessage: 'Invariant interne : expression numérique analysée absente.',
   });
   assert.deepEqual(CONDITION_CAPABILITIES, {
-    literals: 'numeric', literalKind: 'literal', indexing: true, characters: true, casts: true,
-    castTypes: ['int', 'unsigned int', 'float', 'double', 'char'], logic: true,
+    literals: 'numeric', literalKind: 'literal', indexing: true, characters: true, addressOf: true, dereference: true,
+    casts: true, castTypes: ['int', 'unsigned int', 'float', 'double', 'char'], logic: true,
     invalidTokenMessage: 'Cet élément n’appartient pas à une expression numérique prise en charge.',
     invariantMessage: 'Invariant interne : expression numérique analysée absente.',
   });
   // Never published as a profile: selected only between `[` and `]`.
   assert.deepEqual(INDEX_CAPABILITIES, {
-    literals: 'integer', literalKind: 'literal', indexing: true, characters: false, casts: false, castTypes: [], logic: false,
+    literals: 'integer', literalKind: 'literal', indexing: true, characters: false, addressOf: false, dereference: false,
+    casts: false, castTypes: [], logic: false,
     invalidTokenMessage: 'Cet élément n’appartient pas à un indice entier pris en charge.',
     invariantMessage: 'Invariant interne : indice analysé absent.',
   });
@@ -58,10 +60,8 @@ test('capacités déclarées des quatre profils', () => {
 // extension of the numeric and condition profiles. Their refusal by the lot 6
 // profile is still locked, just below.
 const REFUSED = [
+  // The BINARY `&` is untouched by lot 17: only the unary one was opened.
   ['a & b', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_CONDITION_OPERATOR'],
-  ['&a', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_CONDITION_OPERATOR'],
-  ['* a', 'MISSING_OPERAND', 'MISSING_OPERAND', 'MISSING_OPERAND'],
-  ['a * * b', 'MISSING_OPERAND', 'MISSING_OPERAND', 'MISSING_OPERAND'],
   ['"texte"', 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN'],
   ['p->x', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_CONDITION_OPERATOR'],
 ];
@@ -82,6 +82,19 @@ for (const source of ['a[0]', 't[i] + 1', 't[]', 't[i][j]']) {
     const result = parseExpression(source, 0, source.length, validate);
     assert.equal(result.status, 'rejected');
     assert.equal(result.diagnostic.code, 'INVALID_EXPRESSION_TOKEN');
+  });
+}
+
+// `&a`, `* a` and `a * * b` left the shared list at lot 17, which opened the
+// two unary operators in the numeric and condition profiles by decision D4.
+// The lot 6 profile declares neither capability, so its diagnostics are
+// exactly the ones the shared list held before.
+for (const [source, code] of [['&a', 'UNSUPPORTED_EXPRESSION_OPERATOR'], ['&t[0]', 'UNSUPPORTED_EXPRESSION_OPERATOR'],
+  ['* a', 'MISSING_OPERAND'], ['a * * b', 'MISSING_OPERAND'], ['*p', 'MISSING_OPERAND']]) {
+  test(`le profil entier reste fermé aux pointeurs : ${JSON.stringify(source)}`, () => {
+    const result = parseExpression(source, 0, source.length, validate);
+    assert.equal(result.status, 'rejected');
+    assert.equal(result.diagnostic.code, code, source);
   });
 }
 
