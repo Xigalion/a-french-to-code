@@ -2,7 +2,7 @@ import type { Diagnostic, SourceRange } from './translate.ts';
 import { NUMERIC_CAPABILITIES, parseCore } from './expressionCore.ts';
 import type { CoreNameValidator, Token } from './expressionCore.ts';
 
-export type NumericType = 'int' | 'unsigned int' | 'float' | 'double';
+export type NumericType = 'int' | 'unsigned int' | 'float' | 'double' | 'char';
 export type NumericExpression =
   | { kind: 'literal'; value: string; range: SourceRange }
   | { kind: 'name'; name: string; range: SourceRange }

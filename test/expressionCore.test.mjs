@@ -20,17 +20,19 @@ const PROFILES = [
 // capability must add a field; it must never silently widen an existing profile.
 test('capacités déclarées des trois profils historiques', () => {
   assert.deepEqual(INTEGER_CAPABILITIES, {
-    literals: 'integer', casts: false, logic: false,
+    literals: 'integer', casts: false, castTypes: [], logic: false,
     invalidTokenMessage: 'Cet élément n’appartient pas à une expression entière prise en charge.',
     invariantMessage: 'Invariant interne : expression analysée absente.',
   });
+  // `char` entered castTypes at lot 14 by decision D2; it is the only change
+  // this record has undergone since lot 13 sealed it.
   assert.deepEqual(NUMERIC_CAPABILITIES, {
-    literals: 'numeric', casts: true, logic: false,
+    literals: 'numeric', casts: true, castTypes: ['int', 'unsigned int', 'float', 'double', 'char'], logic: false,
     invalidTokenMessage: 'Cet élément n’appartient pas à une expression numérique prise en charge.',
     invariantMessage: 'Invariant interne : expression numérique analysée absente.',
   });
   assert.deepEqual(CONDITION_CAPABILITIES, {
-    literals: 'numeric', casts: true, logic: true,
+    literals: 'numeric', casts: true, castTypes: ['int', 'unsigned int', 'float', 'double', 'char'], logic: true,
     invalidTokenMessage: 'Cet élément n’appartient pas à une expression numérique prise en charge.',
     invariantMessage: 'Invariant interne : expression numérique analysée absente.',
   });
@@ -59,17 +61,36 @@ for (const [source, ...codes] of REFUSED) {
   });
 }
 
-// `char` is a cast word, so it is recognized as a type and refused as such,
-// never as an unknown identifier. Lot 14 changes the French envelopes, not this.
-test('char reste un type numérique non pris en charge dans les conversions', () => {
+// Lot 13 locked this refusal; lot 14 lifted it by decision D2. The cast is now
+// accepted in both profiles that declare the capability, and nowhere else.
+test('char est une conversion acceptée depuis le lot 14', () => {
   for (const parse of [parseNumericExpression, parseCondition]) {
     const source = '(char) a';
     const result = parse(source, 0, source.length, validate);
-    assert.equal(result.status, 'rejected');
-    assert.equal(result.diagnostic.code, 'UNSUPPORTED_NUMERIC_TYPE');
-    assert.deepEqual(result.diagnostic.range, { start: 1, end: 5 });
+    assert.equal(result.status, 'parsed');
+    const node = result.expression ?? result.condition.expression;
+    assert.equal(node.kind, 'cast');
+    assert.equal(node.type, 'char');
   }
+  // The integer profile declares no cast capability at all, so `char` is read
+  // as a name and refused by the validator — exactly as before lot 14.
+  const source = '(char) a';
+  const integer = parseExpression(source, 0, source.length, validate);
+  assert.equal(integer.status, 'rejected');
+  assert.equal(integer.diagnostic.code, 'C_KEYWORD_IDENTIFIER');
 });
+
+// Compound char types stay out: only the bare designation is supported.
+for (const type of ['unsigned char', 'signed char', 'long', 'short']) {
+  test(`conversion hors catalogue : ${type}`, () => {
+    const source = `(${type}) a`;
+    for (const parse of [parseNumericExpression, parseCondition]) {
+      const result = parse(source, 0, source.length, validate);
+      assert.equal(result.status, 'rejected', `${type} devrait être refusé`);
+      assert.equal(result.diagnostic.code, 'UNSUPPORTED_NUMERIC_TYPE');
+    }
+  });
+}
 
 // A capability a profile does not declare can produce no node: this is what
 // makes the narrowing in each wrapper sound rather than merely convenient.

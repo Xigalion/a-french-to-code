@@ -1,4 +1,4 @@
-# Catalogue C-A — état au 12 novembre 2026
+# Catalogue C-A — état au 13 novembre 2026
 
 **Toutes les formulations reconnues, avec leur sortie C exacte.** Ce
 document est **généré depuis le moteur puis relu** : chaque ligne a été
@@ -127,6 +127,39 @@ Types de retour et de paramètre : `int`, `unsigned int`, `float`,
 
 ---
 
+## Domaine 5 — Caractères (lot 14)
+
+Les quatre formulations dédiées. Le littéral n'est **jamais évalué** :
+`'A'` n'est pas remplacé par son code.
+
+| Phrase française | Code C produit | Information |
+|---|---|---|
+| `Déclare un caractère nommé c.` | `char c;` | CHARACTER_STORAGE |
+| `Crée un caractère nommé c de valeur 'A'.` | `char c = 'A';` | CHARACTER_IS_INTEGER |
+| `Affecte le caractère 'A' à c.` | `c = 'A';` | CHARACTER_IS_INTEGER |
+| `Affiche le caractère c.` | `printf("%c", c);` | CHARACTER_FORMAT |
+| `Crée un caractère nommé fin de valeur '\n'.` | `char fin = '\n';` | CHARACTER_IS_INTEGER |
+
+Littéral caractère : apostrophes **ASCII droites**, exactement un
+caractère **ASCII imprimable** (`0x20` à `0x7E`), ou l'un des quatre
+échappements `\'`, `\`, `\n`, `\t`. Tout le reste est refusé, y compris
+`''`, `'ab'`, `'é'`, `'😀'`, `’A’` et `'\0'` — le caractère nul est
+réservé au lot 16, où il est l'objet enseigné.
+
+`char` est aussi devenu un type à part entière (décision D2) :
+
+| Phrase française | Code C produit | Information |
+|---|---|---|
+| `Déclare une variable de type char nommée c.` | `char c;` | — |
+| `Crée une fonction nommée lire qui retourne un char.` | `char lire(void) { ⏎ ⏎ }` | FUNCTION_SCOPE |
+| `Crée une fonction nommée ecrire qui ne retourne rien et prend un char nommé c.` | `void ecrire(char c) { ⏎ ⏎ }` | FUNCTION_SCOPE, PARAMETERS_BY_VALUE |
+| `Affecte à n le résultat numérique de "(char) 65".` | `n = ((char) 65);` | — |
+
+`unsigned char` et `signed char` restent refusés. Un littéral caractère
+**dans une expression** reste refusé dans les trois profils.
+
+---
+
 ## Limites de complexité
 
 | Limite | Valeur |
@@ -161,6 +194,7 @@ sous-expressions ni entre les clauses d'une même instruction.
 ## Non livré
 
 `switch`, `goto`, tableaux, chaînes de caractères, pointeurs, `struct`,
-mémoire dynamique, fichiers, compilation séparée. Types `char`, `long`,
-`short`, `static`, pointeurs : refusés. Paliers de liberté 2 et 3 : non
+mémoire dynamique, fichiers, compilation séparée. Types `long`, `short`,
+`unsigned char`, `signed char`, `static`, pointeurs : refusés. Un littéral
+caractère dans une expression : refusé. Paliers de liberté 2 et 3 : non
 spécifiés.

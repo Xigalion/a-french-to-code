@@ -18,6 +18,11 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const reference = process.argv[2] ?? 'HEAD';
+// An approved extension changes behaviour on purpose. It is still a divergence
+// and is still printed; it simply does not fail the run. Everything the pattern
+// does not cover is a regression. The pattern used is recorded in the lot bilan.
+const flag = process.argv.indexOf('--extensions');
+const extensions = flag === -1 ? undefined : new RegExp(process.argv[flag + 1], 'u');
 const root = process.cwd();
 const extracted = mkdtempSync(join(tmpdir(), 'ca-differentiel-'));
 try {
@@ -68,10 +73,12 @@ function snapshot(run) {
 
 let checked = 0;
 const divergences = [];
+const approved = [];
 function record(stage, input, a, b) {
   checked++;
   if (a === b) return;
-  divergences.push(divergences.length < 10 ? { stage, input, before: a, after: b } : { stage, input });
+  const bucket = extensions?.test(input) ? approved : divergences;
+  bucket.push(bucket.length < 10 ? { stage, input, before: a, after: b } : { stage, input });
 }
 
 const ATOMS = [
@@ -172,6 +179,26 @@ function* sentences() {
       `Crée une boucle pour i de valeur initiale "0" tant que "${expression}" avec mise à jour "i + 1".`];
   }
   for (const text of ['Bonjour\\n', 'a\\"b', 'a\\\\b', 'a\\tb', 'a\\qb', '']) yield `Affiche le texte "${text}".`;
+  // Lot 14 surface. Before that lot every line here is a refusal, so each one
+  // shows up as an approved extension rather than as silence.
+  const BS = String.fromCharCode(92);
+  for (const literal of ["'A'", "'z'", "'0'", "' '", "'}'", "'" + BS + "n'", "'" + BS + "t'",
+    "'" + BS + BS + "'", "'" + BS + "''", "''", "'ab'", "'" + BS + "q'", "'" + BS + "0'",
+    "'é'", "'\u{1F600}'", "’A’", 'A', '"A"', "'a", "'"]) {
+    yield `Crée un caractère nommé c de valeur ${literal}.`;
+    yield `Affecte le caractère ${literal} à c.`;
+  }
+  for (const name of NAMES) {
+    yield* [`Déclare un caractère nommé ${name}.`, `Affiche le caractère ${name}.`,
+      `Déclare une variable de type char nommée ${name}.`,
+      `Crée une fonction nommée ${name} qui retourne un char.`,
+      `Crée une fonction nommée ${name} qui retourne un int et prend un char nommé ${name}.`];
+  }
+  yield* ['Crée un caractère.', 'Crée un caractère nommé.', 'Crée un caractère nommé c.',
+    'Déclare un caractère.', 'Affiche le caractère.', "Affecte le caractère 'A'.",
+    "Affecte le caractère 'A' a c.", 'Déclare une variable de type unsigned char nommée c.',
+    'Affecte à n le résultat numérique de "(char) 65".', 'Crée un bloc si "(char) a < 5".',
+    'Affiche le caractere c.', 'Affiche le texte "A".'];
   for (const digits of ['0', '2', '17', '99', 'x']) {
     yield `Affiche x en notation fixe avec ${digits} décimales.`;
     yield `Affiche x en notation scientifique avec ${digits} décimales.`;
@@ -196,7 +223,8 @@ const DOCUMENTS = ['', '\n', '\n\n', 'int age;\n\n', '#include <stdio.h>\n\n',
   'for (i = 0; i < 3; i = (i + 1)) {\n\n}\n', 'int somme(int a, int b) {\n\n}\n\n',
   '} } {\n', '/* { */\n\n', '"{"\n\n', "'{'\n\n", 'int t[3];\n\n', 'char s[6] = "hello";\n\n',
   'int* p;\n\n', 'void f(int t[], int n) {\n\n}\n\n', 'int a;\r\nint b;\r\n\r\n'];
-const PLACED = ['Crée un entier nommé age de valeur 20.', 'Crée la fonction principale.',
+const PLACED = ['Déclare un caractère nommé c.', "Affecte le caractère ' ' à c.",
+  'Affiche le caractère c.', 'Crée un entier nommé age de valeur 20.', 'Crée la fonction principale.',
   'Crée un bloc si "a < 3".', 'Ajoute une branche sinon.', 'Sors de la boucle la plus intérieure.',
   'Retourne la valeur 0.', 'Crée une fonction nommée f qui retourne un int.',
   'Affecte à x le résultat de "a + b".', 'Crée une boucle tant que "i < 3".'];
@@ -215,8 +243,17 @@ for (const text of DOCUMENTS) {
 }
 
 rmSync(extracted, { recursive: true, force: true });
-console.log(`référence comparée : ${reference}`);
-console.log(`comparaisons       : ${checked}`);
-console.log(`divergences        : ${divergences.length}`);
-for (const divergence of divergences.slice(0, 10)) console.log(JSON.stringify(divergence).slice(0, 1500));
+console.log(`référence comparée     : ${reference}`);
+console.log(`comparaisons           : ${checked}`);
+if (extensions) console.log(`extensions approuvées  : ${approved.length}  (motif /${extensions.source}/)`);
+console.log(`régressions            : ${divergences.length}`);
+for (const divergence of divergences.slice(0, 10)) console.log('RÉGRESSION ' + JSON.stringify(divergence).slice(0, 1500));
+for (const extension of approved.slice(0, 6)) console.log('extension  ' + JSON.stringify(extension).slice(0, 600));
+// --all lists every divergent input, so an extension pattern can be audited
+// rather than trusted: a pattern that swallows a real regression is visible.
+if (process.argv.includes('--all')) {
+  for (const [label, list] of [['RÉGRESSION', divergences], ['extension', approved]]) {
+    for (const entry of list) console.log(`${label}\t${entry.stage}\t${JSON.stringify(entry.input)}`);
+  }
+}
 process.exit(divergences.length ? 1 : 0);

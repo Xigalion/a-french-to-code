@@ -5,7 +5,8 @@ import { instructionCondition } from './translate.ts';
 export type PedagogicalInformation = {
   code: 'SHORT_CIRCUIT_AND' | 'SHORT_CIRCUIT_OR' | 'LOGICAL_NOT'
     | 'WHILE_PRETEST' | 'DO_WHILE_POSTTEST' | 'FOR_CLAUSE_ORDER'
-    | 'FUNCTION_SCOPE' | 'RETURN_ENDS_FUNCTION' | 'PARAMETERS_BY_VALUE' | 'CALL_NOT_RESOLVED';
+    | 'FUNCTION_SCOPE' | 'RETURN_ENDS_FUNCTION' | 'PARAMETERS_BY_VALUE' | 'CALL_NOT_RESOLVED'
+    | 'CHARACTER_IS_INTEGER' | 'CHARACTER_STORAGE' | 'CHARACTER_FORMAT';
   severity: 'information';
   range: SourceRange;
   message: string;
@@ -44,6 +45,23 @@ export function explainInstruction(result: TranslationResult): PedagogicalInform
     return [scope, { code: 'PARAMETERS_BY_VALUE', severity: 'information', range: { ...instruction.parameters.nameRange },
       message: 'En C, un paramètre reçoit une copie de la valeur passée à l’appel : le modifier dans le corps '
         + 'ne modifie pas la variable de l’appelant. Aucun type d’argument n’est vérifié.' }];
+  }
+  // The three sides of the same fact: the constant, the variable that stores
+  // it, and the format that reads it back. None of them computes a value.
+  if (instruction.kind === 'INIT_CHAR' || instruction.kind === 'ASSIGN_CHAR') {
+    return [{ code: 'CHARACTER_IS_INTEGER', severity: 'information', range: { ...instruction.parameters.literalRange },
+      message: 'En C17, une constante caractère comme celle-ci a le type int, pas char : sa valeur est le code du '
+        + 'caractère dans le jeu d’exécution, que le standard ne fixe pas. Aucune valeur n’est calculée ici.' }];
+  }
+  if (instruction.kind === 'DECL_CHAR') {
+    return [{ code: 'CHARACTER_STORAGE', severity: 'information', range: { ...instruction.parameters.nameRange },
+      message: 'Une variable char occupe exactement un octet et contient un code numérique, pas un symbole. '
+        + 'C17 laisse à l’implémentation le soin de dire si ce type est signé. Aucune valeur initiale n’est écrite ici.' }];
+  }
+  if (instruction.kind === 'PRINT_CHAR') {
+    return [{ code: 'CHARACTER_FORMAT', severity: 'information', range: { ...instruction.parameters.nameRange },
+      message: '%c affiche le caractère correspondant au code stocké ; %d afficherait ce même code en décimal. '
+        + 'C-A ne vérifie ni que cette variable existe, ni qu’elle est de type char.' }];
   }
   if (instruction.kind === 'CALL' || instruction.kind === 'CALL_ASSIGN') {
     return [{ code: 'CALL_NOT_RESOLVED', severity: 'information', range: { ...instruction.parameters.nameRange },

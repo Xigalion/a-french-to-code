@@ -8,11 +8,13 @@ import { analyzeFunctionInstruction } from './functionInstructions.ts';
 import type { FunctionInstruction } from './functionInstructions.ts';
 import { parseCondition, renderCondition } from './condition.ts';
 import type { Condition } from './condition.ts';
+import { analyzeCharacterInstruction } from './characterInstructions.ts';
+import type { CharacterInstruction } from './characterInstructions.ts';
 
 /** Half-open offsets in UTF-16 code units, relative to the original input. */
 export type SourceRange = { start: number; end: number };
 
-export type Instruction = NumericInstruction | FunctionInstruction
+export type Instruction = NumericInstruction | FunctionInstruction | CharacterInstruction
   | { kind: 'IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE_IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE'; parameters: Record<string, never> }
@@ -88,6 +90,12 @@ export type DiagnosticCode =
   | 'UNTERMINATED_STRING'
   | 'INVALID_STRING_ESCAPE'
   | 'UNSUPPORTED_STRING_CONTENT'
+  | 'MISSING_CHARACTER'
+  | 'MISSING_CHARACTER_DELIMITER'
+  | 'UNTERMINATED_CHARACTER'
+  | 'INVALID_CHARACTER'
+  | 'INVALID_CHARACTER_ESCAPE'
+  | 'UNSUPPORTED_CHARACTER_CONTENT'
   | 'UNEXPECTED_TEXT';
 
 export type Diagnostic = {
@@ -135,7 +143,7 @@ const C17_KEYWORDS = new Set([
 
 type Token = { text: string; range: SourceRange };
 type Parameter = { parameter: 'name' | 'value' | 'header' };
-type Rule = { kind: Exclude<Instruction['kind'], 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | FunctionInstruction['kind'] | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind']>; parts: (string | Parameter)[] };
+type Rule = { kind: Exclude<Instruction['kind'], 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | FunctionInstruction['kind'] | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind'] | CharacterInstruction['kind']>; parts: (string | Parameter)[] };
 
 const RULES: [Rule, ...Rule[]] = [
   { kind: 'MAIN', parts: ['Crée', 'la', 'fonction', 'principale'] },
@@ -224,6 +232,12 @@ function render(text: string, instruction: Instruction): TranslationResult {
     case 'RETURN_INT': code = `return ${instruction.parameters.value};\n`; break;
     case 'RETURN_EXPRESSION': code = `return ${renderExpression(instruction.parameters.expression)};\n`; break;
     case 'RETURN_NUMERIC': code = `return ${renderNumericExpression(instruction.parameters.expression)};\n`; break;
+    // The character constant is written back exactly as it was typed: no
+    // numeric code is ever computed and no conversion is ever added.
+    case 'DECL_CHAR': code = `char ${instruction.parameters.name};\n`; break;
+    case 'INIT_CHAR': code = `char ${instruction.parameters.name} = ${instruction.parameters.literal};\n`; break;
+    case 'ASSIGN_CHAR': code = `${instruction.parameters.name} = ${instruction.parameters.literal};\n`; break;
+    case 'PRINT_CHAR': code = `printf("%c", ${instruction.parameters.name});\n`; break;
     case 'INCLUDE_STDIO': code = '#include <stdio.h>\n'; break;
     case 'PRINT_INT': code = `printf("%d", ${instruction.parameters.name});\n`; break;
     case 'PRINT_FORMATTED': {
@@ -543,6 +557,10 @@ export function translate(text: string): TranslationResult {
     if (tokens[4]) return reject(text, 'UNEXPECTED_TEXT', 'Ce texte supplémentaire n’est pas accepté après sinon.', { start: tokens[4].range.start, end });
     return render(text, { kind: 'ELSE', parameters: {} });
   }
+
+  const characters = analyzeCharacterInstruction(text, tokens, end, identifierDiagnostic);
+  if (characters?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [characters.diagnostic] };
+  if (characters?.status === 'recognized') return render(text, characters.instruction);
 
   const functions = analyzeFunctionInstruction(text, tokens, end, identifierDiagnostic);
   if (functions?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [functions.diagnostic] };

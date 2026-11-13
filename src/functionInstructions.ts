@@ -87,7 +87,7 @@ export function analyzeFunctionInstruction(source: string, tokens: Token[], end:
       last = tokens[i++]!;
       text += ' ' + last.text.toLowerCase();
     }
-    if (['int', 'unsigned int', 'float', 'double'].includes(text)) return text as NumericType;
+    if (['int', 'unsigned int', 'float', 'double', 'char'].includes(text)) return text as NumericType;
     return fail('UNSUPPORTED_NUMERIC_TYPE', 'Ce type de retour n’est pas pris en charge.',
       { text, range: { start: first.range.start, end: last.range.end } });
   }
@@ -131,7 +131,7 @@ export function analyzeFunctionInstruction(source: string, tokens: Token[], end:
       last = tokens[i++]!;
       text += ' ' + last.text.toLowerCase();
     }
-    if (['int', 'unsigned int', 'float', 'double'].includes(text)) return text as NumericType;
+    if (['int', 'unsigned int', 'float', 'double', 'char'].includes(text)) return text as NumericType;
     return fail('UNSUPPORTED_NUMERIC_TYPE', 'Ce type de paramètre n’est pas pris en charge.',
       { text, range: { start: first.range.start, end: last.range.end } });
   }

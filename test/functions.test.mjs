@@ -83,7 +83,8 @@ const definitionRefusals = [
   ['Crée une fonction nommée f qui.', 'INCOMPLETE_INSTRUCTION'],
   ['Crée une fonction nommée f qui retourne.', 'MISSING_NUMERIC_TYPE'],
   ['Crée une fonction nommée f qui retourne un.', 'MISSING_NUMERIC_TYPE'],
-  ['Crée une fonction nommée f qui retourne un char.', 'UNSUPPORTED_NUMERIC_TYPE', 'char'],
+  // « char » a quitté cette liste au lot 14 : la décision D2 en fait un type
+  // de retour pris en charge. L'acceptation est vérifiée dans characters.test.mjs.
   ['Crée une fonction nommée f qui retourne un long.', 'UNSUPPORTED_NUMERIC_TYPE', 'long'],
   ['Crée une fonction nommée f qui ne retourne pas.', 'UNKNOWN_FORMULATION', 'pas'],
   ['Crée une fonction nommée f qui ne rend rien.', 'UNKNOWN_FORMULATION', 'rend'],

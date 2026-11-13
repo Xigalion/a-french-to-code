@@ -51,7 +51,7 @@ export function analyzeNumericInstruction(source: string, tokens: Token[], end: 
       last = tokens[i++]!;
       text += ' ' + last.text.toLowerCase();
     }
-    if (text === 'int' || text === 'unsigned int' || text === 'float' || text === 'double') return text;
+    if (['int', 'unsigned int', 'float', 'double', 'char'].includes(text)) return text as NumericType;
     return fail('UNSUPPORTED_NUMERIC_TYPE', 'Ce type numérique n’est pas pris en charge.', { text, range: { start: first.range.start, end: last.range.end } });
   }
   function finish(): boolean {

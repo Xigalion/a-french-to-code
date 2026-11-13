@@ -3,7 +3,7 @@ import type { Diagnostic, SourceRange } from './translate.ts';
 export const MAX_EXPRESSION_TOKENS = 1024;
 export const MAX_EXPRESSION_DEPTH = 64;
 
-export type CoreNumericType = 'int' | 'unsigned int' | 'float' | 'double';
+export type CoreNumericType = 'int' | 'unsigned int' | 'float' | 'double' | 'char';
 export type ComparisonOperator = '==' | '!=' | '<' | '>' | '<=' | '>=';
 
 /** Superset of every node the bounded profiles can build. A profile that does
@@ -32,6 +32,9 @@ export type ExpressionCapabilities = {
   readonly literals: 'integer' | 'numeric';
   /** Parenthesized conversions `(type) operand`. */
   readonly casts: boolean;
+  /** The exact type designations a conversion accepts. Listed rather than
+   * derived, so adding a type to one profile is a visible, reviewable change. */
+  readonly castTypes: readonly CoreNumericType[];
   /** Comparisons, `!`, `&&`, `||` and their dedicated diagnostics. */
   readonly logic: boolean;
   readonly invalidTokenMessage: string;
@@ -41,6 +44,7 @@ export type ExpressionCapabilities = {
 export const INTEGER_CAPABILITIES: ExpressionCapabilities = {
   literals: 'integer',
   casts: false,
+  castTypes: [],
   logic: false,
   invalidTokenMessage: 'Cet élément n’appartient pas à une expression entière prise en charge.',
   invariantMessage: 'Invariant interne : expression analysée absente.',
@@ -49,6 +53,7 @@ export const INTEGER_CAPABILITIES: ExpressionCapabilities = {
 export const NUMERIC_CAPABILITIES: ExpressionCapabilities = {
   literals: 'numeric',
   casts: true,
+  castTypes: ['int', 'unsigned int', 'float', 'double', 'char'],
   logic: false,
   invalidTokenMessage: 'Cet élément n’appartient pas à une expression numérique prise en charge.',
   invariantMessage: 'Invariant interne : expression numérique analysée absente.',
@@ -57,6 +62,7 @@ export const NUMERIC_CAPABILITIES: ExpressionCapabilities = {
 export const CONDITION_CAPABILITIES: ExpressionCapabilities = {
   literals: 'numeric',
   casts: true,
+  castTypes: ['int', 'unsigned int', 'float', 'double', 'char'],
   logic: true,
   invalidTokenMessage: 'Cet élément n’appartient pas à une expression numérique prise en charge.',
   invariantMessage: 'Invariant interne : expression numérique analysée absente.',
@@ -135,7 +141,7 @@ export function parseCore(source: string, start: number, end: number, validateNa
       typeText += ' ' + last.text;
     }
     if (diagnostic) return undefined;
-    if (!['int', 'unsigned int', 'float', 'double'].includes(typeText)) return fail('UNSUPPORTED_NUMERIC_TYPE',
+    if (!(capabilities.castTypes as readonly string[]).includes(typeText)) return fail('UNSUPPORTED_NUMERIC_TYPE',
       'Ce type numérique n’est pas pris en charge.', { start: first.range.start, end: last.range.end });
     const closing = peek();
     if (diagnostic) return undefined;

@@ -1,8 +1,8 @@
 # Domaine 5 — « Tableaux, chaînes et pointeurs » : découpage et contrat du premier lot
 
 **Statut au 13 novembre 2026 : découpage approuvé, décisions D1 à D6
-validées, lot 13 livré.** Les lots 14 à 18 restent à implémenter et le lot
-14 attend la revue du lot 13. Dépôt : **2 662 tests Node réussis** et
+validées, lots 13 et 14 livrés.** Les lots 15 à 18 restent à implémenter et
+le lot 15 attend la revue du lot 14. Dépôt : **2 662 tests Node réussis** et
 **97 tests hôte VS Code non exécutés**.
 
 Le bilan du lot 13 est dans `docs/LOT13_CONTRAT_ET_BILAN.md`. Le §4 de ce
@@ -125,7 +125,14 @@ relève du domaine 6.
 
 ---
 
-## 3. Contrat du premier lot pédagogique — Lot 14, le type `char`
+## 3. Contrat du premier lot pédagogique — Lot 14 — **approuvé et livré**
+
+> **Livré le 13 novembre 2026.** Deux précisions ont été prises sur ce
+> contrat et sont soumises à revue : le contenu du littéral est restreint à
+> l'ASCII imprimable, et le message du §3.5 a été réécrit parce qu'une
+> constante caractère ordinaire a le type `int` en C17, pas `char`. Voir
+> `docs/LOT14_BILAN.md`.
+
 
 Ce contrat est **indépendant de la décision D1** : il n'introduit aucune
 construction nouvelle dans les expressions.
@@ -426,8 +433,9 @@ instrument de mesure de la complétion.
 | D5 — `INDEX_NOT_CHECKED` au lot 15 | **approuvée** |
 | D6 — initialisateurs | **approuvée**, non définitive |
 | Lot 13 | **livré** |
-| Lot 14 | contrat approuvé, **implémentation suspendue à la revue du lot 13** |
-| Lots 15 à 18 | découpage approuvé, contrats à rédiger lot par lot |
+| Lot 14 | **livré** |
+| Lot 15 | découpage approuvé, **contrat à rédiger après la revue du lot 14** |
+| Lots 16 à 18 | découpage approuvé, contrats à rédiger lot par lot |
 
 Les arbitrages D3, D4 et D6 sont explicitement **non définitifs** : ils
 fixent la progression pédagogique du domaine 5, pas les limites du modèle 1.

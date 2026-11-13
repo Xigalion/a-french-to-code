@@ -67,7 +67,8 @@ const parameterRefusals = [
   ['Crée une fonction nommée f qui retourne un int et prend un int.', 'INCOMPLETE_INSTRUCTION'],
   ['Crée une fonction nommée f qui retourne un int et prend un int nommé.', 'INCOMPLETE_INSTRUCTION'],
   ['Crée une fonction nommée f qui retourne un int et prend un nommé a.', 'MISSING_NUMERIC_TYPE'],
-  ['Crée une fonction nommée f qui retourne un int et prend un char nommé c.', 'UNSUPPORTED_NUMERIC_TYPE', 'char'],
+  // « char » a quitté cette liste au lot 14 : la décision D2 en fait un type
+  // de paramètre pris en charge. L'acceptation est vérifiée dans characters.test.mjs.
   ['Crée une fonction nommée f qui retourne un int et prend un void nommé v.', 'UNSUPPORTED_NUMERIC_TYPE', 'void'],
   ['Crée une fonction nommée f qui retourne un int et prend un int nomme a.', 'UNKNOWN_FORMULATION', 'nomme'],
   ['Crée une fonction nommée f qui retourne un int et prend un int nommée a.', 'UNKNOWN_FORMULATION', 'nommée'],
