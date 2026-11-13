@@ -188,10 +188,10 @@ Directions envisagées : **algorithmique et développement logiciel**, **systèm
 | Expressions et calculs | 6 à 8 livrés ; recette complète du domaine ouverte | Opérateurs, priorités, types numériques, représentation, précision, conversions et fiabilité des calculs |
 | Décisions et répétitions | **Lots 9 à 11D implémentés : domaine complet côté moteur.** Deux gestes du lot 9 confirmés ; recette manuelle du domaine ouverte ([protocole](RECETTE_DOMAINE3.md)) | Comparaisons, branches, `while` ([11A](LOT11A_BILAN.md)), `do/while` ([11B](LOT11B_CONTRAT_ET_BILAN.md)), `for` ([11C](LOT11C_CONTRAT_ET_BILAN.md)), `break`/`continue` ([11D](LOT11D_CONTRAT_ET_BILAN.md)). `switch` et `return` non livrés |
 | Fonctions et décomposition | **Lot 12 implémenté : 12A définition et retour, 12B paramètres, 12C appels** ([contrat et bilan](LOT12_CONTRAT_ET_BILAN.md)). Recette manuelle du domaine à rédiger | Définition, type de retour vérifié contre la forme de la phrase, paramètres explicites passés par valeur, appels sans résolution de symbole |
-| Tableaux, chaînes et pointeurs | À définir | Collections, accès et adresses |
-| Structures et mémoire dynamique | À définir | Données composées, allocation et durée de vie |
-| Fichiers et modularité | À définir | Entrées/sorties, erreurs, interfaces et compilation séparée |
-| Algorithmes et structures de données | À définir | Conception, structures, recherche, tri et complexité |
+| Tableaux, chaînes et pointeurs | **Découpage et contrat du lot 14 proposés** ([domaine 5](DOMAINE5_CONTRAT_PROPOSE.md)) : lots 13 à 18, trois décisions bloquantes à trancher. Aucune implémentation | Collections, accès et adresses |
+| Structures et mémoire dynamique | À définir — **dans le périmètre du modèle 1** | Données composées, allocation et durée de vie |
+| Fichiers et modularité | À définir — **dans le périmètre du modèle 1** | Entrées/sorties, erreurs, interfaces et compilation séparée |
+| Algorithmes et structures de données | À définir — **dans le périmètre du modèle 1** | Conception, structures, recherche, tri et complexité |
 | Fiabilité et maîtrise avancée | Transversal, puis approfondissement | Tests, débogage, comportements indéfinis, portabilité, maintenance et performance |
 
 **Attention :** ces numéros sont indicatifs, pas des engagements figés. Chaque lot devra être défini par un contrat spécifique. Les bonnes pratiques et les risques pertinents doivent être enseignés au fur et à mesure, et non seulement à la fin du parcours.
@@ -269,6 +269,22 @@ Bilan observé après correctif et alignement : **2 648 tests Node réussis, 0 �
 **Aucun résultat hôte n'est revendiqué.** La suite hôte VS Code est restée inexécutable pendant toute la session : une mise à jour de VS Code est en attente sur la machine et le mutex Inno Setup `vscode-updating`, détenu par l'instance en cours d'exécution, empêche tout démarrage d'hôte de développement. Six tentatives, la dernière à 16:01. Les 97 tests hôte existants **n'ont pas été exécutés et ne doivent pas être présentés comme réussis**. Aucun verrou n'a été supprimé et l'installation n'a pas été modifiée.
 
 Le [catalogue complet](CATALOGUE.md) des formulations reconnues et de leurs sorties exactes est généré depuis le moteur ; il sert de référence pour concevoir une épreuve. Restent ouverts : cette exécution hôte, la recette GCC Expressions et calculs, les recettes manuelles des [domaines 3](RECETTE_DOMAINE3.md) et [4](RECETTE_DOMAINE4.md), la qualification mutex/N-API, et la vérification en recette de la compatibilité C17 des fonctions, dont l'alignement est désormais livré. Le domaine 5 n'est pas commencé et les paliers de liberté ne sont pas spécifiés.
+
+### Décision de périmètre du modèle 1 — 13 novembre 2026
+
+Le fondateur retient l'**option B** : **le modèle 1 couvre l'intégralité des neuf domaines** du parcours « Algorithmique et développement logiciel en C17 ». Les domaines 5 à 9 en font partie et ne sont pas reportés à un modèle ultérieur.
+
+La méthode de développement est confirmée : chaque lot conserve son contrat, ses tests automatisés, son bilan et sa documentation. Les recettes manuelles générales sont **reportées à la phase de validation finale** ; les anomalies et recettes ouvertes restent documentées et **ne bloquent pas** l'implémentation des domaines suivants. À l'issue de la construction, un **exercice de synthèse** mobilisant l'ensemble des compétences mesurera la complétion réelle du modèle 1, identifiera les lacunes et les corrigera. **La réussite des tests automatisés ne vaut pas complétion réelle.** Les paliers de liberté ne sont pas à redéfinir pour l'instant.
+
+### Domaine 5 — découpage et contrat du premier lot proposés, 13 novembre 2026
+
+Le [découpage et le contrat du domaine 5](DOMAINE5_CONTRAT_PROPOSE.md) proposent six lots : 13 profil d'expression unifié (préparatoire, à comportement constant), 14 le type `char`, 15 tableaux et indexation, 16 chaînes C, 17 adresses et pointeurs, 18 relation tableaux/pointeurs.
+
+Deux constats techniques établis par vérification du code et des tests. **Le placement est déjà prêt** : les reconnaisseurs contextuels livrés traitent correctement les tableaux, les initialisateurs refermés, les chaînes contenant des accolades, les paramètres de type tableau et les déclarations de pointeur ; aucune modification n'est nécessaire pour les lots 14 à 16. **Les trois profils d'expression sont en revanche verrouillés** : `a[0]`, `a & b`, `* a` et `'A'` y sont refusés, et ces refus sont garantis par des tests approuvés, donc les profils ne peuvent pas être étendus en place.
+
+Trois décisions sont réellement bloquantes : la stratégie du parseur (quatrième profil dédié, comme aux lots 7 et 9, contre noyau unifié à capacités — l'unification est recommandée **parce que** le périmètre couvre désormais neuf domaines) ; l'entrée de `char` dans le système de types, qui est une extension de contrat transformant trois refus approuvés en acceptations ; et la profondeur des pointeurs. Trois autres décisions peuvent attendre le contrat de leur lot : `string.h`, l'absence de vérification des bornes d'indice, et les initialisateurs entre accolades.
+
+**Aucune implémentation n'est commencée.** Aucun code applicatif, test, configuration ou dépendance n'a été modifié pendant cette préparation. Les 2 648 tests Node restent le résultat du lot 12 ; les 97 tests hôte restent non exécutés et n'ont pas été relancés, conformément à la consigne.
 
 ## 10. Modèle de fiche pour chaque futur lot
 
