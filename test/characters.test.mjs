@@ -231,7 +231,8 @@ test('la conversion char est acceptée dans les deux profils qui déclarent la c
 // `&a` and `* a` left this list at lot 17 by decision D4; the lot 6 profile
 // still refuses them, which expressionCore.test.mjs locks.
 const STILL_REFUSED = [
-  ['p->x', 'UNSUPPORTED_EXPRESSION_OPERATOR'],
+  // `p->x` left this list at lot 20, which opened member access in the
+  // numeric and condition profiles; the frozen profiles still refuse it.
   ['"texte"', 'INVALID_EXPRESSION_TOKEN'],
 ];
 // The character literals left the shared loop at lot 16, which opened them in

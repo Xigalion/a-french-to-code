@@ -286,7 +286,8 @@ test('aucune arithmétique de pointeurs n’est produite par une formulation du 
 
 test('aucun accès membre, pointeur de fonction ou allocation', () => {
   for (const [source, numeric, condition] of [
-    ['p->x', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_CONDITION_OPERATOR'],
+  // `p->x` left this list at lot 20, which opened member access in the
+  // numeric and condition profiles; the frozen profiles still refuse it.
     ['"texte"', 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN'],
   ]) {
     PROFILES.forEach(([name, parse], index) => {

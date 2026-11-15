@@ -10,6 +10,7 @@ export type NumericExpression =
   | { kind: 'address'; operand: NumericName | IndexedElement; range: SourceRange; operatorRange: SourceRange }
   | { kind: 'dereference'; operand: NumericName | PointerSum; range: SourceRange; operatorRange: SourceRange }
   | { kind: 'pointer-sum'; pointer: NumericName; offset: NumericExpression; range: SourceRange; operatorRange: SourceRange }
+  | MemberAccess
   /** Only a name is indexable, which is why `array` is not the whole union. */
   | { kind: 'index'; array: NumericName; index: NumericExpression; range: SourceRange; bracketRange: SourceRange }
   | { kind: 'negation'; operand: NumericExpression; range: SourceRange }
@@ -18,6 +19,8 @@ export type NumericExpression =
 
 export type NumericName = { kind: 'name'; name: string; range: SourceRange };
 export type PointerSum = Extract<NumericExpression, { kind: 'pointer-sum' }>;
+export type MemberAccess = { kind: 'member'; object: NumericName | IndexedElement | MemberAccess;
+  member: string; arrow: boolean; range: SourceRange; operatorRange: SourceRange };
 export type IndexedElement = Extract<NumericExpression, { kind: 'index' }>;
 export type NameValidator = CoreNameValidator;
 export type NumericExpressionResult = { status: 'parsed'; expression: NumericExpression } | { status: 'rejected'; diagnostic: Diagnostic };
@@ -55,6 +58,9 @@ export function renderNumericExpression(expression: NumericExpression): string {
     case 'address': return `(&${renderNumericExpression(expression.operand)})`;
     case 'dereference': return expression.operand.kind === 'name'
       ? `(*${expression.operand.name})` : `(*${renderNumericExpression(expression.operand)})`;
+    // Written exactly as the student wrote it: no access is ever rewritten
+    // from one form into the other.
+    case 'member': return renderNumericExpression(expression.object) + (expression.arrow ? '->' : '.') + expression.member;
     case 'pointer-sum': return `(${expression.pointer.name} + ${renderNumericExpression(expression.offset)})`;
     // No parentheses: `t[i]` is already a postfix designation in C17.
     case 'index': return `${expression.array.name}[${renderNumericExpression(expression.index)}]`;

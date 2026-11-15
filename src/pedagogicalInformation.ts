@@ -15,7 +15,8 @@ export type PedagogicalInformation = {
     | 'ARRAY_POINTER_EQUIVALENCE' | 'POINTER_ARITHMETIC_LIMITS'
     | 'OUT_OF_BOUNDS_UNDEFINED' | 'OFFSET_TYPE_NOT_CHECKED'
     | 'SWITCH_INTEGER_ONLY' | 'SWITCH_FALLTHROUGH' | 'CASE_NEEDS_STATEMENT'
-    | 'DEFAULT_OPTIONAL' | 'BREAK_LEAVES_SWITCH';
+    | 'DEFAULT_OPTIONAL' | 'BREAK_LEAVES_SWITCH'
+    | 'STRUCT_TAG_NEEDS_KEYWORD' | 'STRUCT_LAYOUT' | 'MEMBER_ACCESS_FORM' | 'MEMBER_NOT_CHECKED';
   severity: 'information';
   range: SourceRange;
   message: string;
@@ -125,8 +126,34 @@ const SWITCH_MESSAGES = {
     + 'sortir d’une boucle, la phrase est « Sors de la boucle la plus intérieure. ».',
 } as const;
 
+const STRUCT_MESSAGES = {
+  STRUCT_TAG_NEEDS_KEYWORD: 'En C17, ce nom est une étiquette : le type s’écrit « struct » suivi de l’étiquette, pas '
+    + 'l’étiquette seule. Les champs sont ajoutés un par un ; aucun n’est créé ici.',
+  STRUCT_LAYOUT: 'Les champs sont rangés dans l’ordre de leur déclaration, mais l’implémentation peut insérer du '
+    + 'remplissage entre eux : la taille d’une structure n’est pas la somme des tailles de ses champs.',
+  MEMBER_ACCESS_FORM: 'Le point s’applique à une structure, la flèche à un pointeur vers une structure : « p->x » '
+    + 'est exactement « (*p).x ». C-A écrit la forme demandée et n’en substitue jamais une à l’autre.',
+  MEMBER_NOT_CHECKED: 'C-A ne vérifie ni que cette structure existe, ni qu’elle possède ce champ, ni le type de ce '
+    + 'champ. Aucune déclaration n’est relue ici.',
+} as const;
+
 export function explainInstruction(result: TranslationResult): PedagogicalInformation[] {
   if (result.status !== 'translated') return [];
+  if (result.instruction.kind === 'STRUCT_DECL') {
+    const anchor = result.instruction.parameters.tagRange;
+    return [
+      { code: 'STRUCT_TAG_NEEDS_KEYWORD', severity: 'information', range: { ...anchor }, message: STRUCT_MESSAGES.STRUCT_TAG_NEEDS_KEYWORD },
+      { code: 'STRUCT_LAYOUT', severity: 'information', range: { ...anchor }, message: STRUCT_MESSAGES.STRUCT_LAYOUT },
+    ];
+  }
+  if (result.instruction.kind === 'MEMBER_ASSIGN_INT' || result.instruction.kind === 'MEMBER_ASSIGN_CHAR'
+    || result.instruction.kind === 'MEMBER_ASSIGN_EXPRESSION' || result.instruction.kind === 'MEMBER_PRINT') {
+    const anchor = result.instruction.parameters.target.memberRange;
+    return [
+      { code: 'MEMBER_ACCESS_FORM', severity: 'information', range: { ...anchor }, message: STRUCT_MESSAGES.MEMBER_ACCESS_FORM },
+      { code: 'MEMBER_NOT_CHECKED', severity: 'information', range: { ...anchor }, message: STRUCT_MESSAGES.MEMBER_NOT_CHECKED },
+    ];
+  }
   if (result.instruction.kind === 'SWITCH') {
     return [{ code: 'SWITCH_INTEGER_ONLY', severity: 'information',
       range: { ...result.instruction.parameters.expressionRange }, message: SWITCH_MESSAGES.SWITCH_INTEGER_ONLY }];
@@ -242,6 +269,12 @@ export function explainInstruction(result: TranslationResult): PedagogicalInform
   }
   // A character constant written inside an expression carries the same fact
   // as one written in a dedicated envelope: its type is int.
+  // Member access written inside an expression carries the same two facts.
+  const accessed = firstNodeRange(parameters, 'member', 'operatorRange');
+  if (accessed) {
+    entries.push({ code: 'MEMBER_ACCESS_FORM', severity: 'information', range: { ...accessed }, message: STRUCT_MESSAGES.MEMBER_ACCESS_FORM });
+    entries.push({ code: 'MEMBER_NOT_CHECKED', severity: 'information', range: { ...accessed }, message: STRUCT_MESSAGES.MEMBER_NOT_CHECKED });
+  }
   const character = firstCharacterRange(result.instruction.parameters);
   if (character) {
     entries.push({ code: 'CHARACTER_IS_INTEGER', severity: 'information', range: { ...character },

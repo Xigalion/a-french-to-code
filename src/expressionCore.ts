@@ -23,6 +23,8 @@ export type CoreNode =
   /** `nom + décalage` under a dereference, and nowhere else: the lot 18 frame
    * for the array/pointer relation. One `+`, one level of parentheses. */
   | { kind: 'pointer-sum'; pointer: CoreNode; offset: CoreNode; range: SourceRange; operatorRange: SourceRange }
+  /** objet.champ or objet->champ. One chain, no subscript after a member. */
+  | { kind: 'member'; object: CoreNode; member: string; arrow: boolean; range: SourceRange; operatorRange: SourceRange }
   /** `bracketRange` covers the subscript delimiters alone, so the passive
    * pedagogy can point at the designation without the array name. */
   | { kind: 'index'; array: CoreNode; index: CoreNode; range: SourceRange; bracketRange: SourceRange }
@@ -61,6 +63,9 @@ export type ExpressionCapabilities = {
   readonly dereference: boolean;
   /** `*(nom + décalage)`. Requires `dereference`; off in the frozen profiles. */
   readonly pointerOffset: boolean;
+  /** Postfix access. Off in the frozen profiles, where a dotted name
+   * therefore stays one malformed name token, exactly as before. */
+  readonly members: boolean;
   /** Parenthesized conversions `(type) operand`. */
   readonly casts: boolean;
   /** The exact type designations a conversion accepts. Listed rather than
@@ -80,6 +85,7 @@ export const INTEGER_CAPABILITIES: ExpressionCapabilities = {
   addressOf: false,
   dereference: false,
   pointerOffset: false,
+  members: false,
   casts: false,
   castTypes: [],
   logic: false,
@@ -95,6 +101,7 @@ export const NUMERIC_CAPABILITIES: ExpressionCapabilities = {
   addressOf: true,
   dereference: true,
   pointerOffset: true,
+  members: true,
   casts: true,
   castTypes: ['int', 'unsigned int', 'float', 'double', 'char'],
   logic: false,
@@ -110,6 +117,7 @@ export const CONDITION_CAPABILITIES: ExpressionCapabilities = {
   addressOf: true,
   dereference: true,
   pointerOffset: true,
+  members: true,
   casts: true,
   castTypes: ['int', 'unsigned int', 'float', 'double', 'char'],
   logic: true,
@@ -130,6 +138,7 @@ export const INDEX_CAPABILITIES: ExpressionCapabilities = {
   addressOf: false,
   dereference: false,
   pointerOffset: false,
+  members: false,
   casts: false,
   castTypes: [],
   logic: false,
@@ -181,6 +190,14 @@ export function parseCore(source: string, start: number, end: number, validateNa
       cached = literal;
       return literal;
     }
+    // A dot that does not begin a numeric literal is the member operator.
+    if (capabilities.members && source.charAt(position) === '.' && !/[0-9]/u.test(source.charAt(position + 1))) {
+      position++;
+      const dot = { text: '.', range: { start: beginning, end: position } };
+      if (++budget.count > MAX_EXPRESSION_TOKENS) return tooComplex(dot);
+      cached = dot;
+      return dot;
+    }
     const unsupported = /^(?:>>=|<<=|->|\+\+|--|\*\*|\/\/|\/\*|\*\/|\+=|-=|\*=|\/=|%=|==|!=|<=|>=|&&|\|\||<<|>>|&=|\|=|\^=|[=<>!&|^~?:])/u.exec(source.slice(position, end));
     const numeric = capabilities.literals === 'numeric' && /[0-9.]/u.test(source.charAt(position));
     if (numeric) {
@@ -195,7 +212,11 @@ export function parseCore(source: string, start: number, end: number, validateNa
     else if (/[()+\-*/%]/u.test(source.charAt(position))) position++;
     else {
       // Keep malformed numeric/name tokens whole, including astral characters.
-      while (position < end && !/[ \t()+\-*/%=<>!&|^~?:,;[\]{}"\\]/u.test(source.charAt(position))) position++;
+      // A dot breaks a name only where member access is declared; elsewhere a
+      // dotted name stays one malformed token, as every earlier lot had it.
+      const breaks = capabilities.members
+        ? /[ \t()+\-*/%=<>!&|^~?:,;[\]{}"\\.]/u : /[ \t()+\-*/%=<>!&|^~?:,;[\]{}"\\]/u;
+      while (position < end && !breaks.test(source.charAt(position))) position++;
       if (position === beginning) position += source.codePointAt(position)! > 0xffff ? 2 : 1;
     }
     const token = { text: source.slice(beginning, position), range: { start: beginning, end: position } };
@@ -203,7 +224,8 @@ export function parseCore(source: string, start: number, end: number, validateNa
     // A bare `&` is let through so the parser can decide: in operand position
     // it is the address operator, anywhere else it keeps its historical
     // refusal, emitted by `missingOperator`. `&&` is unaffected.
-    if (unsupported && !numeric && !(capabilities.addressOf && token.text === '&')) {
+    if (unsupported && !numeric && !(capabilities.addressOf && token.text === '&')
+      && !(capabilities.members && token.text === '->')) {
       if (!capabilities.logic) return fail('UNSUPPORTED_EXPRESSION_OPERATOR', 'Cet opérateur n’est pas pris en charge.', token.range);
       if (!isComparison(token.text) && !['&&', '||', '!'].includes(token.text)) {
         return fail(token.text === '=' ? 'ASSIGNMENT_IN_CONDITION' : 'UNSUPPORTED_CONDITION_OPERATOR',
@@ -380,14 +402,48 @@ export function parseCore(source: string, start: number, end: number, validateNa
     if (capabilities.characters && token.text.startsWith("'")) {
       return { kind: 'character', value: token.text, range: token.range };
     }
+    // An access operator with nothing to its left is not a prefix operator:
+    // it keeps the diagnostic it had before this lot.
+    if (capabilities.members && (token.text === '->' || token.text === '.')) {
+      return fail(capabilities.logic ? 'UNSUPPORTED_CONDITION_OPERATOR' : 'UNSUPPORTED_EXPRESSION_OPERATOR',
+        capabilities.logic ? 'Cet opérateur n’est pas pris en charge dans les conditions du lot 9.'
+          : 'Cet opérateur n’est pas pris en charge.', token.range);
+    }
     if (/^[\p{L}_]/u.test(token.text)) {
       diagnostic = validateName(token);
       if (diagnostic) return undefined;
-      const name: CoreNode = { kind: 'name', name: token.text, range: token.range };
-      if (!capabilities.indexing) return name;
-      const next = peek();
-      if (diagnostic) return undefined;
-      return next?.text === '[' ? subscript(name, depth) : name;
+      let node: CoreNode = { kind: 'name', name: token.text, range: token.range };
+      if (capabilities.indexing) {
+        const next = peek();
+        if (diagnostic) return undefined;
+        if (next?.text === '[') {
+          const indexed = subscript(node, depth);
+          if (!indexed) return undefined;
+          node = indexed;
+        }
+      }
+      if (!capabilities.members) return node;
+      // A chain of accesses, left to right. No subscript after a member in
+      // this lot: such a form is refused rather than half-supported.
+      for (;;) {
+        const operator = peek();
+        if (diagnostic) return undefined;
+        if (operator?.text !== '.' && operator?.text !== '->') break;
+        take();
+        const member = peek();
+        if (diagnostic) return undefined;
+        if (!member || !/^[\p{L}_]/u.test(member.text)) {
+          const at = member?.range.start ?? end;
+          return fail('MISSING_MEMBER_NAME', 'Il manque le nom du champ après cet opérateur d’accès.',
+            { start: at, end: member?.range.end ?? at });
+        }
+        take();
+        diagnostic = validateName(member);
+        if (diagnostic) return undefined;
+        node = { kind: 'member', object: node, member: member.text, arrow: operator.text === '->',
+          range: { start: node.range.start, end: member.range.end }, operatorRange: { ...operator.range } };
+      }
+      return node;
     }
     return fail('INVALID_EXPRESSION_TOKEN', capabilities.invalidTokenMessage, token.range);
   }
@@ -420,7 +476,8 @@ export function parseCore(source: string, start: number, end: number, validateNa
   function missingOperator(token: Token): undefined {
     // The binary `&` is not the address operator: outside operand position it
     // keeps the exact diagnostic it had before this lot.
-    if (capabilities.addressOf && token.text === '&') {
+    if ((capabilities.addressOf && token.text === '&')
+      || (capabilities.members && (token.text === '->' || token.text === '.'))) {
       return fail(capabilities.logic ? 'UNSUPPORTED_CONDITION_OPERATOR' : 'UNSUPPORTED_EXPRESSION_OPERATOR',
         capabilities.logic ? 'Cet opérateur n’est pas pris en charge dans les conditions du lot 9.'
           : 'Cet opérateur n’est pas pris en charge.', token.range);

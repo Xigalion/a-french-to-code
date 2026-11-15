@@ -240,7 +240,8 @@ for (const [source, code] of [
 // they did before lot 15; indexing changed neither of them.
 const STILL_REFUSED = [
   // `&a`, `&t[0]` and `* p` left this list at lot 17 by decision D4.
-  ['p->x', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_CONDITION_OPERATOR'],
+  // `p->x` left this list at lot 20, which opened member access in the
+  // numeric and condition profiles; the frozen profiles still refuse it.
   ["t['A']", 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN'],
   ['"texte"', 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN'],
 ];
@@ -253,8 +254,11 @@ for (const [expression, ...codes] of STILL_REFUSED) {
     });
   });
 }
-test('un accès à un membre reste hors catalogue', () => {
-  refused('Affecte à x le résultat numérique de "t.x".', 'INVALID_IDENTIFIER');
+// Member access entered the numeric and condition profiles at lot 20. The
+// lot 6 profile still refuses it, which is what this test now fixes.
+test('un accès à un membre reste hors du profil entier', () => {
+  refused('Affecte à x le résultat de "t.x".', 'INVALID_IDENTIFIER');
+  refused('Retourne le résultat de "t->x".', 'UNSUPPORTED_EXPRESSION_OPERATOR');
 });
 test('aucune enveloppe ne produit une affectation globale de tableau', () => {
   refused('Affecte le tableau u à t.', 'UNKNOWN_FORMULATION');

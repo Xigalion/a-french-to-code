@@ -22,7 +22,7 @@ test('capacités déclarées des quatre profils', () => {
   // The lot 6 profile stays exactly as lot 13 sealed it: lot 15 added two
   // fields, and left `indexing` off here on purpose.
   assert.deepEqual(INTEGER_CAPABILITIES, {
-    literals: 'integer', literalKind: 'integer', indexing: false, characters: false, addressOf: false, dereference: false, pointerOffset: false,
+    literals: 'integer', literalKind: 'integer', indexing: false, characters: false, addressOf: false, dereference: false, pointerOffset: false, members: false,
     casts: false, castTypes: [], logic: false,
     invalidTokenMessage: 'Cet élément n’appartient pas à une expression entière prise en charge.',
     invariantMessage: 'Invariant interne : expression analysée absente.',
@@ -32,20 +32,20 @@ test('capacités déclarées des quatre profils', () => {
   // 17, `pointerOffset` at lot 18, in these two profiles only, each time as
   // an approved and documented extension.
   assert.deepEqual(NUMERIC_CAPABILITIES, {
-    literals: 'numeric', literalKind: 'literal', indexing: true, characters: true, addressOf: true, dereference: true, pointerOffset: true,
+    literals: 'numeric', literalKind: 'literal', indexing: true, characters: true, addressOf: true, dereference: true, pointerOffset: true, members: true,
     casts: true, castTypes: ['int', 'unsigned int', 'float', 'double', 'char'], logic: false,
     invalidTokenMessage: 'Cet élément n’appartient pas à une expression numérique prise en charge.',
     invariantMessage: 'Invariant interne : expression numérique analysée absente.',
   });
   assert.deepEqual(CONDITION_CAPABILITIES, {
-    literals: 'numeric', literalKind: 'literal', indexing: true, characters: true, addressOf: true, dereference: true, pointerOffset: true,
+    literals: 'numeric', literalKind: 'literal', indexing: true, characters: true, addressOf: true, dereference: true, pointerOffset: true, members: true,
     casts: true, castTypes: ['int', 'unsigned int', 'float', 'double', 'char'], logic: true,
     invalidTokenMessage: 'Cet élément n’appartient pas à une expression numérique prise en charge.',
     invariantMessage: 'Invariant interne : expression numérique analysée absente.',
   });
   // Never published as a profile: selected only between `[` and `]`.
   assert.deepEqual(INDEX_CAPABILITIES, {
-    literals: 'integer', literalKind: 'literal', indexing: true, characters: false, addressOf: false, dereference: false, pointerOffset: false,
+    literals: 'integer', literalKind: 'literal', indexing: true, characters: false, addressOf: false, dereference: false, pointerOffset: false, members: false,
     casts: false, castTypes: [], logic: false,
     invalidTokenMessage: 'Cet élément n’appartient pas à un indice entier pris en charge.',
     invariantMessage: 'Invariant interne : indice analysé absent.',
@@ -60,11 +60,12 @@ test('capacités déclarées des quatre profils', () => {
 // `a[0]` and `t[i] + 1` left this list at lot 15: indexing is now an approved
 // extension of the numeric and condition profiles. Their refusal by the lot 6
 // profile is still locked, just below.
+// `p->x` left this list at lot 20, which opened member access in the
+// numeric and condition profiles; the frozen profiles still refuse it.
 const REFUSED = [
   // The BINARY `&` is untouched by lot 17: only the unary one was opened.
   ['a & b', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_CONDITION_OPERATOR'],
   ['"texte"', 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN'],
-  ['p->x', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_CONDITION_OPERATOR'],
 ];
 for (const [source, ...codes] of REFUSED) {
   test(`domaine 5 encore refusé : ${JSON.stringify(source)}`, () => {

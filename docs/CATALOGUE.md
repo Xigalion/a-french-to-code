@@ -360,6 +360,50 @@ une phrase, vérification d'unicité ou de couverture, et `goto`.
 
 ---
 
+## Domaine 6 — Structures et accès aux membres (lot 20)
+
+| Phrase française | Code C produit | Information |
+|---|---|---|
+| `Déclare une structure nommée Point.` | `struct Point { ⏎ ⏎ };` | STRUCT_TAG_NEEDS_KEYWORD, STRUCT_LAYOUT |
+| `Ajoute un champ de type int nommé x.` | `int x;` | — |
+| `Ajoute un champ de type structure Point nommé origine.` | `struct Point origine;` | — |
+| `Déclare une variable de type structure Point nommée p.` | `struct Point p;` | — |
+| `Déclare un pointeur de type structure Point nommé q.` | `struct Point *q;` | — |
+| `Affecte la valeur 5 au champ x de p.` | `p.x = 5;` | MEMBER_ACCESS_FORM, MEMBER_NOT_CHECKED |
+| `Affecte la valeur 5 au champ x pointé par q.` | `q->x = 5;` | idem |
+| `Affecte au champ x de p le résultat numérique de "a + 1".` | `p.x = (a + 1);` | idem |
+| `Affiche le champ x de p.` | `printf("%d", p.x);` | idem |
+| `Affiche le champ x pointé par q.` | `printf("%d", q->x);` | idem |
+
+La définition est un **bloc** et son accolade fermante porte le
+point-virgule. Un champ ne se place **que** dans une structure
+(`FIELD_OUTSIDE_STRUCT` sinon) ; `struct`, `union` et `enum` écrits à la
+main sont reconnus comme cible, avec ou sans étiquette.
+
+`.` et `->` sont aussi des opérateurs postfixés dans les profils numérique
+et condition :
+
+| Phrase française | Code C produit |
+|---|---|
+| `Affecte à n le résultat numérique de "p.x".` | `n = p.x;` |
+| `Affecte à n le résultat numérique de "q->a.b".` | `n = q->a.b;` |
+| `Affecte à n le résultat numérique de "t[i].x".` | `n = t[i].x;` |
+| `Crée un bloc si "q->x > 0".` | `if (q->x > 0) { ⏎ ⏎ }` |
+
+Grammaire : `(nom | nom[indice]) ('.' nom | '->' nom)*`. Les chaînes sont
+autorisées ; **aucune indexation après un champ**. Le point ne devient
+l'opérateur d'accès que si un chiffre ne le suit pas : `p.1` est lu comme
+`p` suivi du littéral `.1`.
+
+C-A **n'écrit jamais une forme à la place de l'autre** : si la phrase dit
+« pointé par », la flèche est produite, et rien ne vérifie que l'objet est
+un pointeur. Ni la structure, ni le champ, ni son type ne sont vérifiés.
+
+Non livré : `typedef`, énumérations, unions déclarées, champs de bits,
+membres anonymes, initialisation ou affectation globale de structure.
+
+---
+
 ## Limites de complexité
 
 | Limite | Valeur |

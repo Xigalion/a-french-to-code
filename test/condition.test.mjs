@@ -90,7 +90,10 @@ for (const [source, code, range] of failures) {
   test(`IF refuse : ${JSON.stringify(source)}`, () => refused(source, code, { start: range[0], end: range[1] }));
 }
 // &&, || and ! become positive cases in lot 10; retain the remaining exclusions.
-for (const operator of ['+=', '-=', '*=', '/=', '%=', '++', '--', '<<', '>>', '&', '|', '^', '~', '?', ':', '->', '**', '/*', '//']) {
+// `->` left this list at lot 20: between two operands it is now the member
+// access operator, and `a -> b` is valid C. A leading `->` keeps this refusal,
+// which structs.test.mjs checks. The binary `&` keeps its own, unchanged.
+for (const operator of ['+=', '-=', '*=', '/=', '%=', '++', '--', '<<', '>>', '&', '|', '^', '~', '?', ':', '**', '/*', '//']) {
   test(`IF opérateur exclu ${operator}`, () => {
     const source = phrase(`a ${operator} b`);
     const at = source.indexOf(operator, 17);

@@ -176,6 +176,9 @@ const EXPRESSIONS = ['2 + 3 * 4', 'a + b', '-a', '(a + b) * c', 'a / 0', 'a % b'
   '*(t + 1.5)', '*(t + 1e3)', '*(t + (int) 1)', "*(t + 'A')", '*(t + *q)', '*(t + &x)',
   '*(t[0] + i)', '*(-t + i)', '*((t) + i)', '*(t + i', '*(t + )', '*( + i)', '*(t +)',
   '*(t + i) + *(u + j)', '&*(t + i)', '* *(t + i)', 't[*(u + i)]',
+  // Lot 20 surface.
+  'p.x', 'q->x', 'p.a.b', 'q->a->b', 'q->a.b', 't[i].x', 'p.x + 1', 'p.x * q->y', '-p.x',
+  'p.', 'p->', 'p.1', 'p.+', '->x', '.x', 'p.t[i]', 'p.int', 'a -> b', 'a . b', '1.5.2',
   'a +', '+ a', '1u', '2.5f', '0x1f', '12abc', 'a, b', 'a; b', '😀', 'a' + ' + a'.repeat(600)];
 const TYPES = ['int', 'unsigned int', 'float', 'double', 'char', 'long'];
 const FORMATS = ['décimal', 'hexadécimal', 'octal', 'décimal non signé', 'binaire'];
@@ -334,6 +337,23 @@ function* sentences() {
     'Ajoute un cas pour.', 'Ajoute un cas sur la valeur 5.', 'Ajoute le cas par defaut.',
     'Crée un aiguillage.', 'Crée un aiguillage sur jour.', 'Sors de l’aiguillage maintenant.',
     'Sors de la boucle la plus intérieure.'];
+  // Lot 20 surface.
+  for (const tag of ['Point', '1Point', 'struct', '']) {
+    yield `Déclare une structure nommée ${tag}.`;
+    yield `Déclare une variable de type structure ${tag} nommée p.`;
+    yield `Déclare un pointeur de type structure ${tag} nommé q.`;
+  }
+  for (const type of [...TYPES, 'structure Point', 'unsigned char', '']) {
+    yield `Ajoute un champ de type ${type} nommé v.`;
+  }
+  for (const target of ['x de p', 'x pointé par q', 'x pointée par q', 'x de 1p', '1x de p', 'x', 'x de', 'x dans p']) {
+    yield `Affecte la valeur 5 au champ ${target}.`;
+    yield `Affiche le champ ${target}.`;
+    yield `Affecte au champ ${target} le résultat numérique de "a + 1".`;
+  }
+  yield* ['Déclare une structure Point.', 'Ajoute un champ int nommé x.',
+    'Déclare un type nommé Point.', 'Déclare une énumération nommée Couleur.',
+    'Déclare une union nommée Valeur.', 'Affecte la structure q à p.'];
   for (const digits of ['0', '2', '17', '99', 'x']) {
     yield `Affiche x en notation fixe avec ${digits} décimales.`;
     yield `Affiche x en notation scientifique avec ${digits} décimales.`;
@@ -376,6 +396,8 @@ const PLACED = ['Déclare un caractère nommé c.', "Affecte le caractère ' ' �
   'Affecte à n le résultat numérique de "*(t + i)".',
   'Crée un bloc si "*(t + i) > 0".',
   'Crée un aiguillage sur "jour".', 'Ajoute un cas pour la valeur 1.',
+  'Déclare une structure nommée Point.', 'Ajoute un champ de type int nommé x.',
+  'Affiche le champ x de p.', 'Affecte à n le résultat numérique de "q->x".',
   'Ajoute le cas par défaut.', 'Sors de l’aiguillage.'];
 
 for (const text of DOCUMENTS) {
@@ -404,7 +426,7 @@ for (const extension of approved.slice(0, 6)) console.log('extension  ' + JSON.s
 // --all lists every divergent input, so an extension pattern can be audited
 // rather than trusted: a pattern that swallows a real regression is visible.
 if (process.argv.includes('--all')) {
-  for (const [label, list] of [['RÉGRESSION', divergences], ['extension', approved]]) {
+  for (const [label, list] of [['RÉGRESSION', divergences], ['PERTE', unexplained], ['extension', approved]]) {
     for (const entry of list) console.log(`${label}\t${entry.stage}\t${JSON.stringify(entry.input)}`);
   }
 }

@@ -284,7 +284,8 @@ test('les plages sont absolues dans la phrase d’origine', () => {
 
 for (const [expression, numeric, condition] of [
   // `&s[0]` and `* p` left this list at lot 17 by decision D4.
-  ['p->x', 'UNSUPPORTED_EXPRESSION_OPERATOR', 'UNSUPPORTED_CONDITION_OPERATOR'],
+  // `p->x` left this list at lot 20, which opened member access in the
+  // numeric and condition profiles; the frozen profiles still refuse it.
   ['"texte"', 'INVALID_EXPRESSION_TOKEN', 'INVALID_EXPRESSION_TOKEN'],
 ]) {
   test(`lots 17 et 18 toujours fermés : ${JSON.stringify(expression)}`, () => {

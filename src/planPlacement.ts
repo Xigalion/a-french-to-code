@@ -7,6 +7,8 @@ import { resolveLoopTarget } from './loopTarget.ts';
 import type { LoopTarget, TransferCode } from './loopTarget.ts';
 import { resolveSwitchTarget } from './switchTarget.ts';
 import type { SwitchTarget, SwitchCode } from './switchTarget.ts';
+import { resolveStructTarget } from './structTarget.ts';
+import type { StructTarget, StructCode } from './structTarget.ts';
 import type { ContextCode } from './enclosingStructures.ts';
 import { resolveFunctionContext, resolveFileScope } from './functionContext.ts';
 import type { FunctionContext, FunctionCode } from './functionContext.ts';
@@ -26,7 +28,7 @@ export type PlacementRequest = {
   fallbackEol?: '\n' | '\r\n';
 };
 export type PlacementDiagnostic = {
-  code: BranchCode | TransferCode | SwitchCode | ContextCode | FunctionCode
+  code: BranchCode | TransferCode | SwitchCode | StructCode | ContextCode | FunctionCode
     | 'RETURN_NEEDS_VALUE' | 'RETURN_IN_VOID_FUNCTION' | 'INVALID_DOCUMENT' | 'INVALID_CURSOR' | 'INVALID_INDENT_UNIT' | 'INVALID_EOL'
     | 'INVALID_TRANSLATION_RESULT' | 'TARGET_LINE_NOT_BLANK'
     | 'TARGET_IN_COMMENT' | 'LEXICAL_CONTEXT_UNDETERMINED'
@@ -44,6 +46,7 @@ export type PlacementPlan = {
   /** Set for break/continue: the loop the transfer was proven to control. */
   loopTarget?: LoopTarget;
   switchTarget?: SwitchTarget;
+  structTarget?: StructTarget;
   /** Set for a return: the function the line was proven to belong to. */
   functionContext?: FunctionContext;
   /** Captured when a contextual recognizer ran, so freshness can rebuild. */
@@ -156,6 +159,7 @@ export function planPlacement(request: PlacementRequest): PlacementResult {
   let attachment: Attachment | undefined;
   let loopTarget: LoopTarget | undefined;
   let switchTarget: SwitchTarget | undefined;
+  let structTarget: StructTarget | undefined;
   let functionContext: FunctionContext | undefined;
   // A label or a switch exit is placed only once the switch it belongs to is
   // proven, never from brace depth and never from indentation.
@@ -183,6 +187,14 @@ export function planPlacement(request: PlacementRequest): PlacementResult {
       return reject(issue.code, issue.reason, issue.message, issue.range);
     }
     switchTarget = resolved.target;
+  } else if (canonical.instruction.kind === 'STRUCT_FIELD') {
+    // A field is placed only once the structure that holds it is proven.
+    const resolved = resolveStructTarget(text, lineStart);
+    if (resolved.status === 'rejected') {
+      const issue = resolved.diagnostic;
+      return reject(issue.code, issue.reason, issue.message, issue.range);
+    }
+    structTarget = resolved.target;
   } else if (defining) {
     // C17 forbids nested function definitions, for MAIN as for any other.
     const scope = resolveFileScope(text, lineStart);
@@ -235,8 +247,9 @@ export function planPlacement(request: PlacementRequest): PlacementResult {
       ...(attachment ? { attachment, branchContext: { indentUnit } } : {}),
       ...(loopTarget ? { loopTarget } : {}),
       ...(switchTarget ? { switchTarget } : {}),
+      ...(structTarget ? { structTarget } : {}),
       ...(functionContext ? { functionContext } : {}),
-      ...(loopTarget || switchTarget || functionContext || defining ? { recognizerContext: { indentUnit } } : {}),
+      ...(loopTarget || switchTarget || structTarget || functionContext || defining ? { recognizerContext: { indentUnit } } : {}),
       base: { documentId: document.id, revision: document.revision, text },
       source: { text: canonical.source.text, instruction: canonical.instruction },
       edits: [{ range: { start: lineStart, end: lineEnd }, newText }],
@@ -254,7 +267,8 @@ export function validatePlan(plan: PlacementPlan, document: DocumentSnapshot): P
   if (plan.base.documentId !== document.id || plan.base.revision !== document.revision || plan.base.text !== document.text) {
     return reject('STALE_PLAN', 'stale-plan', 'Le document a changé : un nouveau plan et un nouvel aperçu sont nécessaires.');
   }
-  const contextual = plan.loopTarget || plan.switchTarget || plan.functionContext
+  const contextual = plan.loopTarget || plan.switchTarget || plan.structTarget || plan.functionContext
+    || plan.source.instruction.kind === 'STRUCT_FIELD'
     || plan.source.instruction.kind === 'BREAK' || plan.source.instruction.kind === 'CONTINUE'
     || SWITCH_KINDS.includes(plan.source.instruction.kind)
     || plan.source.instruction.kind === 'FUNC_DEF' || plan.source.instruction.kind === 'MAIN'

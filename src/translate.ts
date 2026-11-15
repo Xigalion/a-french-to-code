@@ -17,11 +17,13 @@ import { analyzePointerInstruction } from './pointerInstructions.ts';
 import type { PointerInstruction } from './pointerInstructions.ts';
 import { analyzeSwitchInstruction } from './switchInstructions.ts';
 import type { SwitchInstruction } from './switchInstructions.ts';
+import { analyzeStructInstruction, renderMemberTarget } from './structInstructions.ts';
+import type { StructInstruction } from './structInstructions.ts';
 
 /** Half-open offsets in UTF-16 code units, relative to the original input. */
 export type SourceRange = { start: number; end: number };
 
-export type Instruction = NumericInstruction | FunctionInstruction | CharacterInstruction | ArrayInstruction | PointerInstruction | SwitchInstruction
+export type Instruction = NumericInstruction | FunctionInstruction | CharacterInstruction | ArrayInstruction | PointerInstruction | SwitchInstruction | StructInstruction
   | { kind: 'IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE_IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE'; parameters: Record<string, never> }
@@ -46,7 +48,7 @@ type DisplayFormat = 'decimal' | 'hexadecimal' | 'octal';
  * cursor placed inside. Shared by the translator and the placement planner so
  * both stay in step.
  */
-export const BLOCK_KINDS: readonly string[] = ['MAIN', 'IF', 'ELSE_IF', 'ELSE', 'WHILE', 'DO_WHILE', 'FOR', 'FUNC_DEF', 'SWITCH'];
+export const BLOCK_KINDS: readonly string[] = ['MAIN', 'IF', 'ELSE_IF', 'ELSE', 'WHILE', 'DO_WHILE', 'FOR', 'FUNC_DEF', 'SWITCH', 'STRUCT_DECL'];
 
 /** Intents whose only parameter is a bounded condition of the lot 10 profile. */
 export function instructionCondition(instruction: Instruction): Condition | undefined {
@@ -115,6 +117,9 @@ export type DiagnosticCode =
   | 'UNSUPPORTED_INDIRECTION_LEVEL'
   | 'INVALID_POINTER_OFFSET'
   | 'CASE_NEEDS_CONSTANT'
+  | 'MISSING_MEMBER_NAME'
+  | 'MISSING_STRUCT_TAG'
+  | 'FIELD_OUTSIDE_STRUCT'
   | 'UNEXPECTED_TEXT';
 
 export type Diagnostic = {
@@ -162,7 +167,7 @@ const C17_KEYWORDS = new Set([
 
 type Token = { text: string; range: SourceRange };
 type Parameter = { parameter: 'name' | 'value' | 'header' };
-type Rule = { kind: Exclude<Instruction['kind'], 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | FunctionInstruction['kind'] | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind'] | CharacterInstruction['kind'] | ArrayInstruction['kind'] | PointerInstruction['kind'] | SwitchInstruction['kind']>; parts: (string | Parameter)[] };
+type Rule = { kind: Exclude<Instruction['kind'], 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | FunctionInstruction['kind'] | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind'] | CharacterInstruction['kind'] | ArrayInstruction['kind'] | PointerInstruction['kind'] | SwitchInstruction['kind'] | StructInstruction['kind']>; parts: (string | Parameter)[] };
 
 const RULES: [Rule, ...Rule[]] = [
   { kind: 'MAIN', parts: ['Crée', 'la', 'fonction', 'principale'] },
@@ -286,6 +291,19 @@ function render(text: string, instruction: Instruction): TranslationResult {
     case 'CASE_INT': code = `case ${instruction.parameters.value}:\n`; break;
     case 'CASE_CHAR': code = `case ${instruction.parameters.literal}:\n`; break;
     case 'CASE_DEFAULT': code = 'default:\n'; break;
+    // A structure definition is a block whose closing brace carries a
+    // semicolon: C17 requires it, and it belongs to the construct.
+    case 'STRUCT_DECL': code = `struct ${instruction.parameters.tag} {\n    \n};\n`; break;
+    case 'STRUCT_FIELD': code = instruction.parameters.type.kind === 'scalar'
+      ? `${instruction.parameters.type.type} ${instruction.parameters.name};\n`
+      : `struct ${instruction.parameters.type.tag} ${instruction.parameters.name};\n`; break;
+    case 'STRUCT_VAR': code = `struct ${instruction.parameters.tag} ${instruction.parameters.name};\n`; break;
+    case 'STRUCT_POINTER': code = `struct ${instruction.parameters.tag} *${instruction.parameters.name};\n`; break;
+    case 'MEMBER_ASSIGN_INT': code = `${renderMemberTarget(instruction.parameters.target)} = ${instruction.parameters.value};\n`; break;
+    case 'MEMBER_ASSIGN_CHAR': code = `${renderMemberTarget(instruction.parameters.target)} = ${instruction.parameters.literal};\n`; break;
+    case 'MEMBER_ASSIGN_EXPRESSION': code = `${renderMemberTarget(instruction.parameters.target)} `
+      + `= ${renderNumericExpression(instruction.parameters.expression)};\n`; break;
+    case 'MEMBER_PRINT': code = `printf("%d", ${renderMemberTarget(instruction.parameters.target)});\n`; break;
     // Not the same intent as « sors de la boucle » : the target is the switch.
     case 'BREAK_SWITCH': code = 'break;\n'; break;
     case 'INCLUDE_STDIO': code = '#include <stdio.h>\n'; break;
@@ -602,6 +620,10 @@ export function translate(text: string): TranslationResult {
   const arrays = analyzeArrayInstruction(text, tokens, end, identifierDiagnostic);
   if (arrays?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [arrays.diagnostic] };
   if (arrays?.status === 'recognized') return render(text, arrays.instruction);
+
+  const structs = analyzeStructInstruction(text, tokens, end, identifierDiagnostic);
+  if (structs?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [structs.diagnostic] };
+  if (structs?.status === 'recognized') return render(text, structs.instruction);
 
   const switches = analyzeSwitchInstruction(text, tokens, end, identifierDiagnostic);
   if (switches?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [switches.diagnostic] };
