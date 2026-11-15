@@ -22,7 +22,8 @@ export type PedagogicalInformation = {
     | 'FOPEN_CAN_FAIL' | 'FILE_MODE_MEANING' | 'FILE_MUST_BE_CLOSED'
     | 'SCANF_NEEDS_ADDRESS' | 'EOF_AFTER_READ'
     | 'LOCAL_HEADER_SEARCH' | 'GUARD_PREVENTS_DOUBLE_INCLUSION' | 'GUARD_NOT_EVALUATED'
-    | 'PROTOTYPE_DECLARES_ONLY' | 'EXTERNAL_LINKAGE' | 'INTERNAL_LINKAGE';
+    | 'PROTOTYPE_DECLARES_ONLY' | 'EXTERNAL_LINKAGE' | 'INTERNAL_LINKAGE'
+    | 'POINTER_FIELD_OWNS_NOTHING' | 'TYPEDEF_IS_AN_ALIAS' | 'STRUCT_ARRAY_LAYOUT';
   severity: 'information';
   range: SourceRange;
   message: string;
@@ -189,8 +190,31 @@ const MODULE_MESSAGES = {
     + 'lier, et un nom identique ailleurs désignera un autre objet. C-A ne vérifie aucune portée.',
 } as const;
 
+const DATA_MESSAGES = {
+  POINTER_FIELD_OWNS_NOTHING: 'Un champ pointeur contient une adresse, pas un objet : la structure ne possède pas '
+    + 'la mémoire visée, et sa taille ne compte que le pointeur. Un champ pointeur vers la structure elle-même est '
+    + 'la façon d’en chaîner plusieurs ; rien n’est alloué ici.',
+  TYPEDEF_IS_AN_ALIAS: 'Un synonyme donne un second nom au même type ; il n’en crée pas un nouveau. L’étiquette peut '
+    + 'être nommée avant que la structure soit définie, ce qui permet à un champ de pointer vers elle. C-A ne vérifie '
+    + 'pas que cette structure existe.',
+  STRUCT_ARRAY_LAYOUT: 'Un tableau de structures contient les objets eux-mêmes, les uns après les autres, chacun avec '
+    + 'son remplissage éventuel. « t[i].x » désigne un champ d’un élément ; aucun des deux indices n’est vérifié.',
+} as const;
+
 export function explainInstruction(result: TranslationResult): PedagogicalInformation[] {
   if (result.status !== 'translated') return [];
+  if (result.instruction.kind === 'TYPE_ALIAS') {
+    return [{ code: 'TYPEDEF_IS_AN_ALIAS', severity: 'information',
+      range: { ...result.instruction.parameters.aliasRange }, message: DATA_MESSAGES.TYPEDEF_IS_AN_ALIAS }];
+  }
+  if (result.instruction.kind === 'STRUCT_FIELD' && result.instruction.parameters.pointer) {
+    return [{ code: 'POINTER_FIELD_OWNS_NOTHING', severity: 'information',
+      range: { ...result.instruction.parameters.nameRange }, message: DATA_MESSAGES.POINTER_FIELD_OWNS_NOTHING }];
+  }
+  if (result.instruction.kind === 'ARRAY_DECL' && typeof result.instruction.parameters.type !== 'string') {
+    return [{ code: 'STRUCT_ARRAY_LAYOUT', severity: 'information',
+      range: { ...result.instruction.parameters.nameRange }, message: DATA_MESSAGES.STRUCT_ARRAY_LAYOUT }];
+  }
   if (result.instruction.kind === 'INCLUDE_LOCAL') {
     return [{ code: 'LOCAL_HEADER_SEARCH', severity: 'information',
       range: { ...result.instruction.parameters.pathRange }, message: MODULE_MESSAGES.LOCAL_HEADER_SEARCH }];

@@ -8,7 +8,7 @@ import type { IndexedElement, NumericExpression, NumericType } from './numericEx
  * would build, so the C renderer and the passive pedagogy see one shape
  * whether the index was written inside quotes or inside brackets. */
 export type ArrayInstruction =
-  | { kind: 'ARRAY_DECL'; parameters: { type: NumericType; name: string; nameRange: SourceRange; dimension: string; dimensionRange: SourceRange } }
+  | { kind: 'ARRAY_DECL'; parameters: { type: NumericType | { tag: string }; name: string; nameRange: SourceRange; dimension: string; dimensionRange: SourceRange } }
   | { kind: 'ARRAY_ASSIGN_INT'; parameters: { element: IndexedElement; value: string } }
   | { kind: 'ARRAY_ASSIGN_CHAR'; parameters: { element: IndexedElement; literal: string; literalRange: SourceRange } }
   | { kind: 'ARRAY_ASSIGN_EXPRESSION'; parameters: { element: IndexedElement; expression: NumericExpression } }
@@ -129,12 +129,26 @@ export function analyzeArrayInstruction(source: string, tokens: Token[], end: nu
       const at = first?.range.start ?? end;
       return fail('MISSING_NUMERIC_TYPE', 'Il manque le type du tableau.', { start: at, end: at });
     }
-    let text = first.text.toLowerCase();
+    // Lot 24: an array of structures, which a data structure needs. The tag is
+    // named, and no structure is ever defined implicitly by this sentence.
+    let element: NumericType | { tag: string };
     let last = first;
-    i++;
-    while (TYPE_WORDS.includes(word(i) ?? '')) { last = tokens[i++]!; text += ' ' + last.text.toLowerCase(); }
-    if (!SUPPORTED_TYPES.includes(text)) return fail('UNSUPPORTED_NUMERIC_TYPE', 'Ce type numérique n’est pas pris en charge.',
-      { start: first.range.start, end: last.range.end });
+    if (same('structure', first.text)) {
+      const tag = tokens[i + 1];
+      if (!tag) return fail('INCOMPLETE_INSTRUCTION', 'Il manque le nom de la structure.', { start: end, end });
+      diagnostic = validateName(tag);
+      if (diagnostic) return undefined;
+      element = { tag: tag.text };
+      last = tag;
+      i += 2;
+    } else {
+      let text = first.text.toLowerCase();
+      i++;
+      while (TYPE_WORDS.includes(word(i) ?? '')) { last = tokens[i++]!; text += ' ' + last.text.toLowerCase(); }
+      if (!SUPPORTED_TYPES.includes(text)) return fail('UNSUPPORTED_NUMERIC_TYPE', 'Ce type numérique n’est pas pris en charge.',
+        { start: first.range.start, end: last.range.end });
+      element = text as NumericType;
+    }
     if (!fixed('nommé', 'INCOMPLETE_INSTRUCTION', 'Instruction incomplète : « nommé » attendu.')) return undefined;
     const name = tokens[i];
     if (!name) return fail('INCOMPLETE_INSTRUCTION', 'Il manque le nom du tableau.', { start: end, end });
@@ -153,7 +167,7 @@ export function analyzeArrayInstruction(source: string, tokens: Token[], end: nu
     if (!initialised) {
       const extra = tokens[i];
       if (extra) return fail('UNEXPECTED_TEXT', 'Ce texte supplémentaire n’est pas accepté.', { start: extra.range.start, end });
-      return { kind: 'ARRAY_DECL', parameters: { type: text as NumericType, name: name.text,
+      return { kind: 'ARRAY_DECL', parameters: { type: element, name: name.text,
         nameRange: { ...name.range }, dimension: size.text, dimensionRange: { ...size.range } } };
     }
     if (!fixed('avec', 'INCOMPLETE_INSTRUCTION', 'Instruction incomplète : « avec » attendu.')) return undefined;
@@ -161,7 +175,7 @@ export function analyzeArrayInstruction(source: string, tokens: Token[], end: nu
     if (!fixed('texte', 'INCOMPLETE_INSTRUCTION', 'Instruction incomplète : « texte » attendu.')) return undefined;
     // The type is checked only here: a text initialiser is the only thing that
     // makes a non-char array wrong, and the wrong word to point at is `char`.
-    if (text !== 'char') return fail('STRING_REQUIRES_CHAR',
+    if (element !== 'char') return fail('STRING_REQUIRES_CHAR',
       'Seul un tableau de type char peut être initialisé par un texte.', { start: first.range.start, end: last.range.end });
     const scanned = parseStringLiteral(source, tokens[i - 1]!.range.end, end);
     if (scanned.status === 'rejected') { diagnostic = scanned.diagnostic; return undefined; }

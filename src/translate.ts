@@ -283,7 +283,12 @@ function render(text: string, instruction: Instruction): TranslationResult {
     case 'PRINT_CHAR': code = `printf("%c", ${instruction.parameters.name});\n`; break;
     // A dimension is written exactly as it was given, and no initialiser is
     // ever added: an array declared here holds no value yet.
-    case 'ARRAY_DECL': code = `${instruction.parameters.type} ${instruction.parameters.name}[${instruction.parameters.dimension}];\n`; break;
+    case 'ARRAY_DECL': {
+      const element = instruction.parameters.type;
+      const spelling = typeof element === 'string' ? element : `struct ${element.tag}`;
+      code = `${spelling} ${instruction.parameters.name}[${instruction.parameters.dimension}];\n`;
+      break;
+    }
     case 'ARRAY_ASSIGN_INT': code = `${renderNumericExpression(instruction.parameters.element)} = ${instruction.parameters.value};\n`; break;
     case 'ARRAY_ASSIGN_CHAR': code = `${renderNumericExpression(instruction.parameters.element)} = ${instruction.parameters.literal};\n`; break;
     case 'ARRAY_ASSIGN_EXPRESSION': code = `${renderNumericExpression(instruction.parameters.element)} `
@@ -313,10 +318,18 @@ function render(text: string, instruction: Instruction): TranslationResult {
     // A structure definition is a block whose closing brace carries a
     // semicolon: C17 requires it, and it belongs to the construct.
     case 'STRUCT_DECL': code = `struct ${instruction.parameters.tag} {\n    \n};\n`; break;
-    case 'STRUCT_FIELD': code = instruction.parameters.type.kind === 'scalar'
-      ? `${instruction.parameters.type.type} ${instruction.parameters.name};\n`
-      : `struct ${instruction.parameters.type.tag} ${instruction.parameters.name};\n`; break;
+    // The star of a pointer field stays against the name, as decision D2 of
+    // lot 17 settled for every declarator in the catalogue.
+    case 'STRUCT_FIELD': {
+      const field = instruction.parameters;
+      const spelling = field.type.kind === 'scalar' ? field.type.type : `struct ${field.type.tag}`;
+      code = `${spelling} ${field.pointer ? '*' : ''}${field.name};\n`;
+      break;
+    }
     case 'STRUCT_VAR': code = `struct ${instruction.parameters.tag} ${instruction.parameters.name};\n`; break;
+    // An alias, not a new type; the tag may be named before the structure is
+    // defined, which is what a self-referential structure needs.
+    case 'TYPE_ALIAS': code = `typedef struct ${instruction.parameters.tag} ${instruction.parameters.alias};\n`; break;
     case 'STRUCT_POINTER': code = `struct ${instruction.parameters.tag} *${instruction.parameters.name};\n`; break;
     case 'MEMBER_ASSIGN_INT': code = `${renderMemberTarget(instruction.parameters.target)} = ${instruction.parameters.value};\n`; break;
     case 'MEMBER_ASSIGN_CHAR': code = `${renderMemberTarget(instruction.parameters.target)} = ${instruction.parameters.literal};\n`; break;

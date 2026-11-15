@@ -5,19 +5,26 @@ import type { NumericExpression, NumericType } from './numericExpression.ts';
 /** A field type is either one of the five scalar types already taught, or
  * another structure named by its tag. No bit-field, no anonymous member. */
 export type FieldType = { kind: 'scalar'; type: NumericType } | { kind: 'struct'; tag: string };
+/** A field may be a pointer to either shape. One level of indirection, as
+ * decision D3 of the domain 5 settled, and the star stays on the declarator. */
+export type Field = { type: FieldType; pointer: boolean };
 /** `objet.champ` or `objet->champ` as the target of an envelope. `arrow` is
  * what the sentence said; no form is ever rewritten into the other. */
 export type MemberTarget = { object: string; objectRange: SourceRange; member: string; memberRange: SourceRange; arrow: boolean };
 
 export type StructInstruction =
   | { kind: 'STRUCT_DECL'; parameters: { tag: string; tagRange: SourceRange } }
-  | { kind: 'STRUCT_FIELD'; parameters: { type: FieldType; name: string; nameRange: SourceRange } }
+  | { kind: 'STRUCT_FIELD'; parameters: { type: FieldType; pointer: boolean; name: string; nameRange: SourceRange } }
   | { kind: 'STRUCT_VAR'; parameters: { tag: string; tagRange: SourceRange; name: string; nameRange: SourceRange } }
   | { kind: 'STRUCT_POINTER'; parameters: { tag: string; tagRange: SourceRange; name: string; nameRange: SourceRange } }
   | { kind: 'MEMBER_ASSIGN_INT'; parameters: { target: MemberTarget; value: string } }
   | { kind: 'MEMBER_ASSIGN_CHAR'; parameters: { target: MemberTarget; literal: string; literalRange: SourceRange } }
   | { kind: 'MEMBER_ASSIGN_EXPRESSION'; parameters: { target: MemberTarget; expression: NumericExpression } }
-  | { kind: 'MEMBER_PRINT'; parameters: { target: MemberTarget } };
+  | { kind: 'MEMBER_PRINT'; parameters: { target: MemberTarget } }
+  /** Lot 24: `typedef struct Tag Alias;`. An alias, not a new type, and the
+   * tag may be named before the structure is defined — which is exactly what
+   * a self-referential structure needs. */
+  | { kind: 'TYPE_ALIAS'; parameters: { alias: string; aliasRange: SourceRange; tag: string; tagRange: SourceRange } };
 
 type Token = { text: string; range: SourceRange };
 type NameValidator = (token: Token) => Diagnostic | undefined;
@@ -125,7 +132,10 @@ export function analyzeStructInstruction(source: string, tokens: Token[], end: n
     const tag = identifier(4, 'Il manque le nom de la structure.');
     if (tag && finish(5)) instruction = { kind: 'STRUCT_DECL', parameters: { tag: tag.text, tagRange: { ...tag.range } } };
   } else if (word(0) === 'ajoute' && word(1) === 'un' && word(2) === 'champ') {
-    const read = fieldType(3);
+    // « un champ pointeur de type … » is the self-referential form a linked
+    // structure needs; the star belongs to the declarator, not to the type.
+    const pointer = word(3) === 'pointeur';
+    const read = fieldType(pointer ? 4 : 3);
     if (read) {
       const article = word(read.next);
       if (article !== 'nommé' && article !== 'nommée') {
@@ -135,7 +145,7 @@ export function analyzeStructInstruction(source: string, tokens: Token[], end: n
       } else {
         const name = identifier(read.next + 1, 'Il manque le nom du champ.');
         if (name && finish(read.next + 2)) {
-          instruction = { kind: 'STRUCT_FIELD', parameters: { type: read.type, name: name.text, nameRange: { ...name.range } } };
+          instruction = { kind: 'STRUCT_FIELD', parameters: { type: read.type, pointer, name: name.text, nameRange: { ...name.range } } };
         }
       }
     }
@@ -181,6 +191,17 @@ export function analyzeStructInstruction(source: string, tokens: Token[], end: n
       if (ok) {
         const parsed = expression(i);
         if (parsed) instruction = { kind: 'MEMBER_ASSIGN_EXPRESSION', parameters: { target: read.target, expression: parsed } };
+      }
+    }
+  } else if (word(0) === 'déclare' && word(1) === 'le' && word(2) === 'synonyme') {
+    const alias = identifier(3, 'Il manque le nom du synonyme.');
+    if (alias && expect(4, 'pour', 'INCOMPLETE_INSTRUCTION', 'Instruction incomplète : « pour la structure » attendu.')
+      && expect(5, 'la', 'INCOMPLETE_INSTRUCTION', 'Instruction incomplète : « la structure » attendu.')
+      && expect(6, 'structure', 'INCOMPLETE_INSTRUCTION', 'Instruction incomplète : « structure » attendu.')) {
+      const tag = identifier(7, 'Il manque le nom de la structure.');
+      if (tag && finish(8)) {
+        instruction = { kind: 'TYPE_ALIAS', parameters: { alias: alias.text, aliasRange: { ...alias.range },
+          tag: tag.text, tagRange: { ...tag.range } } };
       }
     }
   } else if (word(0) === 'affiche' && word(1) === 'le' && word(2) === 'champ') {

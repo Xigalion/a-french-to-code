@@ -495,6 +495,34 @@ traduits sans un mot.
 
 ---
 
+## Domaine 8 — Structures de données (lot 24)
+
+Le domaine se **compose** avec l'existant : ce lot ne comble que les trois
+manques qui le rendaient impossible.
+
+| Phrase française | Code C produit | Information |
+|---|---|---|
+| `Déclare le synonyme Noeud pour la structure Noeud.` | `typedef struct Noeud Noeud;` | TYPEDEF_IS_AN_ALIAS |
+| `Ajoute un champ pointeur de type structure Noeud nommé suivant.` | `struct Noeud *suivant;` | POINTER_FIELD_OWNS_NOTHING |
+| `Ajoute un champ pointeur de type int nommé donnees.` | `int *donnees;` | POINTER_FIELD_OWNS_NOTHING |
+| `Déclare un tableau de type structure Point nommé t de dimension 10.` | `struct Point t[10];` | STRUCT_ARRAY_LAYOUT |
+
+**Aucune commande de tri, de recherche ou d'échange n'existe, et c'est
+voulu** : elle cacherait exactement ce que le domaine enseigne. Une liste
+chaînée, une recherche séquentielle, un échange et un parcours s'écrivent
+entièrement avec le catalogue, et quatre tests le démontrent avec des
+documents finaux exacts.
+
+C-A **n'invente jamais** la variable temporaire d'un échange : l'étudiant
+la déclare.
+
+Non livré : tableau de pointeurs, pointeur de tableau, double indirection
+dans un champ, `typedef` d'autre chose qu'une structure, et toute
+information de complexité — C-A ne lit pas le document et ne peut rien
+dire du coût d'un algorithme.
+
+---
+
 ## Limites de complexité
 
 | Limite | Valeur |

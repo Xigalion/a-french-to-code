@@ -412,6 +412,21 @@ function* sentences() {
     for (const type of [...TYPES, '']) yield `Déclare la variable ${linkage} de type ${type} nommée v.`;
   }
   yield* ['Définis la constante TAILLE à 10.', 'Déclare un type nommé Entier.', 'Compile le fichier calcul.c.'];
+  // Lot 24 surface.
+  for (const tag of ['Noeud', '1N', '']) {
+    yield* [`Déclare le synonyme ${tag} pour la structure Noeud.`,
+      `Déclare le synonyme Noeud pour la structure ${tag}.`,
+      `Déclare un tableau de type structure ${tag} nommé t de dimension 3.`,
+      `Ajoute un champ pointeur de type structure ${tag} nommé suivant.`];
+  }
+  for (const type of [...TYPES, 'structure Point', 'unsigned char', '']) {
+    yield `Ajoute un champ pointeur de type ${type} nommé p.`;
+  }
+  yield* ['Déclare le synonyme Entier pour le type int.', 'Déclare le synonyme.',
+    'Déclare un tableau de pointeurs de type int nommé t de dimension 3.',
+    'Ajoute un champ pointeur pointeur de type int nommé p.',
+    'Crée un tableau de type structure Point nommé t de dimension 2 avec le texte "a".',
+    'Échange les éléments "i" et "j" de t.', 'Trie le tableau t.'];
   for (const digits of ['0', '2', '17', '99', 'x']) {
     yield `Affiche x en notation fixe avec ${digits} décimales.`;
     yield `Affiche x en notation scientifique avec ${digits} décimales.`;
@@ -464,6 +479,9 @@ const PLACED = ['Déclare un caractère nommé c.', "Affecte le caractère ' ' �
   'Inclue l’en-tête "calcul.h".', 'Ouvre la protection d’en-tête nommée H.',
   'Ferme la protection d’en-tête.', 'Déclare la variable externe de type int nommée v.',
   'Déclare le prototype d’une fonction nommée f qui retourne un int.',
+  'Déclare le synonyme Noeud pour la structure Noeud.',
+  'Ajoute un champ pointeur de type structure Noeud nommé suivant.',
+  'Déclare un tableau de type structure Point nommé t de dimension 10.',
   'Ajoute le cas par défaut.', 'Sors de l’aiguillage.'];
 
 for (const text of DOCUMENTS) {
