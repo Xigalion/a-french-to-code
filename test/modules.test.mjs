@@ -68,7 +68,9 @@ test('les deux formes d’inclusion restent distinctes', () => {
   assert.equal(translated('Inclue la bibliothèque stdio.h.').fragments[0].code, '#include <stdio.h>\n');
   // And the frozen rule of lot 4 keeps its own grammar and message.
   const refusal = refused('Inclue la bibliothèque "calcul.h".', 'UNSUPPORTED_HEADER');
-  assert.equal(refusal.message, 'Seul l’en-tête stdio.h, écrit exactement ainsi, est pris en charge.');
+  // Lot 28 : message réécrit, grammaire et verdict inchangés.
+  assert.equal(refusal.message, 'Les en-têtes de la bibliothèque standard pris en charge sont stdio.h, stdlib.h, assert.h et limits.h, '
+    + 'écrits exactement ainsi.');
 });
 
 // ---------------------------------------------------------------------------

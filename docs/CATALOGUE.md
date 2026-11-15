@@ -531,6 +531,7 @@ dire du coût d'un algorithme.
 | Phrase française | Code C produit | Information |
 |---|---|---|
 | `Inclue la bibliothèque assert.h.` | `#include <assert.h>` | — |
+| `Inclue la bibliothèque limits.h.` | `#include <limits.h>` | LIMITS_ARE_IMPLEMENTATION_DEFINED, LIMIT_MACROS_NOT_KNOWN |
 | `Vérifie que "x > 0".` | `assert(x > 0);` | ASSERT_DISABLED_BY_NDEBUG, ASSERT_NOT_ERROR_HANDLING |
 | `Déclare une constante de type int nommée MAX avec le résultat de "100".` | `const int MAX = 100;` | CONST_IS_NOT_A_MACRO |
 
@@ -540,11 +541,26 @@ immédiatement : `Vérifie que "x = 0".` est refusé avec
 éviter. Sa condition reçoit aussi les **avertissements du lot 8** et les
 **informations d'opérateur du lot 10**.
 
-**Trois en-têtes sont pris en charge, et eux seuls** : `stdio.h`,
-`stdlib.h`, `assert.h`. `limits.h` et `float.h` restent refusés, parce que
-l'instantané de compatibilité du lot 6 gèle leur refus ; aucune macro de
-limite n'est donc produite, puisque son en-tête ne peut pas être inclus.
-Voir `docs/LOT25_CONTRAT_ET_BILAN.md` §2 pour la décision demandée.
+**Quatre en-têtes sont pris en charge, et eux seuls** : `stdio.h`,
+`stdlib.h`, `assert.h`, `limits.h`. `float.h` reste refusé : la décision 3
+du fondateur du 15 novembre 2026 ne nomme que `limits.h`.
+
+**Aucune formulation ne nomme une limite.** Il n'existe pas de phrase
+« Affiche la limite maximale du type int. » — elle est refusée. Les macros
+s'écrivent dans une expression, où `INT_MAX` est accepté **parce que c'est
+un identifiant C valide**, non parce que C-A saurait ce qu'il désigne :
+
+    Affecte à m le résultat numérique de "INT_MAX".   → m = INT_MAX;
+    Crée un bloc si "x < INT_MAX".                    → if (x < INT_MAX) { … }
+
+C-A **ne vérifie pas** que `limits.h` a été inclus, ne connaît pas la
+valeur d'une macro, et ne signale aucun dépassement d'entier. Une phrase
+avec `LIMITE_INEXISTANTE` est acceptée de la même façon.
+
+Le message de `UNSUPPORTED_HEADER` a été réécrit au lot 28 : il affirmait
+que `stdio.h` était le seul en-tête pris en charge, ce qui était faux
+depuis le lot 21. Neuf entrées d'instantané ont été amendées, dont **une
+seule** change de verdict. Voir `docs/LOT28_CONTRAT_ET_BILAN.md`.
 
 Non livré : `static_assert`, `errno`, `perror`, tests automatisés,
 débogage, mesure de temps, couverture, `const` sur un pointeur, un

@@ -25,7 +25,8 @@ export type PedagogicalInformation = {
     | 'PROTOTYPE_DECLARES_ONLY' | 'EXTERNAL_LINKAGE' | 'INTERNAL_LINKAGE'
     | 'POINTER_FIELD_OWNS_NOTHING' | 'TYPEDEF_IS_AN_ALIAS' | 'STRUCT_ARRAY_LAYOUT'
     | 'ASSERT_DISABLED_BY_NDEBUG' | 'ASSERT_NOT_ERROR_HANDLING'
-    | 'CONST_IS_NOT_A_MACRO';
+    | 'CONST_IS_NOT_A_MACRO'
+    | 'LIMITS_ARE_IMPLEMENTATION_DEFINED' | 'LIMIT_MACROS_NOT_KNOWN';
   severity: 'information';
   range: SourceRange;
   message: string;
@@ -160,6 +161,19 @@ const MEMORY_MESSAGES = {
     + 'valide : le libérer deux fois ou l’utiliser encore a un comportement indéfini. C-A ne suit aucune durée de vie.',
   HEADER_DECLARES_ONLY: 'Cet en-tête déclare malloc, realloc, free et NULL. L’inclure ne fait rien d’autre : aucune '
     + 'allocation n’a lieu ici, et C-A n’ajoute jamais un en-tête de lui-même.',
+} as const;
+
+/** Lot 28. Two informations, and the second one is the important one: the
+ * macros work because they are valid identifiers, not because C-A knows
+ * them. Saying so is the point — a form that is accepted proves nothing. */
+const LIMITS_MESSAGES = {
+  LIMITS_ARE_IMPLEMENTATION_DEFINED: 'Cet en-tête définit les bornes des types entiers — INT_MAX, INT_MIN, '
+    + 'UINT_MAX, CHAR_BIT, CHAR_MAX, CHAR_MIN et les autres. Leurs valeurs sont définies par l’implémentation : '
+    + 'elles changent d’une machine ou d’un compilateur à l’autre, et C-A ne les connaît pas.',
+  LIMIT_MACROS_NOT_KNOWN: 'Dans une expression, un nom comme INT_MAX est accepté parce que c’est un identifiant '
+    + 'C valide, non parce que C-A saurait de quoi il s’agit. C-A ne vérifie pas que cet en-tête a été inclus, ni '
+    + 'qu’une macro existe, ni qu’un calcul tient dans son type : un dépassement d’entier signé reste un '
+    + 'comportement indéfini que rien ici ne signale.',
 } as const;
 
 const FILE_MESSAGES = {
@@ -311,6 +325,12 @@ export function explainInstruction(result: TranslationResult): PedagogicalInform
   if (result.instruction.kind === 'INCLUDE_STDLIB') {
     return [{ code: 'HEADER_DECLARES_ONLY', severity: 'information', range: { start: 0, end: 0 },
       message: MEMORY_MESSAGES.HEADER_DECLARES_ONLY }];
+  }
+  if (result.instruction.kind === 'INCLUDE_LIMITS') {
+    return [{ code: 'LIMITS_ARE_IMPLEMENTATION_DEFINED', severity: 'information', range: { start: 0, end: 0 },
+      message: LIMITS_MESSAGES.LIMITS_ARE_IMPLEMENTATION_DEFINED },
+      { code: 'LIMIT_MACROS_NOT_KNOWN', severity: 'information', range: { start: 0, end: 0 },
+        message: LIMITS_MESSAGES.LIMIT_MACROS_NOT_KNOWN }];
   }
   if (result.instruction.kind === 'SIZEOF_PRINT' || result.instruction.kind === 'SIZEOF_ASSIGN') {
     return [{ code: 'SIZEOF_IS_BYTES', severity: 'information',

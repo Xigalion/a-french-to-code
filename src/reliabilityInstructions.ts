@@ -4,15 +4,19 @@ import { parseNumericExpression } from './numericExpression.ts';
 import type { Condition } from './condition.ts';
 import type { NumericExpression, NumericType } from './numericExpression.ts';
 
-/** `limits.h` and its macros are NOT delivered by this lot, and the reason is
- * documented rather than worked around: the sentence that would include it,
- * `Inclue la bibliothèque limits.h.`, is frozen as a REFUSAL by the lot 6
- * compatibility snapshot. Shipping the macros without a way to include the
- * header would produce C that cannot compile. See LOT25, section on the open
- * decision. */
+/** Lot 28 delivers `limits.h`, which lot 25 had deliberately left out
+ * because the lot 6 snapshot froze its sentence as a refusal. The founder
+ * authorized amending that snapshot on 15 November 2026, so the header is
+ * now accepted by its own branch, exactly as `stdlib.h` is by lot 21.
+ *
+ * The limit MACROS need no code at all: `INT_MAX` is a valid C identifier,
+ * so every expression profile has always accepted it as an ordinary name.
+ * That is also the honest limit — C-A does not know those macros, does not
+ * know their values, and never checks that the header was included. */
 
 export type ReliabilityInstruction =
   | { kind: 'INCLUDE_ASSERT'; parameters: Record<string, never> }
+  | { kind: 'INCLUDE_LIMITS'; parameters: Record<string, never> }
   | { kind: 'ASSERT'; parameters: { condition: Condition; conditionRange: SourceRange } }
   | { kind: 'CONST_DECL'; parameters: { type: NumericType; name: string; nameRange: SourceRange; expression: NumericExpression } };
 
@@ -87,6 +91,8 @@ export function analyzeReliabilityInstruction(source: string, tokens: Token[], e
   let instruction: ReliabilityInstruction | undefined;
   if (word(0) === 'inclue' && word(1) === 'la' && word(2) === 'bibliothèque' && tokens[3]?.text === 'assert.h') {
     instruction = finish(4) ? { kind: 'INCLUDE_ASSERT', parameters: {} } : undefined;
+  } else if (word(0) === 'inclue' && word(1) === 'la' && word(2) === 'bibliothèque' && tokens[3]?.text === 'limits.h') {
+    instruction = finish(4) ? { kind: 'INCLUDE_LIMITS', parameters: {} } : undefined;
   } else if (word(0) === 'vérifie' && word(1) === 'que') {
     const quotes = quoted(2, 'MISSING_CONDITION', 'Il manque la condition à vérifier.');
     if (quotes) {

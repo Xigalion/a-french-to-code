@@ -186,28 +186,66 @@ test('aucune information du lot 25 sur les instructions voisines', () => {
 // 5. Le conflit avec un instantané figé, et ce qui en découle
 // ---------------------------------------------------------------------------
 
-test('limits.h et float.h restent refusés, parce qu’un instantané les gèle', () => {
-  // `test/lot6-compatibility.json` freezes both as refusals. Accepting them
-  // would mean amending a frozen contract, which is a founder decision.
-  // `assert.h` is not in any snapshot, which is why it could be delivered.
-  for (const header of ['limits.h', 'float.h']) {
-    const diagnostic = refused(`Inclue la bibliothèque ${header}.`, 'UNSUPPORTED_HEADER');
-    assert.equal(diagnostic.message, 'Seul l’en-tête stdio.h, écrit exactement ainsi, est pris en charge.');
-  }
-  // And no formulation produces a limit macro, since its header cannot be
-  // included: shipping one would produce C that cannot compile.
-  for (const source of ['Affiche la limite maximale du type int.', 'Affiche la limite minimale du type int.',
-    'Affecte à n la limite maximale du type int.']) {
-    assert.equal(translate(source).status, 'rejected', source);
-  }
+test('lot 28 : limits.h est livré, float.h reste refusé', () => {
+  // Le lot 25 avait laissé limits.h de côté parce que l'instantané du lot 6
+  // le gelait comme un refus. La décision 3 du fondateur du 15 novembre 2026
+  // a autorisé l'amendement de cet instantané ; une seule entrée a changé de
+  // verdict, et elle a été reconstruite depuis le moteur. Voir LOT28.
+  const limits = translated('Inclue la bibliothèque limits.h.');
+  assert.equal(limits.instruction.kind, 'INCLUDE_LIMITS');
+  assert.deepEqual(limits.instruction.parameters, {});
+  assert.equal(limits.fragments[0].code, '#include <limits.h>\n');
+  assert.equal(limits.fragments[0].comment, '// Inclue la bibliothèque limits.h.');
+  // float.h n'est PAS autorisé par la décision 3, qui ne nomme que limits.h.
+  const diagnostic = refused('Inclue la bibliothèque float.h.', 'UNSUPPORTED_HEADER');
+  assert.equal(diagnostic.message, 'Les en-têtes de la bibliothèque standard pris en charge sont stdio.h, stdlib.h, assert.h et limits.h, '
+    + 'écrits exactement ainsi.');
 });
 
-test('les trois en-têtes livrés, et eux seuls', () => {
+test('lot 28 : aucune formulation ne nomme une limite — les macros sont des noms', () => {
+  // Point essentiel, et c'est la limite honnête du lot : C-A n'a AUCUNE
+  // commande de limite. INT_MAX passe parce que c'est un identifiant C
+  // valide, accepté par la grammaire des noms depuis toujours, pas parce que
+  // C-A saurait ce qu'il désigne.
+  for (const source of ['Affiche la limite maximale du type int.', 'Affiche la limite minimale du type int.',
+    'Affecte à n la limite maximale du type int.', 'Affiche la borne supérieure du type int.']) {
+    assert.equal(translate(source).status, 'rejected', source);
+  }
+  for (const source of ['Affecte à m le résultat numérique de "INT_MAX".',
+    'Affecte à m le résultat de "INT_MIN".',
+    'Crée un bloc si "x < INT_MAX".',
+    'Affecte à b le résultat numérique de "CHAR_BIT * 2".',
+    'Affiche la valeur de UINT_MAX.']) {
+    assert.equal(translate(source).status, 'translated', source);
+  }
+  // Et rien ne vérifie que l'en-tête a été inclus : la phrase ci-dessous est
+  // acceptée dans un document qui n'inclut rien. Une forme acceptée ne
+  // prouve pas que le C produit compile.
+  assert.equal(translate('Affecte à m le résultat numérique de "INT_MAX".').status, 'translated');
+  assert.equal(translate('Affecte à m le résultat numérique de "LIMITE_INEXISTANTE".').status, 'translated');
+});
+
+test('lot 28 : deux informations passives sur l’inclusion de limits.h', () => {
+  const items = explainInstruction(translated('Inclue la bibliothèque limits.h.'));
+  assert.deepEqual(items.map(item => item.code),
+    ['LIMITS_ARE_IMPLEMENTATION_DEFINED', 'LIMIT_MACROS_NOT_KNOWN']);
+  for (const item of items) assert.equal(item.severity, 'information');
+  assert.match(items[0].message, /définies par l’implémentation/u);
+  assert.match(items[0].message, /C-A ne les connaît pas/u);
+  assert.match(items[1].message, /parce que c’est un identifiant/u);
+  assert.match(items[1].message, /ne vérifie pas que cet en-tête a été inclus/u);
+  assert.match(items[1].message, /dépassement d’entier signé/u);
+});
+
+test('les quatre en-têtes livrés, et eux seuls', () => {
+  // Lot 28 : limits.h rejoint la liste. Le titre disait « trois » et
+  // serait devenu faux en continuant de passer, ce qui est pire qu'un
+  // échec : un test vert qui affirme une chose fausse.
   for (const [header, code] of [['stdio.h', '#include <stdio.h>\n'], ['stdlib.h', '#include <stdlib.h>\n'],
-    ['assert.h', '#include <assert.h>\n']]) {
+    ['assert.h', '#include <assert.h>\n'], ['limits.h', '#include <limits.h>\n']]) {
     assert.equal(translated(`Inclue la bibliothèque ${header}.`).fragments[0].code, code);
   }
-  for (const header of ['string.h', 'stddef.h', 'math.h', 'time.h', 'errno.h', 'stdint.h']) {
+  for (const header of ['string.h', 'stddef.h', 'math.h', 'time.h', 'errno.h', 'stdint.h', 'float.h']) {
     refused(`Inclue la bibliothèque ${header}.`, 'UNSUPPORTED_HEADER');
   }
 });

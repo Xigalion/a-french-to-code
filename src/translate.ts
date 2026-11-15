@@ -349,6 +349,7 @@ function render(text: string, instruction: Instruction): TranslationResult {
     // Not the same intent as « sors de la boucle » : the target is the switch.
     case 'BREAK_SWITCH': code = 'break;\n'; break;
     case 'INCLUDE_STDIO': code = '#include <stdio.h>\n'; break;
+    case 'INCLUDE_LIMITS': code = '#include <limits.h>\n'; break;
     case 'INCLUDE_STDLIB': code = '#include <stdlib.h>\n'; break;
     // `sizeof` yields a size_t, whose C17 conversion specifier is `%zu`.
     case 'SIZEOF_PRINT': code = `printf("%zu", sizeof(${renderMeasuredType(instruction.parameters.type)}));\n`; break;
@@ -786,11 +787,16 @@ export function translate(text: string): TranslationResult {
       }
       parameters.name = token.text;
     } else if (part.parameter === 'header') {
-      // This message is frozen by the lot 5 compatibility snapshot. `stdlib.h`
-      // is therefore accepted by the lot 21 branch, before this rule is ever
-      // reached, rather than by widening the test here. See LOT21.
+      // Lot 28: this message had been frozen since lot 5 and said that only
+      // stdio.h was supported, while stdlib.h, assert.h and now limits.h are
+      // each accepted by their own branch before this rule is reached. It
+      // under-stated the perimeter. The founder authorized amending the
+      // snapshots rather than keeping a message that had become false.
+      // It states the perimeter; it does not hand over a sentence to copy.
       if (token.text !== 'stdio.h') {
-        return reject(text, 'UNSUPPORTED_HEADER', 'Seul l’en-tête stdio.h, écrit exactement ainsi, est pris en charge.', token.range);
+        return reject(text, 'UNSUPPORTED_HEADER',
+          'Les en-têtes de la bibliothèque standard pris en charge sont stdio.h, stdlib.h, assert.h et limits.h, '
+          + 'écrits exactement ainsi.', token.range);
       }
     } else {
       if (!/^(?:0|-?[1-9][0-9]*)$/u.test(token.text)) {

@@ -51,18 +51,20 @@ for (const [source, code, kind] of EXACT) {
   });
 }
 
-test('le contrat gelé de l’inclusion n’a pas bougé', () => {
-  // The lot 4 and lot 5 snapshots freeze this kind, this output and this
-  // message. `stdlib.h` is therefore handled by its own branch, before the
-  // historical rule is reached, and that rule is byte-identical.
+test('le contrat gelé de l’inclusion n’a pas bougé, sauf son message', () => {
+  // `stdlib.h` est toujours traité par sa propre branche, avant la règle
+  // historique, et le genre, la sortie et la portée de l'inclusion sont
+  // intacts. Lot 28 : seul le MESSAGE a changé, parce qu'il affirmait que
+  // stdio.h était le seul en-tête pris en charge, ce qui était devenu faux.
+  // Les instantanés des lots 4 et 6 ont été amendés en conséquence, 9
+  // entrées, dont une seule change de verdict. Voir LOT28.
   const stdio = translated('Inclue la bibliothèque stdio.h.');
   assert.equal(stdio.instruction.kind, 'INCLUDE_STDIO');
   assert.deepEqual(stdio.instruction.parameters, {});
   assert.equal(stdio.fragments[0].code, '#include <stdio.h>\n');
   const refusal = refused('Inclue la bibliothèque string.h.', 'UNSUPPORTED_HEADER');
-  assert.equal(refusal.message, 'Seul l’en-tête stdio.h, écrit exactement ainsi, est pris en charge.');
-  // Known inconsistency, kept on purpose and documented: the frozen message
-  // under-states what is supported now that stdlib.h is accepted.
+  assert.equal(refusal.message, 'Les en-têtes de la bibliothèque standard pris en charge sont stdio.h, stdlib.h, assert.h et limits.h, '
+    + 'écrits exactement ainsi.');
   for (const header of ['stddef.h', 'string.h', 'math.h', 'stdlib']) {
     refused(`Inclue la bibliothèque ${header}.`, 'UNSUPPORTED_HEADER');
   }

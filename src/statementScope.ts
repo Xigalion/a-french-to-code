@@ -11,7 +11,7 @@ export type ScopeResolution = { status: 'resolved' } | { status: 'rejected'; dia
  * duration, so these are valid there and their placement is untouched.
  */
 export const DECLARATION_KINDS: readonly string[] = [
-  'INCLUDE_STDIO', 'INCLUDE_STDLIB', 'INCLUDE_ASSERT', 'INCLUDE_LOCAL',
+  'INCLUDE_STDIO', 'INCLUDE_STDLIB', 'INCLUDE_ASSERT', 'INCLUDE_LIMITS', 'INCLUDE_LOCAL',
   'GUARD_OPEN', 'GUARD_CLOSE',
   'DECL_INT', 'INIT_INT', 'DECL_CHAR', 'INIT_CHAR', 'NUMERIC_DECL', 'NUMERIC_INIT',
   'ARRAY_DECL', 'STRING_INIT', 'DECL_POINTER', 'INIT_POINTER', 'CONST_DECL',
