@@ -19,11 +19,13 @@ import { analyzeSwitchInstruction } from './switchInstructions.ts';
 import type { SwitchInstruction } from './switchInstructions.ts';
 import { analyzeStructInstruction, renderMemberTarget } from './structInstructions.ts';
 import type { StructInstruction } from './structInstructions.ts';
+import { analyzeMemoryInstruction, renderMeasuredType } from './memoryInstructions.ts';
+import type { MemoryInstruction } from './memoryInstructions.ts';
 
 /** Half-open offsets in UTF-16 code units, relative to the original input. */
 export type SourceRange = { start: number; end: number };
 
-export type Instruction = NumericInstruction | FunctionInstruction | CharacterInstruction | ArrayInstruction | PointerInstruction | SwitchInstruction | StructInstruction
+export type Instruction = NumericInstruction | FunctionInstruction | CharacterInstruction | ArrayInstruction | PointerInstruction | SwitchInstruction | StructInstruction | MemoryInstruction
   | { kind: 'IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE_IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE'; parameters: Record<string, never> }
@@ -167,7 +169,7 @@ const C17_KEYWORDS = new Set([
 
 type Token = { text: string; range: SourceRange };
 type Parameter = { parameter: 'name' | 'value' | 'header' };
-type Rule = { kind: Exclude<Instruction['kind'], 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | FunctionInstruction['kind'] | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind'] | CharacterInstruction['kind'] | ArrayInstruction['kind'] | PointerInstruction['kind'] | SwitchInstruction['kind'] | StructInstruction['kind']>; parts: (string | Parameter)[] };
+type Rule = { kind: Exclude<Instruction['kind'], MemoryInstruction['kind'] | 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | FunctionInstruction['kind'] | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind'] | CharacterInstruction['kind'] | ArrayInstruction['kind'] | PointerInstruction['kind'] | SwitchInstruction['kind'] | StructInstruction['kind']>; parts: (string | Parameter)[] };
 
 const RULES: [Rule, ...Rule[]] = [
   { kind: 'MAIN', parts: ['Crée', 'la', 'fonction', 'principale'] },
@@ -307,6 +309,17 @@ function render(text: string, instruction: Instruction): TranslationResult {
     // Not the same intent as « sors de la boucle » : the target is the switch.
     case 'BREAK_SWITCH': code = 'break;\n'; break;
     case 'INCLUDE_STDIO': code = '#include <stdio.h>\n'; break;
+    case 'INCLUDE_STDLIB': code = '#include <stdlib.h>\n'; break;
+    // `sizeof` yields a size_t, whose C17 conversion specifier is `%zu`.
+    case 'SIZEOF_PRINT': code = `printf("%zu", sizeof(${renderMeasuredType(instruction.parameters.type)}));\n`; break;
+    case 'SIZEOF_ASSIGN': code = `${instruction.parameters.name} = sizeof(${renderMeasuredType(instruction.parameters.type)});\n`; break;
+    // The product is written out, never folded: the student reads the count
+    // and the element size separately, which is the point of the lesson.
+    case 'ALLOCATE': code = `${instruction.parameters.name} = malloc(${instruction.parameters.count.text} `
+      + `* sizeof(${renderMeasuredType(instruction.parameters.type)}));\n`; break;
+    case 'REALLOCATE': code = `${instruction.parameters.name} = realloc(${instruction.parameters.source}, `
+      + `${instruction.parameters.count.text} * sizeof(${renderMeasuredType(instruction.parameters.type)}));\n`; break;
+    case 'FREE': code = `free(${instruction.parameters.name});\n`; break;
     case 'PRINT_INT': code = `printf("%d", ${instruction.parameters.name});\n`; break;
     case 'PRINT_FORMATTED': {
       const specifiers: Record<DisplayFormat, string> = { decimal: '%d', hexadecimal: '%x', octal: '%o' };
@@ -621,6 +634,10 @@ export function translate(text: string): TranslationResult {
   if (arrays?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [arrays.diagnostic] };
   if (arrays?.status === 'recognized') return render(text, arrays.instruction);
 
+  const memory = analyzeMemoryInstruction(tokens, end, identifierDiagnostic);
+  if (memory?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [memory.diagnostic] };
+  if (memory?.status === 'recognized') return render(text, memory.instruction);
+
   const structs = analyzeStructInstruction(text, tokens, end, identifierDiagnostic);
   if (structs?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [structs.diagnostic] };
   if (structs?.status === 'recognized') return render(text, structs.instruction);
@@ -687,6 +704,9 @@ export function translate(text: string): TranslationResult {
       }
       parameters.name = token.text;
     } else if (part.parameter === 'header') {
+      // This message is frozen by the lot 5 compatibility snapshot. `stdlib.h`
+      // is therefore accepted by the lot 21 branch, before this rule is ever
+      // reached, rather than by widening the test here. See LOT21.
       if (token.text !== 'stdio.h') {
         return reject(text, 'UNSUPPORTED_HEADER', 'Seul l’en-tête stdio.h, écrit exactement ainsi, est pris en charge.', token.range);
       }

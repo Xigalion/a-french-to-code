@@ -404,6 +404,37 @@ membres anonymes, initialisation ou affectation globale de structure.
 
 ---
 
+## Domaine 6 — `sizeof` et mémoire dynamique (lot 21)
+
+| Phrase française | Code C produit | Information |
+|---|---|---|
+| `Inclue la bibliothèque stdlib.h.` | `#include <stdlib.h>` | HEADER_DECLARES_ONLY |
+| `Affiche la taille du type int.` | `printf("%zu", sizeof(int));` | SIZEOF_IS_BYTES |
+| `Affiche la taille du type structure Point.` | `printf("%zu", sizeof(struct Point));` | SIZEOF_IS_BYTES |
+| `Affecte à n la taille du type double.` | `n = sizeof(double);` | SIZEOF_IS_BYTES |
+| `Affecte à p l'allocation de 10 éléments de type int.` | `p = malloc(10 * sizeof(int));` | ALLOCATION_CAN_FAIL, SIZEOF_IS_BYTES, ALLOCATION_NOT_INITIALIZED |
+| `Affecte à q la réallocation de p pour 20 éléments de type int.` | `q = realloc(p, 20 * sizeof(int));` | ALLOCATION_CAN_FAIL, SIZEOF_IS_BYTES, REALLOC_MAY_MOVE |
+| `Libère la mémoire pointée par p.` | `free(p);` | FREE_ONCE |
+
+« du type » et « de type » se lisent tous deux ; « 1 élément » comme
+« 10 éléments ». Le produit `4 * sizeof(int)` est **écrit, jamais
+replié** : le nombre d'éléments et la taille d'un élément restent
+visibles séparément. **Aucune conversion** n'est ajoutée au résultat de
+`malloc` : C17 n'en a pas besoin.
+
+Types mesurés : les cinq scalaires, ou `structure {tag}`. Nombre
+d'éléments : un entier décimal positif **ou un nom**, sans qu'aucune
+vérification ait lieu.
+
+`NULL` s'écrit comme un nom ordinaire et fonctionne parce que `stdlib.h`
+le déclare ; aucune formulation ne l'introduit, et `ALLOCATION_CAN_FAIL`
+**nomme la phrase à écrire** sans l'écrire.
+
+Non livré : `calloc`, `aligned_alloc`, `sizeof` sur une expression, toute
+vérification de durée de vie, de cohérence ou de fuite.
+
+---
+
 ## Limites de complexité
 
 | Limite | Valeur |

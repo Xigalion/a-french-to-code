@@ -16,7 +16,9 @@ export type PedagogicalInformation = {
     | 'OUT_OF_BOUNDS_UNDEFINED' | 'OFFSET_TYPE_NOT_CHECKED'
     | 'SWITCH_INTEGER_ONLY' | 'SWITCH_FALLTHROUGH' | 'CASE_NEEDS_STATEMENT'
     | 'DEFAULT_OPTIONAL' | 'BREAK_LEAVES_SWITCH'
-    | 'STRUCT_TAG_NEEDS_KEYWORD' | 'STRUCT_LAYOUT' | 'MEMBER_ACCESS_FORM' | 'MEMBER_NOT_CHECKED';
+    | 'STRUCT_TAG_NEEDS_KEYWORD' | 'STRUCT_LAYOUT' | 'MEMBER_ACCESS_FORM' | 'MEMBER_NOT_CHECKED'
+    | 'SIZEOF_IS_BYTES' | 'ALLOCATION_CAN_FAIL' | 'ALLOCATION_NOT_INITIALIZED'
+    | 'REALLOC_MAY_MOVE' | 'FREE_ONCE' | 'HEADER_DECLARES_ONLY';
   severity: 'information';
   range: SourceRange;
   message: string;
@@ -137,8 +139,50 @@ const STRUCT_MESSAGES = {
     + 'champ. Aucune déclaration n’est relue ici.',
 } as const;
 
+const MEMORY_MESSAGES = {
+  SIZEOF_IS_BYTES: 'sizeof donne une taille en octets, de type size_t, qui s’affiche avec « %zu ». Ce n’est pas un '
+    + 'nombre d’éléments, et ce n’est pas la somme des tailles des champs pour une structure.',
+  ALLOCATION_CAN_FAIL: 'malloc renvoie NULL si l’allocation échoue. C-A n’ajoute aucun test : il revient à '
+    + 'l’étudiant d’écrire « Crée un bloc si "p == NULL". » avant d’utiliser ce pointeur.',
+  ALLOCATION_NOT_INITIALIZED: 'malloc ne donne aucune valeur à la mémoire obtenue. Lire un élément avant de l’avoir '
+    + 'écrit a, en C17, un comportement indéfini.',
+  REALLOC_MAY_MOVE: 'realloc peut déplacer le bloc : seule l’adresse qu’il renvoie est valide ensuite, et l’ancienne '
+    + 'ne doit plus être utilisée. En cas d’échec il renvoie NULL sans libérer l’ancien bloc : écraser le pointeur '
+    + 'd’origine avec le résultat ferait perdre ce bloc.',
+  FREE_ONCE: 'free rend la mémoire une fois et une seule. Après cet appel, le pointeur ne désigne plus rien de '
+    + 'valide : le libérer deux fois ou l’utiliser encore a un comportement indéfini. C-A ne suit aucune durée de vie.',
+  HEADER_DECLARES_ONLY: 'Cet en-tête déclare malloc, realloc, free et NULL. L’inclure ne fait rien d’autre : aucune '
+    + 'allocation n’a lieu ici, et C-A n’ajoute jamais un en-tête de lui-même.',
+} as const;
+
 export function explainInstruction(result: TranslationResult): PedagogicalInformation[] {
   if (result.status !== 'translated') return [];
+  if (result.instruction.kind === 'INCLUDE_STDLIB') {
+    return [{ code: 'HEADER_DECLARES_ONLY', severity: 'information', range: { start: 0, end: 0 },
+      message: MEMORY_MESSAGES.HEADER_DECLARES_ONLY }];
+  }
+  if (result.instruction.kind === 'SIZEOF_PRINT' || result.instruction.kind === 'SIZEOF_ASSIGN') {
+    return [{ code: 'SIZEOF_IS_BYTES', severity: 'information',
+      range: { ...result.instruction.parameters.typeRange }, message: MEMORY_MESSAGES.SIZEOF_IS_BYTES }];
+  }
+  if (result.instruction.kind === 'ALLOCATE' || result.instruction.kind === 'REALLOCATE') {
+    const anchor = result.instruction.parameters.nameRange;
+    const entries: PedagogicalInformation[] = [
+      { code: 'ALLOCATION_CAN_FAIL', severity: 'information', range: { ...anchor }, message: MEMORY_MESSAGES.ALLOCATION_CAN_FAIL },
+      { code: 'SIZEOF_IS_BYTES', severity: 'information', range: { ...result.instruction.parameters.typeRange },
+        message: MEMORY_MESSAGES.SIZEOF_IS_BYTES },
+    ];
+    if (result.instruction.kind === 'REALLOCATE') {
+      return [...entries, { code: 'REALLOC_MAY_MOVE', severity: 'information',
+        range: { ...result.instruction.parameters.sourceRange }, message: MEMORY_MESSAGES.REALLOC_MAY_MOVE }];
+    }
+    return [...entries, { code: 'ALLOCATION_NOT_INITIALIZED', severity: 'information', range: { ...anchor },
+      message: MEMORY_MESSAGES.ALLOCATION_NOT_INITIALIZED }];
+  }
+  if (result.instruction.kind === 'FREE') {
+    return [{ code: 'FREE_ONCE', severity: 'information',
+      range: { ...result.instruction.parameters.nameRange }, message: MEMORY_MESSAGES.FREE_ONCE }];
+  }
   if (result.instruction.kind === 'STRUCT_DECL') {
     const anchor = result.instruction.parameters.tagRange;
     return [

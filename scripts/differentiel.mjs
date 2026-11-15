@@ -354,6 +354,24 @@ function* sentences() {
   yield* ['Déclare une structure Point.', 'Ajoute un champ int nommé x.',
     'Déclare un type nommé Point.', 'Déclare une énumération nommée Couleur.',
     'Déclare une union nommée Valeur.', 'Affecte la structure q à p.'];
+  // Lot 21 surface.
+  for (const header of ['stdio.h', 'stdlib.h', 'string.h', 'stddef.h', 'stdlib', 'math.h']) {
+    yield `Inclue la bibliothèque ${header}.`;
+  }
+  for (const type of [...TYPES, 'structure Point', 'unsigned char', '']) {
+    yield* [`Affiche la taille du type ${type}.`, `Affiche la taille de type ${type}.`,
+      `Affecte à n la taille du type ${type}.`,
+      `Affecte à p l’allocation de 4 éléments de type ${type}.`,
+      `Affecte à q la réallocation de p pour 8 éléments de type ${type}.`];
+  }
+  for (const count of ['1', '10', '0', '-1', '1.5', '007', 'n', '']) {
+    yield `Affecte à p l’allocation de ${count} éléments de type int.`;
+    yield `Affecte à p l’allocation de ${count} élément de type int.`;
+  }
+  yield* ['Libère la mémoire pointée par p.', 'Libère la mémoire de p.', 'Libère p.',
+    'Libère la mémoire pointée par.', 'Affiche la taille.', 'Affiche la taille du type.',
+    'Affecte à p l’allocation de 10 objets de type int.', 'Appelle calloc avec "10" et "4".',
+    'Crée un bloc si "p == NULL".'];
   for (const digits of ['0', '2', '17', '99', 'x']) {
     yield `Affiche x en notation fixe avec ${digits} décimales.`;
     yield `Affiche x en notation scientifique avec ${digits} décimales.`;
@@ -398,6 +416,8 @@ const PLACED = ['Déclare un caractère nommé c.', "Affecte le caractère ' ' �
   'Crée un aiguillage sur "jour".', 'Ajoute un cas pour la valeur 1.',
   'Déclare une structure nommée Point.', 'Ajoute un champ de type int nommé x.',
   'Affiche le champ x de p.', 'Affecte à n le résultat numérique de "q->x".',
+  'Inclue la bibliothèque stdlib.h.', 'Affecte à p l’allocation de 4 éléments de type int.',
+  'Libère la mémoire pointée par p.', 'Affiche la taille du type int.',
   'Ajoute le cas par défaut.', 'Sors de l’aiguillage.'];
 
 for (const text of DOCUMENTS) {
