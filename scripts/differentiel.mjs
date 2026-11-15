@@ -427,6 +427,21 @@ function* sentences() {
     'Ajoute un champ pointeur pointeur de type int nommé p.',
     'Crée un tableau de type structure Point nommé t de dimension 2 avec le texte "a".',
     'Échange les éléments "i" et "j" de t.', 'Trie le tableau t.'];
+  // Lot 25 surface.
+  for (const header of ['assert.h', 'limits.h', 'float.h', 'stddef.h', 'string.h']) {
+    yield `Inclue la bibliothèque ${header}.`;
+  }
+  for (const condition of ['x > 0', 'p != 0 && n > 0', '!fini', 'x = 0', 'a == b == c', 'a & b', '0', '', '1int']) {
+    yield `Vérifie que "${condition}".`;
+  }
+  yield* ['Vérifie que.', 'Vérifie que x > 0.', 'Vérifie "x > 0".', 'Vérifie que "x > 0" encore.'];
+  for (const type of [...TYPES, '']) {
+    yield `Déclare une constante de type ${type} nommée C avec le résultat de "1".`;
+  }
+  yield* ['Déclare une constante de type int nommée MAX.', 'Déclare une constante nommée MAX avec le résultat de "1".',
+    'Déclare une constante de type int nommée MAX de valeur "1".',
+    'Affiche la limite maximale du type int.', 'Affiche la limite minimale du type int.',
+    'Écris un test de la fonction somme.', 'Active le débogage.', 'Mesure le temps de la fonction somme.'];
   for (const digits of ['0', '2', '17', '99', 'x']) {
     yield `Affiche x en notation fixe avec ${digits} décimales.`;
     yield `Affiche x en notation scientifique avec ${digits} décimales.`;
@@ -482,6 +497,8 @@ const PLACED = ['Déclare un caractère nommé c.', "Affecte le caractère ' ' �
   'Déclare le synonyme Noeud pour la structure Noeud.',
   'Ajoute un champ pointeur de type structure Noeud nommé suivant.',
   'Déclare un tableau de type structure Point nommé t de dimension 10.',
+  'Inclue la bibliothèque assert.h.', 'Vérifie que "x > 0".',
+  'Déclare une constante de type int nommée MAX avec le résultat de "100".',
   'Ajoute le cas par défaut.', 'Sors de l’aiguillage.'];
 
 for (const text of DOCUMENTS) {

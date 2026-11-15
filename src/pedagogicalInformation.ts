@@ -23,7 +23,9 @@ export type PedagogicalInformation = {
     | 'SCANF_NEEDS_ADDRESS' | 'EOF_AFTER_READ'
     | 'LOCAL_HEADER_SEARCH' | 'GUARD_PREVENTS_DOUBLE_INCLUSION' | 'GUARD_NOT_EVALUATED'
     | 'PROTOTYPE_DECLARES_ONLY' | 'EXTERNAL_LINKAGE' | 'INTERNAL_LINKAGE'
-    | 'POINTER_FIELD_OWNS_NOTHING' | 'TYPEDEF_IS_AN_ALIAS' | 'STRUCT_ARRAY_LAYOUT';
+    | 'POINTER_FIELD_OWNS_NOTHING' | 'TYPEDEF_IS_AN_ALIAS' | 'STRUCT_ARRAY_LAYOUT'
+    | 'ASSERT_DISABLED_BY_NDEBUG' | 'ASSERT_NOT_ERROR_HANDLING'
+    | 'CONST_IS_NOT_A_MACRO';
   severity: 'information';
   range: SourceRange;
   message: string;
@@ -201,8 +203,35 @@ const DATA_MESSAGES = {
     + 'son remplissage éventuel. « t[i].x » désigne un champ d’un élément ; aucun des deux indices n’est vérifié.',
 } as const;
 
+const RELIABILITY_MESSAGES = {
+  ASSERT_DISABLED_BY_NDEBUG: 'assert disparaît entièrement si NDEBUG est défini à la compilation : la condition '
+    + 'n’est alors même pas évaluée. N’y mettez jamais un calcul dont le programme a besoin.',
+  ASSERT_NOT_ERROR_HANDLING: 'assert sert à détecter une erreur de programmation pendant la mise au point, pas à '
+    + 'traiter une erreur d’exécution attendue. Une entrée invalide ou un fichier absent se traitent par une '
+    + 'condition ordinaire, pas par une assertion.',
+  CONST_IS_NOT_A_MACRO: 'const qualifie un type : l’objet existe, il a une adresse et un type, contrairement à une '
+    + 'macro qui est un remplacement de texte. Modifier cet objet par un autre chemin a un comportement indéfini, '
+    + 'et C-A ne vérifie aucun chemin.',
+} as const;
+
 export function explainInstruction(result: TranslationResult): PedagogicalInformation[] {
   if (result.status !== 'translated') return [];
+  if (result.instruction.kind === 'ASSERT') {
+    const anchor = result.instruction.parameters.conditionRange;
+    return [
+      { code: 'ASSERT_DISABLED_BY_NDEBUG', severity: 'information', range: { ...anchor },
+        message: RELIABILITY_MESSAGES.ASSERT_DISABLED_BY_NDEBUG },
+      { code: 'ASSERT_NOT_ERROR_HANDLING', severity: 'information', range: { ...anchor },
+        message: RELIABILITY_MESSAGES.ASSERT_NOT_ERROR_HANDLING },
+      // The operator informations of lot 10 apply to this condition as well.
+      ...explainStructure(result),
+    ];
+  }
+  if (result.instruction.kind === 'CONST_DECL') {
+    return [{ code: 'CONST_IS_NOT_A_MACRO', severity: 'information',
+      range: { ...result.instruction.parameters.nameRange },
+      message: RELIABILITY_MESSAGES.CONST_IS_NOT_A_MACRO }];
+  }
   if (result.instruction.kind === 'TYPE_ALIAS') {
     return [{ code: 'TYPEDEF_IS_AN_ALIAS', severity: 'information',
       range: { ...result.instruction.parameters.aliasRange }, message: DATA_MESSAGES.TYPEDEF_IS_AN_ALIAS }];

@@ -25,11 +25,13 @@ import { analyzeFileInstruction } from './fileInstructions.ts';
 import type { FileInstruction } from './fileInstructions.ts';
 import { analyzeModuleInstruction } from './moduleInstructions.ts';
 import type { ModuleInstruction } from './moduleInstructions.ts';
+import { analyzeReliabilityInstruction } from './reliabilityInstructions.ts';
+import type { ReliabilityInstruction } from './reliabilityInstructions.ts';
 
 /** Half-open offsets in UTF-16 code units, relative to the original input. */
 export type SourceRange = { start: number; end: number };
 
-export type Instruction = NumericInstruction | FunctionInstruction | CharacterInstruction | ArrayInstruction | PointerInstruction | SwitchInstruction | StructInstruction | MemoryInstruction | FileInstruction | ModuleInstruction
+export type Instruction = NumericInstruction | FunctionInstruction | CharacterInstruction | ArrayInstruction | PointerInstruction | SwitchInstruction | StructInstruction | MemoryInstruction | FileInstruction | ModuleInstruction | ReliabilityInstruction
   | { kind: 'IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE_IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE'; parameters: Record<string, never> }
@@ -56,10 +58,13 @@ type DisplayFormat = 'decimal' | 'hexadecimal' | 'octal';
  */
 export const BLOCK_KINDS: readonly string[] = ['MAIN', 'IF', 'ELSE_IF', 'ELSE', 'WHILE', 'DO_WHILE', 'FOR', 'FUNC_DEF', 'SWITCH', 'STRUCT_DECL', 'FILE_AT_END'];
 
-/** Intents whose only parameter is a bounded condition of the lot 10 profile. */
+/** Intents whose only parameter is a bounded condition of the lot 10 profile.
+ * `ASSERT` joined at lot 25: its condition is a condition like any other, so
+ * the lot 8 advisories and the operator informations apply to it too. */
 export function instructionCondition(instruction: Instruction): Condition | undefined {
   switch (instruction.kind) {
-    case 'IF': case 'ELSE_IF': case 'WHILE': case 'DO_WHILE': case 'FOR': return instruction.parameters.condition;
+    case 'IF': case 'ELSE_IF': case 'WHILE': case 'DO_WHILE': case 'FOR': case 'ASSERT':
+      return instruction.parameters.condition;
     default: return undefined;
   }
 }
@@ -130,6 +135,7 @@ export type DiagnosticCode =
   | 'UNSUPPORTED_LOCAL_HEADER'
   | 'MISSING_GUARD_MACRO'
   | 'INVALID_GUARD_MACRO'
+  | 'UNSUPPORTED_LIMIT_TYPE'
   | 'FIELD_OUTSIDE_STRUCT'
   | 'UNEXPECTED_TEXT';
 
@@ -178,7 +184,7 @@ const C17_KEYWORDS = new Set([
 
 type Token = { text: string; range: SourceRange };
 type Parameter = { parameter: 'name' | 'value' | 'header' };
-type Rule = { kind: Exclude<Instruction['kind'], MemoryInstruction['kind'] | FileInstruction['kind'] | ModuleInstruction['kind'] | 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | FunctionInstruction['kind'] | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind'] | CharacterInstruction['kind'] | ArrayInstruction['kind'] | PointerInstruction['kind'] | SwitchInstruction['kind'] | StructInstruction['kind']>; parts: (string | Parameter)[] };
+type Rule = { kind: Exclude<Instruction['kind'], MemoryInstruction['kind'] | FileInstruction['kind'] | ModuleInstruction['kind'] | ReliabilityInstruction['kind'] | 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | FunctionInstruction['kind'] | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind'] | CharacterInstruction['kind'] | ArrayInstruction['kind'] | PointerInstruction['kind'] | SwitchInstruction['kind'] | StructInstruction['kind']>; parts: (string | Parameter)[] };
 
 const RULES: [Rule, ...Rule[]] = [
   { kind: 'MAIN', parts: ['Crée', 'la', 'fonction', 'principale'] },
@@ -370,6 +376,12 @@ function render(text: string, instruction: Instruction): TranslationResult {
     // closing `#endif` is a separate instruction the student must write.
     case 'GUARD_OPEN': code = `#ifndef ${instruction.parameters.macro}\n#define ${instruction.parameters.macro}\n`; break;
     case 'GUARD_CLOSE': code = '#endif\n'; break;
+    case 'INCLUDE_ASSERT': code = '#include <assert.h>\n'; break;
+    // A development check, not error handling: the condition is written as it
+    // was given, and no message is invented alongside it.
+    case 'ASSERT': code = `assert(${renderCondition(instruction.parameters.condition)});\n`; break;
+    case 'CONST_DECL': code = `const ${instruction.parameters.type} ${instruction.parameters.name} `
+      + `= ${renderNumericExpression(instruction.parameters.expression)};\n`; break;
     case 'LINKAGE_DECL': code = `${instruction.parameters.linkage} ${instruction.parameters.type} ${instruction.parameters.name};\n`; break;
     case 'PRINT_INT': code = `printf("%d", ${instruction.parameters.name});\n`; break;
     case 'PRINT_FORMATTED': {
@@ -649,6 +661,10 @@ export function translate(text: string): TranslationResult {
   // Before the IF branch, and only because of it: « Crée un bloc si la fin du
   // fichier f est atteinte. » shares the four words that select a condition
   // block. The module declines every other sentence, so nothing else moves.
+  const reliability = analyzeReliabilityInstruction(text, tokens, end, identifierDiagnostic);
+  if (reliability?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [reliability.diagnostic] };
+  if (reliability?.status === 'recognized') return render(text, reliability.instruction);
+
   const modules = analyzeModuleInstruction(tokens, end, identifierDiagnostic);
   if (modules?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [modules.diagnostic] };
   if (modules?.status === 'recognized') return render(text, modules.instruction);

@@ -523,6 +523,32 @@ dire du coût d'un algorithme.
 
 ---
 
+## Domaine 9 — Fiabilité et maîtrise avancée (lot 25)
+
+| Phrase française | Code C produit | Information |
+|---|---|---|
+| `Inclue la bibliothèque assert.h.` | `#include <assert.h>` | — |
+| `Vérifie que "x > 0".` | `assert(x > 0);` | ASSERT_DISABLED_BY_NDEBUG, ASSERT_NOT_ERROR_HANDLING |
+| `Déclare une constante de type int nommée MAX avec le résultat de "100".` | `const int MAX = 100;` | CONST_IS_NOT_A_MACRO |
+
+L'assertion réutilise le **profil condition du lot 10**, ce qui paie
+immédiatement : `Vérifie que "x = 0".` est refusé avec
+`ASSIGNMENT_IN_CONDITION` — exactement le bug que l'assertion sert à
+éviter. Sa condition reçoit aussi les **avertissements du lot 8** et les
+**informations d'opérateur du lot 10**.
+
+**Trois en-têtes sont pris en charge, et eux seuls** : `stdio.h`,
+`stdlib.h`, `assert.h`. `limits.h` et `float.h` restent refusés, parce que
+l'instantané de compatibilité du lot 6 gèle leur refus ; aucune macro de
+limite n'est donc produite, puisque son en-tête ne peut pas être inclus.
+Voir `docs/LOT25_CONTRAT_ET_BILAN.md` §2 pour la décision demandée.
+
+Non livré : `static_assert`, `errno`, `perror`, tests automatisés,
+débogage, mesure de temps, couverture, `const` sur un pointeur, un
+paramètre ou un membre.
+
+---
+
 ## Limites de complexité
 
 | Limite | Valeur |
