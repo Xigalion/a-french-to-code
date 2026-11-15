@@ -77,7 +77,13 @@ export function inspectPrefix(prefix: string): LexicalIssue | undefined {
       // Deliberately narrow header grammar: no escapes, embedded delimiters,
       // block comments, macro includes, or directives following a block comment.
       const include = /^[ \t]*#[ \t]*include[ \t]+(?:<[^<>"\\\r\n]+>|"[^"<>\\\r\n]+")[ \t]*(?:\/\/[^\r\n]*)?$/u;
-      if (!include.test(line)) {
+      // Lot 23 widening, deliberately narrow: the three directives of a header
+      // guard, and nothing else. An object-like `#define NAME` with NO
+      // replacement list is accepted; `#define NAME value` stays refused,
+      // because C-A does not expand macros and must not read code whose tokens
+      // a macro could change.
+      const guard = /^[ \t]*#[ \t]*(?:ifndef[ \t]+[A-Za-z_][A-Za-z0-9_]*|define[ \t]+[A-Za-z_][A-Za-z0-9_]*|endif)[ \t]*(?:\/\/[^\r\n]*)?$/u;
+      if (!include.test(line) && !guard.test(line)) {
         return {
           code: 'UNSUPPORTED_DIRECTIVE', reason: 'unsupported-construct',
           message: 'Seules les inclusions directes simples avant la cible sont prises en charge dans ce lot.',

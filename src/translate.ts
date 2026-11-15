@@ -23,11 +23,13 @@ import { analyzeMemoryInstruction, renderMeasuredType } from './memoryInstructio
 import type { MemoryInstruction } from './memoryInstructions.ts';
 import { analyzeFileInstruction } from './fileInstructions.ts';
 import type { FileInstruction } from './fileInstructions.ts';
+import { analyzeModuleInstruction } from './moduleInstructions.ts';
+import type { ModuleInstruction } from './moduleInstructions.ts';
 
 /** Half-open offsets in UTF-16 code units, relative to the original input. */
 export type SourceRange = { start: number; end: number };
 
-export type Instruction = NumericInstruction | FunctionInstruction | CharacterInstruction | ArrayInstruction | PointerInstruction | SwitchInstruction | StructInstruction | MemoryInstruction | FileInstruction
+export type Instruction = NumericInstruction | FunctionInstruction | CharacterInstruction | ArrayInstruction | PointerInstruction | SwitchInstruction | StructInstruction | MemoryInstruction | FileInstruction | ModuleInstruction
   | { kind: 'IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE_IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE'; parameters: Record<string, never> }
@@ -125,6 +127,9 @@ export type DiagnosticCode =
   | 'MISSING_STRUCT_TAG'
   | 'MISSING_FILE_MODE'
   | 'UNSUPPORTED_FILE_MODE'
+  | 'UNSUPPORTED_LOCAL_HEADER'
+  | 'MISSING_GUARD_MACRO'
+  | 'INVALID_GUARD_MACRO'
   | 'FIELD_OUTSIDE_STRUCT'
   | 'UNEXPECTED_TEXT';
 
@@ -173,7 +178,7 @@ const C17_KEYWORDS = new Set([
 
 type Token = { text: string; range: SourceRange };
 type Parameter = { parameter: 'name' | 'value' | 'header' };
-type Rule = { kind: Exclude<Instruction['kind'], MemoryInstruction['kind'] | FileInstruction['kind'] | 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | FunctionInstruction['kind'] | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind'] | CharacterInstruction['kind'] | ArrayInstruction['kind'] | PointerInstruction['kind'] | SwitchInstruction['kind'] | StructInstruction['kind']>; parts: (string | Parameter)[] };
+type Rule = { kind: Exclude<Instruction['kind'], MemoryInstruction['kind'] | FileInstruction['kind'] | ModuleInstruction['kind'] | 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | FunctionInstruction['kind'] | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind'] | CharacterInstruction['kind'] | ArrayInstruction['kind'] | PointerInstruction['kind'] | SwitchInstruction['kind'] | StructInstruction['kind']>; parts: (string | Parameter)[] };
 
 const RULES: [Rule, ...Rule[]] = [
   { kind: 'MAIN', parts: ['Crée', 'la', 'fonction', 'principale'] },
@@ -253,6 +258,14 @@ function render(text: string, instruction: Instruction): TranslationResult {
       const { returnType, name, params } = instruction.parameters;
       const list = params.length ? params.map(parameter => `${parameter.type} ${parameter.name}`).join(', ') : 'void';
       code = `${returnType} ${name}(${list}) {\n    \n}\n`;
+      break;
+    }
+    // Same signature, no body, and a semicolon: a declaration, not a
+    // definition. `static` makes it internal to the translation unit.
+    case 'FUNC_PROTOTYPE': {
+      const { returnType, name, params, internal } = instruction.parameters;
+      const list = params.length ? params.map(parameter => `${parameter.type} ${parameter.name}`).join(', ') : 'void';
+      code = `${internal ? 'static ' : ''}${returnType} ${name}(${list});\n`;
       break;
     }
     case 'CALL': code = `${instruction.parameters.name}(${instruction.parameters.args.map(renderNumericExpression).join(', ')});\n`; break;
@@ -337,6 +350,14 @@ function render(text: string, instruction: Instruction): TranslationResult {
     // seeing `&` here is the lesson, not an implementation detail.
     case 'FILE_READ_INT': code = `fscanf(${instruction.parameters.name}, "%d", &${instruction.parameters.target});\n`; break;
     case 'FILE_AT_END': code = `if (feof(${instruction.parameters.name})) {\n    \n}\n`; break;
+    // A local header is included with quotes, a library one with angles: the
+    // two forms mean different search rules, and neither is rewritten.
+    case 'INCLUDE_LOCAL': code = `#include "${instruction.parameters.path}"\n`; break;
+    // Two directives, written together because they are one gesture. The
+    // closing `#endif` is a separate instruction the student must write.
+    case 'GUARD_OPEN': code = `#ifndef ${instruction.parameters.macro}\n#define ${instruction.parameters.macro}\n`; break;
+    case 'GUARD_CLOSE': code = '#endif\n'; break;
+    case 'LINKAGE_DECL': code = `${instruction.parameters.linkage} ${instruction.parameters.type} ${instruction.parameters.name};\n`; break;
     case 'PRINT_INT': code = `printf("%d", ${instruction.parameters.name});\n`; break;
     case 'PRINT_FORMATTED': {
       const specifiers: Record<DisplayFormat, string> = { decimal: '%d', hexadecimal: '%x', octal: '%o' };
@@ -615,6 +636,10 @@ export function translate(text: string): TranslationResult {
   // Before the IF branch, and only because of it: « Crée un bloc si la fin du
   // fichier f est atteinte. » shares the four words that select a condition
   // block. The module declines every other sentence, so nothing else moves.
+  const modules = analyzeModuleInstruction(tokens, end, identifierDiagnostic);
+  if (modules?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [modules.diagnostic] };
+  if (modules?.status === 'recognized') return render(text, modules.instruction);
+
   const files = analyzeFileInstruction(text, tokens, end, identifierDiagnostic);
   if (files?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [files.diagnostic] };
   if (files?.status === 'recognized') return render(text, files.instruction);

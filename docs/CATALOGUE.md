@@ -462,6 +462,39 @@ chose qu'un entier, et toute vérification de flux, de chemin ou d'ordre.
 
 ---
 
+## Domaine 7 — Modularité : en-têtes, prototypes et liaison (lot 23)
+
+| Phrase française | Code C produit | Information |
+|---|---|---|
+| `Inclue l'en-tête "calcul.h".` | `#include "calcul.h"` | LOCAL_HEADER_SEARCH |
+| `Ouvre la protection d'en-tête nommée CALCUL_H.` | `#ifndef CALCUL_H` ⏎ `#define CALCUL_H` | GUARD_PREVENTS_DOUBLE_INCLUSION, GUARD_NOT_EVALUATED |
+| `Ferme la protection d'en-tête.` | `#endif` | — |
+| `Déclare le prototype d'une fonction nommée somme qui retourne un int et prend un int nommé a.` | `int somme(int a);` | PROTOTYPE_DECLARES_ONLY |
+| `Déclare le prototype d'une fonction interne nommée aide qui retourne un int.` | `static int aide(void);` | + INTERNAL_LINKAGE |
+| `Déclare la variable externe de type int nommée compteur.` | `extern int compteur;` | EXTERNAL_LINKAGE |
+| `Déclare la variable interne de type double nommée total.` | `static double total;` | INTERNAL_LINKAGE |
+
+Une garde est **deux instructions**, et l'information d'ouverture nomme la
+phrase de fermeture. Un nom de protection s'écrit en **majuscules ASCII**.
+Un chemin d'en-tête local n'accepte ni espace, ni échappement, ni
+délimiteur interne.
+
+Le prototype réutilise **exactement** la queue de phrase du lot 12 : même
+analyse, mêmes diagnostics, et le prototype est l'en-tête de la définition
+avec un point-virgule au lieu du corps.
+
+**Directives acceptées avant la ligne cible** : `#include`, et depuis ce
+lot `#ifndef IDENT`, `#define IDENT` **sans** liste de remplacement, et
+`#endif`. `#define X 1` reste refusé : C-A n'expanse aucune macro et ne
+doit pas lire du code dont une macro pourrait avoir changé les jetons.
+
+Non livré : macros à remplacement, `typedef`, `#if`/`#ifdef`/`#else`,
+`#pragma`, définition de fonction `static`, et toute vérification de
+projet — un prototype sans définition ou deux gardes de même nom sont
+traduits sans un mot.
+
+---
+
 ## Limites de complexité
 
 | Limite | Valeur |

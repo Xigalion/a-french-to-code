@@ -14,6 +14,9 @@ export const MAX_ARGUMENTS = 16;
  */
 export type FunctionInstruction =
   | { kind: 'FUNC_DEF'; parameters: { returnType: ReturnType; name: string; nameRange: SourceRange; params: Parameter[] } }
+  /** Lot 23: the same signature as a definition, declared without a body. The
+   * tail is parsed by the very same rules, so the two cannot drift apart. */
+  | { kind: 'FUNC_PROTOTYPE'; parameters: { returnType: ReturnType; name: string; nameRange: SourceRange; params: Parameter[]; internal: boolean } }
   | { kind: 'CALL'; parameters: { name: string; nameRange: SourceRange; args: NumericExpression[] } }
   | { kind: 'CALL_ASSIGN'; parameters: { target: string; name: string; nameRange: SourceRange; args: NumericExpression[] } }
   | { kind: 'RETURN'; parameters: { keywordRange: SourceRange } }
@@ -32,11 +35,16 @@ export function analyzeFunctionInstruction(source: string, tokens: Token[], end:
   // keyboard layout decides which one is typed.
   const word = (index: number): string | undefined => tokens[index]?.text.toLowerCase().replace(/'/gu, '’');
   const definition = word(0) === 'crée' && word(1) === 'une' && word(2) === 'fonction';
+  // `Déclare le prototype d’une fonction nommée …` and its internal variant.
+  const prototype = word(0) === 'déclare' && word(1) === 'le' && word(2) === 'prototype'
+    && word(3) === 'd’une' && word(4) === 'fonction';
+  const internalPrototype = word(0) === 'déclare' && word(1) === 'le' && word(2) === 'prototype'
+    && word(3) === 'd’une' && word(4) === 'fonction' && word(5) === 'interne';
   const returning = word(0) === 'retourne';
   const calling = word(0) === 'appelle';
   const assigningCall = word(0) === 'affecte' && word(1) === 'à' && word(3) === 'le'
     && word(4) === 'résultat' && word(5) === 'de' && word(6) === 'l’appel';
-  if (!definition && !returning && !calling && !assigningCall) return undefined;
+  if (!definition && !prototype && !returning && !calling && !assigningCall) return undefined;
   const budget = { count: 0 };
   let i = 0;
   let diagnostic: Diagnostic | undefined;
@@ -192,8 +200,12 @@ export function analyzeFunctionInstruction(source: string, tokens: Token[], end:
       if (!args) return undefined;
       return finish() ? { kind: 'CALL', parameters: { name: nameToken.text, nameRange: { ...nameToken.range }, args } } : undefined;
     }
-    if (definition) {
-      i = 3;
+    if (definition || prototype) {
+      // The two intents share every word after the function name, so the tail
+      // below is literally the same code for both.
+      const kind = prototype ? 'FUNC_PROTOTYPE' : 'FUNC_DEF';
+      const internal = internalPrototype;
+      i = prototype ? (internal ? 6 : 5) : 3;
       if (!expect('nommée', 'INCOMPLETE_INSTRUCTION', 'Il manque le nom de la fonction.')) return undefined;
       const nameToken = tokens[i];
       if (!nameToken) return fail('INCOMPLETE_INSTRUCTION', 'Il manque le nom de la fonction.');
@@ -206,18 +218,20 @@ export function analyzeFunctionInstruction(source: string, tokens: Token[], end:
         i++;
         if (!expect('retourne') || !expect('rien')) return undefined;
         const voidParams = parameterList();
-        return voidParams && finish()
-          ? { kind: 'FUNC_DEF', parameters: { returnType: 'void', name: nameToken.text, nameRange: { ...nameToken.range }, params: voidParams } }
-          : undefined;
+        if (!voidParams || !finish()) return undefined;
+        return kind === 'FUNC_PROTOTYPE'
+          ? { kind, parameters: { returnType: 'void', name: nameToken.text, nameRange: { ...nameToken.range }, params: voidParams, internal } }
+          : { kind, parameters: { returnType: 'void', name: nameToken.text, nameRange: { ...nameToken.range }, params: voidParams } };
       }
       if (!expect('retourne', 'INCOMPLETE_INSTRUCTION', 'Il manque la description du retour de la fonction.')) return undefined;
       if (!expect('un', 'MISSING_NUMERIC_TYPE', 'Il manque le type de retour.')) return undefined;
       const type = returnType();
       if (!type) return undefined;
       const params = parameterList();
-      return params && finish()
-        ? { kind: 'FUNC_DEF', parameters: { returnType: type, name: nameToken.text, nameRange: { ...nameToken.range }, params } }
-        : undefined;
+      if (!params || !finish()) return undefined;
+      return kind === 'FUNC_PROTOTYPE'
+        ? { kind, parameters: { returnType: type, name: nameToken.text, nameRange: { ...nameToken.range }, params, internal } }
+        : { kind, parameters: { returnType: type, name: nameToken.text, nameRange: { ...nameToken.range }, params } };
     }
     i = 1;
     const keywordRange = { ...tokens[0]!.range };

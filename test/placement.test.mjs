@@ -240,10 +240,15 @@ for (const directive of ['#include <stdio.h>', '  # include "local.h"', '\t#\tin
   });
 }
 
+// `#ifndef X`, `#define X` without a replacement list, and `#endif` left this
+// list at lot 23, which needed them to place the two halves of a header guard.
+// Everything else stays refused, and `#define X 1` above all: C-A does not
+// expand macros, and must not read code whose tokens a macro could change.
 for (const directive of [
-  '#define X 1', '#undef X', '#if 0', '#ifdef X', '#ifndef X', '#elif X', '#else', '#endif',
+  '#define X 1', '#undef X', '#if 0', '#ifdef X', '#elif X', '#else',
   '#pragma once', '#line 3', '#error test', '#include HEADER', '#include <x.h> /* fin */',
   '#include ""', '#include "dir\\x.h"', '%:include <stdio.h>', '/* avant */ #include <stdio.h>',
+  '#define X (1)', '#define X Y', '#ifndef', '#endif X', '#ifndef 1X',
 ]) {
   test(`directive non prise en charge : ${directive}`, () => {
     rejected(request(directive + '\n'), 'UNSUPPORTED_DIRECTIVE', 'unsupported-construct');

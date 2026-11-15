@@ -20,7 +20,9 @@ export type PedagogicalInformation = {
     | 'SIZEOF_IS_BYTES' | 'ALLOCATION_CAN_FAIL' | 'ALLOCATION_NOT_INITIALIZED'
     | 'REALLOC_MAY_MOVE' | 'FREE_ONCE' | 'HEADER_DECLARES_ONLY'
     | 'FOPEN_CAN_FAIL' | 'FILE_MODE_MEANING' | 'FILE_MUST_BE_CLOSED'
-    | 'SCANF_NEEDS_ADDRESS' | 'EOF_AFTER_READ';
+    | 'SCANF_NEEDS_ADDRESS' | 'EOF_AFTER_READ'
+    | 'LOCAL_HEADER_SEARCH' | 'GUARD_PREVENTS_DOUBLE_INCLUSION' | 'GUARD_NOT_EVALUATED'
+    | 'PROTOTYPE_DECLARES_ONLY' | 'EXTERNAL_LINKAGE' | 'INTERNAL_LINKAGE';
   severity: 'information';
   range: SourceRange;
   message: string;
@@ -172,8 +174,50 @@ const FILE_MESSAGES = {
     + 'la fin était atteinte. Tester feof avant de lire fait lire une fois de trop.',
 } as const;
 
+const MODULE_MESSAGES = {
+  LOCAL_HEADER_SEARCH: 'Les guillemets font chercher l’en-tête à côté du fichier courant, les chevrons dans les '
+    + 'répertoires du système. C-A ne vérifie pas que ce fichier existe et n’en lit pas le contenu.',
+  GUARD_PREVENTS_DOUBLE_INCLUSION: 'Cette protection empêche qu’un en-tête inclus deux fois déclare deux fois les '
+    + 'mêmes choses. Il faut écrire la fermeture : « Ferme la protection d’en-tête. », sinon le fichier ne compile pas.',
+  GUARD_NOT_EVALUATED: 'C-A n’évalue aucune condition de préprocesseur : il insère du texte, que la région soit '
+    + 'active ou non. Il ne vérifie pas non plus que ce nom de protection est unique dans le projet.',
+  PROTOTYPE_DECLARES_ONLY: 'Un prototype déclare la signature sans écrire le corps : il dit à l’appelant quels '
+    + 'types attendre. C-A ne vérifie pas qu’une définition correspondante existe, ni qu’elle s’accorde avec lui.',
+  EXTERNAL_LINKAGE: '« extern » déclare une variable définie ailleurs, sans la créer ici : il faut exactement une '
+    + 'définition dans un seul fichier du projet. C-A ne la cherche pas.',
+  INTERNAL_LINKAGE: '« static » à la portée fichier réserve ce nom à ce fichier : un autre fichier ne peut pas s’y '
+    + 'lier, et un nom identique ailleurs désignera un autre objet. C-A ne vérifie aucune portée.',
+} as const;
+
 export function explainInstruction(result: TranslationResult): PedagogicalInformation[] {
   if (result.status !== 'translated') return [];
+  if (result.instruction.kind === 'INCLUDE_LOCAL') {
+    return [{ code: 'LOCAL_HEADER_SEARCH', severity: 'information',
+      range: { ...result.instruction.parameters.pathRange }, message: MODULE_MESSAGES.LOCAL_HEADER_SEARCH }];
+  }
+  if (result.instruction.kind === 'GUARD_OPEN') {
+    const anchor = result.instruction.parameters.macroRange;
+    return [
+      { code: 'GUARD_PREVENTS_DOUBLE_INCLUSION', severity: 'information', range: { ...anchor },
+        message: MODULE_MESSAGES.GUARD_PREVENTS_DOUBLE_INCLUSION },
+      { code: 'GUARD_NOT_EVALUATED', severity: 'information', range: { ...anchor },
+        message: MODULE_MESSAGES.GUARD_NOT_EVALUATED },
+    ];
+  }
+  if (result.instruction.kind === 'FUNC_PROTOTYPE') {
+    const anchor = result.instruction.parameters.nameRange;
+    const entries: PedagogicalInformation[] = [{ code: 'PROTOTYPE_DECLARES_ONLY', severity: 'information',
+      range: { ...anchor }, message: MODULE_MESSAGES.PROTOTYPE_DECLARES_ONLY }];
+    if (!result.instruction.parameters.internal) return entries;
+    return [...entries, { code: 'INTERNAL_LINKAGE', severity: 'information', range: { ...anchor },
+      message: MODULE_MESSAGES.INTERNAL_LINKAGE }];
+  }
+  if (result.instruction.kind === 'LINKAGE_DECL') {
+    const internal = result.instruction.parameters.linkage === 'static';
+    return [{ code: internal ? 'INTERNAL_LINKAGE' : 'EXTERNAL_LINKAGE', severity: 'information',
+      range: { ...result.instruction.parameters.nameRange },
+      message: internal ? MODULE_MESSAGES.INTERNAL_LINKAGE : MODULE_MESSAGES.EXTERNAL_LINKAGE }];
+  }
   if (result.instruction.kind === 'FILE_OPEN') {
     return [
       { code: 'FOPEN_CAN_FAIL', severity: 'information', range: { ...result.instruction.parameters.nameRange },

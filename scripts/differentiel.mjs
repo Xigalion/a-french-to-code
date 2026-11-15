@@ -391,6 +391,27 @@ function* sentences() {
     'Lis une ligne depuis le fichier f dans s.', 'Vide le tampon du fichier f.',
     'Crée un bloc si la fin du fichier f est atteint.', 'Crée un bloc si "f == NULL".',
     'Crée un bloc si a > 0.', 'Crée un bloc si.', 'Crée un bloc si "a > 0" encore.'];
+  // Lot 23 surface.
+  for (const path of ['calcul.h', 'sous/d.h', 'mon dossier/c.h', '', 'a"b.h', 'a<b.h']) {
+    yield `Inclue l’en-tête "${path}".`;
+  }
+  yield* ['Inclue l’en-tête calcul.h.', "Inclue l'en-tête \"calcul.h\".", 'Inclue l’en-tête.',
+    'Inclue la bibliothèque "calcul.h".'];
+  for (const macro of ['CALCUL_H', 'H', 'calcul_h', '1H', '_H', '']) {
+    yield `Ouvre la protection d’en-tête nommée ${macro}.`;
+  }
+  yield* ['Ferme la protection d’en-tête.', 'Ferme la protection.', 'Ouvre la protection d’en-tête.',
+    "Ferme la protection d'en-tête."];
+  for (const tail of ['qui retourne un int', 'qui ne retourne rien', 'qui retourne un long',
+    'qui retourne un int et prend un int nommé a', 'qui retourne un int et prend un int nommé a et un int nommé a', '']) {
+    yield `Déclare le prototype d’une fonction nommée f ${tail}.`;
+    yield `Déclare le prototype d’une fonction interne nommée f ${tail}.`;
+    yield `Crée une fonction nommée f ${tail}.`;
+  }
+  for (const linkage of ['externe', 'interne', 'publique']) {
+    for (const type of [...TYPES, '']) yield `Déclare la variable ${linkage} de type ${type} nommée v.`;
+  }
+  yield* ['Définis la constante TAILLE à 10.', 'Déclare un type nommé Entier.', 'Compile le fichier calcul.c.'];
   for (const digits of ['0', '2', '17', '99', 'x']) {
     yield `Affiche x en notation fixe avec ${digits} décimales.`;
     yield `Affiche x en notation scientifique avec ${digits} décimales.`;
@@ -440,6 +461,9 @@ const PLACED = ['Déclare un caractère nommé c.', "Affecte le caractère ' ' �
   'Déclare un fichier nommé f.', 'Ferme le fichier f.',
   'Affecte à f l’ouverture du fichier "d.txt" en lecture.',
   'Crée un bloc si la fin du fichier f est atteinte.',
+  'Inclue l’en-tête "calcul.h".', 'Ouvre la protection d’en-tête nommée H.',
+  'Ferme la protection d’en-tête.', 'Déclare la variable externe de type int nommée v.',
+  'Déclare le prototype d’une fonction nommée f qui retourne un int.',
   'Ajoute le cas par défaut.', 'Sors de l’aiguillage.'];
 
 for (const text of DOCUMENTS) {
