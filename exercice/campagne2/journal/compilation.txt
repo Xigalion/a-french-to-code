@@ -1,0 +1,60 @@
+Campagne 2 — compilation et execution reelles
+=============================================
+
+Compilateur : gcc.exe (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r3) 16.2.0
+Options     : -std=c17 -Wall -Wextra -pedantic
+Date        : 15 novembre 2026
+Difference avec la campagne 1 : AUCUNE retouche manuelle.
+
+--- 1. VERSION BRUTE DE C-A (campagne2/ca)
+ca/calcul.c: In function 'dangereuse':
+ca/calcul.c:33:19: warning: division by zero [-Wdiv-by-zero]
+   33 |     return (total / 0);
+      |                   ^
+<DOSSIER-PERSONNEL>/AppData/Local/Temp/ca-mingw/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/16.2.0/../../../../x86_64-w64-mingw32/bin/ld.exe: <DOSSIER-PERSONNEL>\AppData\Local\Temp\ccXiui5W.o:calcul.c:(.bss+0x0): multiple definition of `compteur'; <DOSSIER-PERSONNEL>\AppData\Local\Temp\ccc8rflc.o:carnet.c:(.bss+0x0): first defined here
+collect2.exe: error: ld returned 1 exit status
+   => code de sortie du compilateur : 1
+
+--- 2. VERSION CORRIGEE (campagne2/corrige), SANS retouche
+corrige/calcul.c: In function 'dangereuse':
+corrige/calcul.c:33:19: warning: division by zero [-Wdiv-by-zero]
+   33 |     return (total / 0);
+      |                   ^
+   => code de sortie du compilateur : 0
+
+--- 3. EXECUTION
+Carnet de notes
+Carnet
+Carnet
+3
+12
+48
+15
+13.67
+a revoir
+17
+2147483647
+   => code de sortie du programme : 0
+
+--- 4. FICHIER PRODUIT PAR LE PROGRAMME (resultat.txt)
+Meilleure note17
+--- 5. COMPILATION SEPAREE puis edition de liens
+corrige/calcul.c: In function 'dangereuse':
+corrige/calcul.c:33:19: warning: division by zero [-Wdiv-by-zero]
+   33 |     return (total / 0);
+      |                   ^
+   => edition de liens separee : code 0
+Carnet de notes
+Carnet
+Carnet
+3
+12
+48
+15
+13.67
+a revoir
+17
+2147483647
+
+--- 6. GARDE D'EN-TETE sous double inclusion
+   => code de sortie : 0

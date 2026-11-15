@@ -1,0 +1,52 @@
+Campagne 2 — vérifications de portée et de blocages
+===================================================
+
+--- 1. Instructions posées à la PORTÉE FICHIER : doivent être refusées
+    (la campagne 1 les plaçait en silence, et produisait du C non
+     compilable sans un mot : c'était la lacune de rang 1)
+
+  REFUSÉE STATEMENT_AT_FILE_SCOPE    Affecte la valeur 5 à compteur.
+  REFUSÉE STATEMENT_AT_FILE_SCOPE    Affiche la valeur de compteur.
+  REFUSÉE STATEMENT_AT_FILE_SCOPE    Appelle mention avec "15".
+  REFUSÉE STATEMENT_AT_FILE_SCOPE    Crée un bloc si "compteur > 0".
+  REFUSÉE STATEMENT_AT_FILE_SCOPE    Crée une boucle tant que "compteur > 0".
+  REFUSÉE STATEMENT_AT_FILE_SCOPE    Vérifie que "compteur > 0".
+  REFUSÉE STATEMENT_AT_FILE_SCOPE    Libère la mémoire pointée par eleves.
+  REFUSÉE STATEMENT_AT_FILE_SCOPE    Affiche un retour à la ligne.
+
+    Et la même instruction DANS un corps de fonction reste placée :
+  PLACÉE  Affecte la valeur 5 à compteur.
+  PLACÉE  Affiche la valeur de compteur.
+  PLACÉE  Appelle mention avec "15".
+  PLACÉE  Crée un bloc si "compteur > 0".
+  PLACÉE  Crée une boucle tant que "compteur > 0".
+  PLACÉE  Vérifie que "compteur > 0".
+  PLACÉE  Libère la mémoire pointée par eleves.
+  PLACÉE  Affiche un retour à la ligne.
+
+--- 2. Blocages LEVÉS par les lots 27 à 29
+
+  LEVÉ    lot 27 — champ de type tableau
+          phrase  : Ajoute un champ de type char nommé nom de dimension 32.
+          produit : char nom[32];
+          attendu : char nom[32];
+  LEVÉ    lot 28 — limits.h
+          phrase  : Inclue la bibliothèque limits.h.
+          produit : #include <limits.h>
+          attendu : #include <limits.h>
+  LEVÉ    lot 29 — séparateur explicite
+          phrase  : Affiche un retour à la ligne.
+          produit : printf("\n");
+          attendu : printf("\n");
+
+--- 3. Blocages RESTANTS : six, contre huit à la campagne 1
+
+  REFUSÉ  UNKNOWN_FORMULATION            macro de limite : aucune commande dédiée
+  REFUSÉ  UNKNOWN_FORMULATION            définition static
+  REFUSÉ  UNKNOWN_FORMULATION            lecture de chaîne depuis un fichier
+  REFUSÉ  UNEXPECTED_TEXT                initialiseur entre accolades
+  ACCEPTÉ SANS AVERTISSEMENT      arithmétique de pointeur non signalée
+          p = (p + 1);
+  REFUSÉ  INVALID_EXPRESSION_TOKEN       profil entier fermé à l’indexation
+
+TOUTES LES VÉRIFICATIONS PASSENT.

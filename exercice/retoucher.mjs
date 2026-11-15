@@ -1,3 +1,7 @@
+// CAMPAGNE 1 UNIQUEMENT — sans objet depuis le lot 27, qui rend ce champ
+// écrivable par C-A. La campagne 2 n'a aucune retouche manuelle. Conservé
+// pour que la campagne 1 reste reproductible telle qu'elle s'est déroulée.
+//
 // Applique la SEULE retouche manuelle de l'exercice, de façon reproductible
 // et idempotente : le champ de type tableau que C-A refuse d'écrire.
 //

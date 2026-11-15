@@ -1,0 +1,30 @@
+Campagne 2 — suite hote VS Code
+===============================
+
+VS Code 1.138.0. Deux passages consecutifs, apres les lots 26 a 29.
+
+--- PASSAGE 1
+  99 cas, 98 reussis, 1 echec
+  ECHEC : lot 9 : IF imbriques et insertions successives ["\r\n","  "]
+
+--- PASSAGE 2, sans aucune modification entre les deux
+  99 cas, 99 reussis, 0 echec
+
+CONCLUSION : l'echec n'est PAS reproductible. C'est une instabilite de
+minutage, pas une regression.
+
+Ce qui l'etablit :
+  - le meme scenario est execute six fois, pour trois unites d'indentation
+    et deux fins de ligne. UNE SEULE combinaison a echoue, et les cinq
+    autres, de logique identique, ont passe au meme passage ;
+  - le test n'assertionne aucun compte d'informations pedagogiques, donc le
+    lot 29 — qui en ajoute une sur les affichages — ne peut pas l'affecter ;
+  - le second passage, sans aucune modification du depot, donne 99 sur 99.
+
+Ce que cela ne dit PAS : que la suite hote soit stable. Elle depend de
+delais (delay, waitFor) et d'un editeur reel. Un echec isole sur ce test
+doit etre reproduit avant d'etre tenu pour une regression — et un passage
+vert unique ne prouve pas davantage l'absence de probleme.
+
+Trois gestes restent irreductiblement manuels : touches physiques,
+composition IME, controle visuel du focus et du diff.

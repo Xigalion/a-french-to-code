@@ -4,5 +4,5 @@ extension/out/
 /debug.log
 
 # Binaires produits par la recette GCC de l'exercice
-exercice/corrige/*.exe
-exercice/corrige/*.o
+exercice/**/*.exe
+exercice/**/*.o

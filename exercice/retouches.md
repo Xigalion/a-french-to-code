@@ -1,6 +1,13 @@
 
 # Retouches manuelles — ce que C-A n'a pas écrit
 
+> **Document de la campagne 1, conservé tel quel.** La retouche décrite
+> plus bas — `char nom[32];` — n’est **plus nécessaire** : le lot 27 la
+> rend écrivable par C-A. La campagne 2 ne comporte **aucune** retouche
+> manuelle, et `exercice/retoucher.mjs` est sans objet pour elle. Ce
+> fichier reste parce que la campagne 1 doit rester lisible telle qu’elle
+> s’est déroulée. Voir `docs/CAMPAGNE2_VALIDATION.md` §3.
+
 `exercice/ca/` est le résultat **brut** de C-A. `exercice/corrige/` est la
 version qui doit compiler et s'exécuter. Ce document dit **exactement** ce
 qui les sépare, et par quel moyen.
