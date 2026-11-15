@@ -506,6 +506,9 @@ manques qui le rendaient impossible.
 | `Ajoute un champ pointeur de type structure Noeud nommé suivant.` | `struct Noeud *suivant;` | POINTER_FIELD_OWNS_NOTHING |
 | `Ajoute un champ pointeur de type int nommé donnees.` | `int *donnees;` | POINTER_FIELD_OWNS_NOTHING |
 | `Déclare un tableau de type structure Point nommé t de dimension 10.` | `struct Point t[10];` | STRUCT_ARRAY_LAYOUT |
+| `Ajoute un champ de type char nommé nom de dimension 32.` | `char nom[32];` | ARRAY_NOT_ASSIGNABLE, STRUCT_ARRAY_LAYOUT, CHAR_ARRAY_NOT_STRING |
+| `Ajoute un champ de type int nommé notes de dimension 10.` | `int notes[10];` | ARRAY_NOT_ASSIGNABLE, STRUCT_ARRAY_LAYOUT |
+| `Ajoute un champ de type structure Point nommé sommets de dimension 4.` | `struct Point sommets[4];` | ARRAY_NOT_ASSIGNABLE, STRUCT_ARRAY_LAYOUT |
 
 **Aucune commande de tri, de recherche ou d'échange n'existe, et c'est
 voulu** : elle cacherait exactement ce que le domaine enseigne. Une liste

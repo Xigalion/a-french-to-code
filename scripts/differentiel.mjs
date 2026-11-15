@@ -345,6 +345,13 @@ function* sentences() {
   }
   for (const type of [...TYPES, 'structure Point', 'unsigned char', '']) {
     yield `Ajoute un champ de type ${type} nommé v.`;
+    // Lot 27 : la dimension optionnelle d'un champ, avec les formes valides et
+    // les formes fautives, pour que le corpus couvre la capacité nouvelle.
+    for (const dimension of ['32', '1', '0', '-1', '01', '3.5', 'n', '', '32 et plus']) {
+      yield `Ajoute un champ de type ${type} nommé v de dimension ${dimension}.`;
+    }
+    yield `Ajoute un champ de type ${type} nommé v de taille 3.`;
+    yield `Ajoute un champ pointeur de type ${type} nommé v de dimension 10.`;
   }
   for (const target of ['x de p', 'x pointé par q', 'x pointée par q', 'x de 1p', '1x de p', 'x', 'x de', 'x dans p']) {
     yield `Affecte la valeur 5 au champ ${target}.`;

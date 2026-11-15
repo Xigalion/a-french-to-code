@@ -240,6 +240,23 @@ export function explainInstruction(result: TranslationResult): PedagogicalInform
     return [{ code: 'POINTER_FIELD_OWNS_NOTHING', severity: 'information',
       range: { ...result.instruction.parameters.nameRange }, message: DATA_MESSAGES.POINTER_FIELD_OWNS_NOTHING }];
   }
+  // Lot 27: an array field carries exactly the two lessons an array
+  // declaration carries, worded for a field. No new message is invented.
+  if (result.instruction.kind === 'STRUCT_FIELD' && result.instruction.parameters.dimension !== undefined) {
+    const field = result.instruction.parameters;
+    const declared: PedagogicalInformation[] = [{ code: 'ARRAY_NOT_ASSIGNABLE', severity: 'information',
+      range: { ...field.nameRange },
+      message: 'Un champ de type tableau ne s’affecte pas globalement en C17 : « ' + field.name
+        + ' = … » n’existe pas, et chaque élément se remplit séparément. Copier la structure entière copie '
+        + 'le tableau, ce qui n’est pas le cas d’un champ pointeur.' },
+      { code: 'STRUCT_ARRAY_LAYOUT', severity: 'information', range: { ...field.dimensionRange! },
+        message: 'La dimension ' + field.dimension + ' est fixée ici et entre dans la taille de la structure. '
+          + 'C-A ne la retient pas pour vérifier un indice plus tard, et aucun élément n’est initialisé.' }];
+    if (field.type.kind !== 'scalar' || field.type.type !== 'char') return declared;
+    return [...declared, { code: 'CHAR_ARRAY_NOT_STRING', severity: 'information', range: { ...field.nameRange },
+      message: 'Un champ de type char avec une dimension est un tableau de caractères, pas une chaîne : '
+        + 'il n’est une chaîne que si l’un de ses éléments vaut le caractère nul, et C-A ne l’écrit pas ici.' }];
+  }
   if (result.instruction.kind === 'ARRAY_DECL' && typeof result.instruction.parameters.type !== 'string') {
     return [{ code: 'STRUCT_ARRAY_LAYOUT', severity: 'information',
       range: { ...result.instruction.parameters.nameRange }, message: DATA_MESSAGES.STRUCT_ARRAY_LAYOUT }];

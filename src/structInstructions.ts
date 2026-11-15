@@ -14,7 +14,10 @@ export type MemberTarget = { object: string; objectRange: SourceRange; member: s
 
 export type StructInstruction =
   | { kind: 'STRUCT_DECL'; parameters: { tag: string; tagRange: SourceRange } }
-  | { kind: 'STRUCT_FIELD'; parameters: { type: FieldType; pointer: boolean; name: string; nameRange: SourceRange } }
+  /** Lot 27: `dimension` is present only for an array field, so a scalar
+   * field's structured shape is byte-for-byte what it was before. */
+  | { kind: 'STRUCT_FIELD'; parameters: { type: FieldType; pointer: boolean; name: string; nameRange: SourceRange;
+      dimension?: string; dimensionRange?: SourceRange } }
   | { kind: 'STRUCT_VAR'; parameters: { tag: string; tagRange: SourceRange; name: string; nameRange: SourceRange } }
   | { kind: 'STRUCT_POINTER'; parameters: { tag: string; tagRange: SourceRange; name: string; nameRange: SourceRange } }
   | { kind: 'MEMBER_ASSIGN_INT'; parameters: { target: MemberTarget; value: string } }
@@ -144,8 +147,34 @@ export function analyzeStructInstruction(source: string, tokens: Token[], end: n
         else fail('INCOMPLETE_INSTRUCTION', 'Instruction incomplète : « nommé » attendu.', { start: end, end });
       } else {
         const name = identifier(read.next + 1, 'Il manque le nom du champ.');
-        if (name && finish(read.next + 2)) {
-          instruction = { kind: 'STRUCT_FIELD', parameters: { type: read.type, pointer, name: name.text, nameRange: { ...name.range } } };
+        if (name) {
+          // Lot 27: the optional `de dimension {n}` tail. The dimension grammar
+          // is the lot 15 one, digits only and strictly positive: no size is
+          // ever invented, and none is remembered to check an index later.
+          const tail = read.next + 2;
+          if (word(tail) === 'de') {
+            if (pointer) {
+              // `int *t[10]` is an array of pointers, a construct no other
+              // formulation produces. Refused rather than rendered silently.
+              const token = tokens[tail]!;
+              fail('UNSUPPORTED_POINTER_ARRAY_FIELD',
+                'Un champ ne peut pas être à la fois un pointeur et un tableau : C-A ne produit pas de tableau de pointeurs.',
+                { start: token.range.start, end: end });
+            } else if (!expect(tail + 1, 'dimension', 'MISSING_ARRAY_DIMENSION', 'Il manque la dimension du champ.')) {
+              // diagnostic already set by expect
+            } else {
+              const size = tokens[tail + 2];
+              if (!size) fail('MISSING_ARRAY_DIMENSION', 'Il manque la dimension du champ.', { start: end, end });
+              else if (!/^[1-9][0-9]*$/u.test(size.text)) fail('INVALID_ARRAY_DIMENSION',
+                'Une dimension entière strictement positive, écrite en chiffres, est attendue.', size.range);
+              else if (finish(tail + 3)) {
+                instruction = { kind: 'STRUCT_FIELD', parameters: { type: read.type, pointer, name: name.text,
+                  nameRange: { ...name.range }, dimension: size.text, dimensionRange: { ...size.range } } };
+              }
+            }
+          } else if (finish(tail)) {
+            instruction = { kind: 'STRUCT_FIELD', parameters: { type: read.type, pointer, name: name.text, nameRange: { ...name.range } } };
+          }
         }
       }
     }

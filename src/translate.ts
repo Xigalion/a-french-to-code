@@ -121,6 +121,8 @@ export type DiagnosticCode =
   | 'UNSUPPORTED_ARRAY_DIMENSIONS'
   | 'MISSING_ARRAY_DIMENSION'
   | 'INVALID_ARRAY_DIMENSION'
+  /** Lot 27: a field cannot be both a pointer and an array. */
+  | 'UNSUPPORTED_POINTER_ARRAY_FIELD'
   | 'INSUFFICIENT_ARRAY_DIMENSION'
   | 'STRING_REQUIRES_CHAR'
   | 'INVALID_ADDRESS_OPERAND'
@@ -329,7 +331,9 @@ function render(text: string, instruction: Instruction): TranslationResult {
     case 'STRUCT_FIELD': {
       const field = instruction.parameters;
       const spelling = field.type.kind === 'scalar' ? field.type.type : `struct ${field.type.tag}`;
-      code = `${spelling} ${field.pointer ? '*' : ''}${field.name};\n`;
+      // Lot 27: the dimension belongs to the declarator, after the name.
+      const bound = field.dimension === undefined ? '' : `[${field.dimension}]`;
+      code = `${spelling} ${field.pointer ? '*' : ''}${field.name}${bound};\n`;
       break;
     }
     case 'STRUCT_VAR': code = `struct ${instruction.parameters.tag} ${instruction.parameters.name};\n`; break;
