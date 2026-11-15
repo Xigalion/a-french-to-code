@@ -543,14 +543,35 @@ test('MAIN : aucune résolution de symbole ni détection de doublon', () => {
   assert.equal((text.match(/int main\(void\)/gu) ?? []).length, 2);
 });
 
-test('les autres intentions historiques ignorent toujours les accolades', () => {
-  // Only function definitions changed. Lot 2 behaviour stands for the rest.
+test('les déclarations historiques ignorent toujours les accolades', () => {
+  // Lot 26 : ce test portait sur TOUTES les intentions historiques. Il est
+  // scindé, parce que le lot 26 amende le contrat du lot 2 pour les seules
+  // instructions exécutables. Ce qui subsiste du contrat du lot 2 — une
+  // déclaration ou une directive ignore les accolades — est vérifié ici et
+  // reste vrai partout.
   for (const text of ['int main(void) {\n', '} } {\n', 'struct P { int x;\n']) {
-    for (const source of ['Déclare un entier nommé age.', 'Affecte la valeur 25 à age.',
-      'Affiche le texte "x".', 'Inclue la bibliothèque stdio.h.', 'Crée un bloc si "a".',
-      'Crée une boucle tant que "i < 3".']) {
+    for (const source of ['Déclare un entier nommé age.', 'Inclue la bibliothèque stdio.h.']) {
       assert.equal(planPlacement(input(text, source)).status, 'planned', `${text} / ${source}`);
     }
+  }
+});
+
+test('lot 26 : les instructions exécutables ne les ignorent plus', () => {
+  // L'autre moitié de l'ancien test. Une instruction exécutable est placée
+  // dans un corps de fonction ouvert, et refusée ailleurs — c'est la
+  // correction de rang 1 de l'évaluation du modèle 1.
+  const statements = ['Affecte la valeur 25 à age.', 'Affiche le texte "x".',
+    'Crée un bloc si "a".', 'Crée une boucle tant que "i < 3".'];
+  for (const source of statements) {
+    assert.equal(planPlacement(input('int main(void) {\n', source)).status, 'planned', source);
+    for (const text of ['} } {\n', 'struct P { int x;\n']) {
+      const result = planPlacement(input(text, source));
+      assert.equal(result.status, 'rejected', `${text} / ${source}`);
+      assert.equal(result.diagnostics[0].code, 'UNSUPPORTED_ENCLOSING_CONTEXT', `${text} / ${source}`);
+    }
+    const atFileScope = planPlacement(input('', source));
+    assert.equal(atFileScope.status, 'rejected', source);
+    assert.equal(atFileScope.diagnostics[0].code, 'STATEMENT_AT_FILE_SCOPE', source);
   }
 });
 

@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { TranslationSession } from '../extension/out/extension/src/session.js';
 
 test('lot 8 warnings are nonblocking, copied and consumed with the preview', () => {
-  const current = target();
+  const current = inMain();
   const source = 'Affecte à r le résultat numérique de "7 / 0 + 5.0 % 2".';
   const session = new TranslationSession(current, source);
   assert.equal(session.diagnose(current), undefined);
@@ -19,7 +19,7 @@ test('lot 8 warnings are nonblocking, copied and consumed with the preview', () 
   assert.equal(session.reviewReady(preview.token, current), true);
   assert.equal(session.advisories.length, 2);
   assert.equal(session.beginApply(preview.token, current).expectedAfter,
-    `// ${source}\nr = ((7 / 0) + (5.0 % 2));\n\n`);
+    `${CORPS}// ${source}\nr = ((7 / 0) + (5.0 % 2));\n\n`);
   assert.deepEqual(session.advisories, []);
   session.finishApply(true);
   assert.deepEqual(session.advisories, []);
@@ -27,7 +27,7 @@ test('lot 8 warnings are nonblocking, copied and consumed with the preview', () 
 
 for (const action of ['text', 'edit', 'stale', 'cancel']) {
   test(`lot 8 advisory lifecycle: ${action}`, () => {
-    const current = target();
+    const current = inMain();
     const session = new TranslationSession(current, 'Affecte à r le résultat de "7 / 0".');
     const old = prepare(session, current);
     session.reviewReady(old.token, current);
@@ -42,7 +42,7 @@ for (const action of ['text', 'edit', 'stale', 'cancel']) {
     if (action === 'cancel') session.cancel();
     assert.deepEqual(session.advisories, []);
     assert.equal(session.beginApply(old.token, current).status, 'error');
-    assert.equal(current.document.text, '');
+    assert.equal(current.document.text, CORPS);
   });
 }
 
@@ -65,6 +65,16 @@ function target(text = '', cursorOffset = text.length) {
     singleCursor: true, indentUnit: '    ', indentSignature: 'true:4', eol: '\n', open: true };
 }
 const main = 'Crée la fonction principale';
+// Lot 26 : une instruction exécutable n'existe que dans le corps d'une
+// fonction. Les tests dont le sujet est le CYCLE de la session — refus,
+// correction, aperçu, confirmation, avis de calcul — plaçaient leur
+// instruction dans un document vide, donc à la portée fichier. Ils utilisent
+// désormais cette cible, qui porte l'en-tête écrit par l'auteur ; leur sujet
+// est inchangé. Les tests qui ne placent qu'une déclaration ou une définition
+// gardent la cible vide. Le refus à la portée fichier est couvert par
+// test/statementScope.test.mjs.
+const CORPS = 'int main(void) {\n';
+const inMain = () => target(CORPS);
 function prepare(session, current) {
   const result = session.prepare(current);
   assert.equal(result.status, 'preview', JSON.stringify(result));
@@ -195,10 +205,16 @@ test('le brouillon non enregistré est la source de l’aperçu', () => {
 });
 
 test('une erreur C ne devient pas un refus de l’interface', () => {
-  const current = target();
+  // Lot 26 : l'affectation exige un corps de fonction, fourni ici par
+  // l'auteur. Le sujet du test reste entier : « absent » n'est déclaré nulle
+  // part, C-A ne vérifie aucun symbole, et l'aperçu est produit sans que
+  // l'interface transforme cette erreur C en refus.
+  const current = inMain();
   const preview = prepare(new TranslationSession(current, 'Affecte la valeur 42 à absent'), current);
   assert.ok(preview.after.includes('absent = 42;'));
-  assert.ok(!preview.after.includes('main') && !preview.after.includes('#include'));
+  assert.ok(!preview.after.includes('#include'));
+  // Aucun main inventé : le seul présent est celui que l'auteur a écrit.
+  assert.equal(preview.after.split('int main(void) {').length - 1, 1);
 });
 
 test('un échec d’édition exige un nouvel aperçu et conserve la phrase', () => {
@@ -265,7 +281,7 @@ test('manifeste : raccourci limité au C éditable, aucune exécution externe', 
 
 for (const source of ['Affiche age.', 'Affiche age en.', 'Affiche en décimal.', 'Affiche age en binaire.']) {
   test(`lot 5 aucun aperçu ni insertion : ${source}`, () => {
-    const current = target();
+    const current = inMain();
     const session = new TranslationSession(current, source);
     const result = session.prepare(current);
     assert.equal(result.status, 'error');
@@ -273,16 +289,16 @@ for (const source of ['Affiche age.', 'Affiche age en.', 'Affiche en décimal.',
     assert.equal(session.phase, 'editing');
     assert.equal(session.reviewReady(1, current), false);
     assert.equal(session.beginApply(1, current).status, 'error');
-    assert.equal(current.document.text, '');
+    assert.equal(current.document.text, CORPS);
     session.updateText('Affiche age en hexadécimal.');
     const preview = prepare(session, current);
     assert.equal(session.beginApply(preview.token, current).status, 'error');
     assert.equal(session.reviewReady(preview.token, current), true);
-    assert.equal(session.beginApply(preview.token, current).expectedAfter, '// Affiche age en hexadécimal.\nprintf("%x", age);\n\n');
+    assert.equal(session.beginApply(preview.token, current).expectedAfter, CORPS + '// Affiche age en hexadécimal.\nprintf("%x", age);\n\n');
   });
 }
 test('lot 5 une instruction incomplète invalide aussi un aperçu précédent', () => {
-  const current = target();
+  const current = inMain();
   const session = new TranslationSession(current, 'Affiche age en octal.');
   const preview = prepare(session, current);
   session.reviewReady(preview.token, current);
@@ -291,30 +307,30 @@ test('lot 5 une instruction incomplète invalide aussi un aperçu précédent', 
   assert.equal(session.prepare(current).diagnostic.code, 'MISSING_DISPLAY_FORMAT');
   assert.equal(session.beginApply(preview.token, current).status, 'error');
   assert.equal(session.reviewReady(preview.token, current), false);
-  assert.equal(current.document.text, '');
+  assert.equal(current.document.text, CORPS);
 });
 
 for (const source of ['Affecte à r le résultat de "a +".', 'Affecte à r le résultat de "".',
   'Affecte à r le résultat de "(a + b".', 'Affecte à r le résultat de "a + 😀".',
   'Affecte à r le résultat de "' + '('.repeat(65) + 'a' + ')'.repeat(65) + '".']) {
   test(`lot 6 refus, correction et confirmation : ${source.slice(0, 80)}`, () => {
-    const current = target();
+    const current = inMain();
     const session = new TranslationSession(current, source);
     assert.equal(session.prepare(current).status, 'error');
     assert.equal(session.phase, 'editing');
     assert.equal(session.reviewReady(1, current), false);
     assert.equal(session.beginApply(1, current).status, 'error');
-    assert.equal(current.document.text, '');
+    assert.equal(current.document.text, CORPS);
     session.updateText('Affecte à r le résultat de "a * -b".');
     const preview = prepare(session, current);
     assert.equal(session.beginApply(preview.token, current).status, 'error');
     assert.equal(session.reviewReady(preview.token, current), true);
     assert.equal(session.beginApply(preview.token, current).expectedAfter,
-      '// Affecte à r le résultat de "a * -b".\nr = (a * (-b));\n\n');
+      CORPS + '// Affecte à r le résultat de "a * -b".\nr = (a * (-b));\n\n');
   });
 }
 test('lot 6 une expression incomplète invalide un ancien aperçu', () => {
-  const current = target();
+  const current = inMain();
   const session = new TranslationSession(current, 'Affecte à r le résultat de "-a".');
   const preview = prepare(session, current);
   assert.equal(session.reviewReady(preview.token, current), true);
@@ -322,29 +338,29 @@ test('lot 6 une expression incomplète invalide un ancien aperçu', () => {
   assert.equal(session.prepare(current).diagnostic.code, 'MISSING_OPERAND');
   assert.equal(session.reviewReady(preview.token, current), false);
   assert.equal(session.beginApply(preview.token, current).status, 'error');
-  assert.equal(current.document.text, '');
+  assert.equal(current.document.text, CORPS);
 });
 
 for (const source of ['Déclare une variable de type.', 'Crée une variable de type float nommée f avec le résultat de "".',
   'Affecte à q le résultat numérique de "(double)".', 'Affiche f en notation fixe.',
   'Affiche f en notation fixe avec 21 décimales.']) {
   test(`lot 7 refus, correction, aperçu et confirmation : ${source}`, () => {
-    const current = target();
+    const current = inMain();
     const session = new TranslationSession(current, source);
     assert.equal(session.prepare(current).status, 'error');
     assert.equal(session.reviewReady(1, current), false);
     assert.equal(session.beginApply(1, current).status, 'error');
-    assert.equal(current.document.text, '');
+    assert.equal(current.document.text, CORPS);
     session.updateText('Affecte à q le résultat numérique de "(double) 7 / 2".');
     const preview = prepare(session, current);
     assert.equal(session.beginApply(preview.token, current).status, 'error');
     assert.equal(session.reviewReady(preview.token, current), true);
     assert.equal(session.beginApply(preview.token, current).expectedAfter,
-      '// Affecte à q le résultat numérique de "(double) 7 / 2".\nq = (((double) 7) / 2);\n\n');
+      CORPS + '// Affecte à q le résultat numérique de "(double) 7 / 2".\nq = (((double) 7) / 2);\n\n');
   });
 }
 test('lot 7 changer une précision invalide le jeton précédent', () => {
-  const current = target();
+  const current = inMain();
   const session = new TranslationSession(current, 'Affiche f en notation fixe avec 3 décimales.');
   const preview = prepare(session, current);
   assert.equal(session.reviewReady(preview.token, current), true);
@@ -352,5 +368,5 @@ test('lot 7 changer une précision invalide le jeton précédent', () => {
   assert.equal(session.prepare(current).diagnostic.code, 'MISSING_DISPLAY_PRECISION');
   assert.equal(session.reviewReady(preview.token, current), false);
   assert.equal(session.beginApply(preview.token, current).status, 'error');
-  assert.equal(current.document.text, '');
+  assert.equal(current.document.text, CORPS);
 });

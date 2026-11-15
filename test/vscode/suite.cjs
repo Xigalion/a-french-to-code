@@ -20,6 +20,14 @@ exports.run = async function run() {
   let api;
   let fixtureNumber = 0;
   const documents = [];
+  // Lot 26 : une instruction exécutable n'existe que dans le corps d'une
+  // fonction. Les scénarios hôte dont le sujet est la mécanique de l'éditeur
+  // ou le cycle saisie → aperçu → confirmation plaçaient leur instruction dans
+  // un document vide, donc à la portée fichier. Ils passent désormais cet
+  // en-tête, écrit par l'auteur du document ; leur sujet est inchangé. Les
+  // scénarios qui créent une fonction, une déclaration ou une directive
+  // gardent le document vide, parce que C17 les y admet.
+  const CORPS = 'int main(void) {\n';
   async function fixture(text = '', cursor = text.length) {
     const file = path.join(workspace, `scenario-${++fixtureNumber}.c`);
     fs.writeFileSync(file, text, 'utf8');
@@ -329,8 +337,8 @@ exports.run = async function run() {
       });
     }
     await test('lot 5 formats explicites : aperçu, confirmation et curseur successif', async () => {
-      const { document, file } = await fixture();
-      let expected = '';
+      const { document, file } = await fixture(CORPS);
+      let expected = CORPS;
       const eol = document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
       for (const [word, specifier] of [['décimal', '%d'], ['hexadécimal', '%x'], ['octal', '%o']]) {
         const phrase = `Affiche age en ${word}.`;
@@ -343,7 +351,7 @@ exports.run = async function run() {
         await inserted();
         assert.equal(document.getText(), expected + eol);
         assert.equal(document.offsetAt(vscode.window.activeTextEditor.selection.active), expected.length);
-        assert.equal(fs.readFileSync(file, 'utf8'), '');
+        assert.equal(fs.readFileSync(file, 'utf8'), CORPS);
       }
     });
     for (const [expression, code, token] of [
@@ -373,9 +381,9 @@ exports.run = async function run() {
       });
     }
     await test('lot 6 négations, calculs et confirmation : source, aperçu et curseur exacts', async () => {
-      const { document, file } = await fixture();
+      const { document, file } = await fixture(CORPS);
       const eol = document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
-      let expected = '';
+      let expected = CORPS;
       for (const [expression, code] of [['-a', '(-a)'], ['-(a + b)', '(-(a + b))'],
         ['a * -b', '(a * (-b))'], ['2 + 3 * 4', '(2 + (3 * 4))'], ['a / b', '(a / b)'], ['a % b', '(a % b)']]) {
         const source = `Affecte à resultat le résultat de "${expression}".`;
@@ -388,7 +396,7 @@ exports.run = async function run() {
         await inserted();
         assert.equal(document.getText(), expected + eol);
         assert.equal(document.offsetAt(vscode.window.activeTextEditor.selection.active), expected.length);
-        assert.equal(fs.readFileSync(file, 'utf8'), '');
+        assert.equal(fs.readFileSync(file, 'utf8'), CORPS);
       }
       const applied = document.getText();
       await vscode.commands.executeCommand('undo');
@@ -421,9 +429,9 @@ exports.run = async function run() {
       });
     }
     await test('lot 7 types, divisions, casts et formats : parcours inchangé', async () => {
-      const { document, file } = await fixture();
+      const { document, file } = await fixture(CORPS);
       const eol = document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
-      let expected = '';
+      let expected = CORPS;
       for (const [phrase, code] of [
         ['Déclare une variable de type double nommée q.', 'double q;'],
         ['Crée une variable de type unsigned int nommée u avec le résultat de "7u".', 'unsigned int u = 7u;'],
@@ -444,7 +452,7 @@ exports.run = async function run() {
         await inserted();
         assert.equal(document.getText(), expected + eol);
         assert.equal(document.offsetAt(vscode.window.activeTextEditor.selection.active), expected.length);
-        assert.equal(fs.readFileSync(file, 'utf8'), '');
+        assert.equal(fs.readFileSync(file, 'utf8'), CORPS);
       }
       const applied = document.getText();
       await vscode.commands.executeCommand('undo');
@@ -460,7 +468,7 @@ exports.run = async function run() {
       ['7 / 0 + 5.0 % 2', ['INTEGER_ZERO_DIVISOR', 'FLOAT_REMAINDER_OPERAND']],
     ]) {
       await test(`lot 8 nonblocking warnings and unchanged insertion: ${expression}`, async () => {
-        const { document, file } = await fixture();
+        const { document, file } = await fixture(CORPS);
         const phrase = `Affecte à r le résultat numérique de "${expression}".`;
         await start(phrase);
         const editing = api.inspect();
@@ -484,19 +492,19 @@ exports.run = async function run() {
         const shown = after.getText();
         assert.ok(shown.includes('// ' + phrase));
         assert.ok(!shown.includes('avertissement'));
-        assert.equal(document.getText(), '');
+        assert.equal(document.getText(), CORPS);
         await inserted(); // Source only: no C compilation or execution in this suite.
         assert.equal(document.getText(), shown);
-        assert.equal(fs.readFileSync(file, 'utf8'), '');
+        assert.equal(fs.readFileSync(file, 'utf8'), CORPS);
         assert.ok(document.offsetAt(vscode.window.activeTextEditor.selection.active) > 0);
         await vscode.commands.executeCommand('undo');
-        assert.equal(document.getText(), '');
+        assert.equal(document.getText(), CORPS);
         await vscode.commands.executeCommand('redo');
         assert.equal(document.getText(), shown);
       });
     }
     await test('lot 8 edit/cancel drops warned preview; incomplete new phrase cannot insert', async () => {
-      const { document } = await fixture();
+      const { document } = await fixture(CORPS);
       await preview('Affecte à r le résultat de "7 / 0".');
       assert.equal(api.inspect().advisories.length, 1);
       await vscode.commands.executeCommand('workbench.action.quickOpenSelectNext');
@@ -510,10 +518,10 @@ exports.run = async function run() {
       assert.deepEqual(api.inspect().advisories, []);
       await accept();
       assert.equal(api.inspect().ui, 'input');
-      assert.equal(document.getText(), '');
+      assert.equal(document.getText(), CORPS);
     });
     await test('lot 8 stale preview clears active warnings and insertion choices', async () => {
-      const { editor, document } = await fixture();
+      const { editor, document } = await fixture(CORPS);
       await preview('Affecte à r le résultat de "7 / 0".');
       await editor.edit(builder => builder.insert(new vscode.Position(0, 0), ' '));
       await waitFor(() => api.inspect()?.phase === 'stale', 'lot 8 stale');
@@ -521,10 +529,10 @@ exports.run = async function run() {
       assert.ok(!api.inspect().choices.includes('Insérer'));
       assert.equal(api.inspect().loggedPreviews, 1);
       await cancel();
-      assert.equal(document.getText(), ' ');
+      assert.equal(document.getText(), ' ' + CORPS);
     });
     await test('lot 8 deliberate exclusions have no warning or log', async () => {
-      await fixture();
+      await fixture(CORPS);
       await preview('Affecte à r le résultat numérique de "7 / (1 - 1)".');
       assert.deepEqual(api.inspect().advisories, []);
       assert.equal(api.inspect().loggedPreviews, 0);
@@ -571,32 +579,35 @@ exports.run = async function run() {
         });
       }
     }
-    await test('lot 9 : document vide, IF complet sans main implicite et annulation', async () => {
-      const { document, editor } = await fixture();
+    // Lot 26 : le document n'est plus vide — un bloc si est une instruction, et
+    // C17 ne l'admet qu'en corps de fonction. Le sujet subsiste : C-A n'invente
+    // aucun main, et le seul présent est celui que l'auteur a écrit.
+    await test('lot 9 : IF complet sans main implicite et annulation', async () => {
+      const { document, editor } = await fixture(CORPS);
       await preview('Crée un bloc si "actif".');
       const after = await vscode.workspace.openTextDocument(vscode.Uri.parse(api.inspect().preview.after));
       const expected = after.getText();
-      assert.equal(document.getText(), '');
+      assert.equal(document.getText(), CORPS);
       await inserted();
       assert.equal(document.getText(), expected);
-      assert.ok(!document.getText().includes('main'));
+      assert.equal(document.getText().split('int main(void) {').length - 1, 1);
       assert.equal(editor.selection.active.character, 4);
       await vscode.commands.executeCommand('undo');
-      assert.equal(document.getText(), '');
+      assert.equal(document.getText(), CORPS);
       await vscode.commands.executeCommand('redo');
       assert.equal(document.getText(), expected);
     });
     await test('lot 9 : IF périmé ne s’applique pas', async () => {
-      const { document, editor } = await fixture();
+      const { document, editor } = await fixture(CORPS);
       await preview('Crée un bloc si "age > 0".');
       await editor.edit(builder => builder.insert(new vscode.Position(0, 0), ' '));
       await waitFor(() => api.inspect()?.phase === 'stale', 'IF périmé');
       assert.ok(!api.inspect().choices.includes('Insérer'));
       await cancel();
-      assert.equal(document.getText(), ' ');
+      assert.equal(document.getText(), ' ' + CORPS);
     });
     await test('lot 9 : avis historiques dans les conditions, sans blocage', async () => {
-      const { document } = await fixture();
+      const { document } = await fixture(CORPS);
       await preview('Crée un bloc si "7 / 0 < 5.0 % 2".');
       assert.deepEqual(api.inspect().advisories.map(item => item.code), ['INTEGER_ZERO_DIVISOR', 'FLOAT_REMAINDER_OPERAND']);
       assert.ok(api.inspect().choices.includes('Insérer'));
@@ -613,7 +624,7 @@ exports.run = async function run() {
       await cancel();
     });
     await test('lot 10 : précédence et informations passives sans Warning', async () => {
-      const { document } = await fixture();
+      const { document } = await fixture(CORPS);
       await preview('Crée un bloc si "!a == b || c && d".');
       assert.deepEqual(api.inspect().advisories, []);
       assert.equal(api.inspect().information.length, 3);
@@ -706,13 +717,13 @@ exports.run = async function run() {
       assert.ok(!document.getText().includes('else'));
     });
     await test('lot 10 : court-circuit ne supprime pas les avis calcul', async () => {
-      const { document } = await fixture();
+      const { document } = await fixture(CORPS);
       await preview('Crée un bloc si "0 && 7 / 0 || 5.0 % 2".');
       assert.equal(api.inspect().advisories.length, 2);
       assert.equal(api.inspect().information.length, 2);
       assert.match(api.inspect().pedagogyEntry, /FLOAT_REMAINDER_OPERAND/);
       assert.match(api.inspect().pedagogyEntry, /SHORT_CIRCUIT_OR/);
-      assert.equal(document.getText(), '');
+      assert.equal(document.getText(), CORPS);
       await cancel();
     });
     for (const eol of ['\n', '\r\n']) {
@@ -748,7 +759,7 @@ exports.run = async function run() {
       });
     }
     await test('lot 11A : WHILE_PRETEST journalisé en information, sans Warning', async () => {
-      const { document } = await fixture();
+      const { document } = await fixture(CORPS);
       await preview('Crée une boucle tant que "i < limite && !suspendu".');
       assert.deepEqual(api.inspect().advisories, []);
       assert.equal(api.inspect().information.length, 3);
@@ -762,14 +773,14 @@ exports.run = async function run() {
       assert.ok(document.getText().includes('while (((i < limite) && (!suspendu))) {'));
     });
     await test('lot 11A : avis de calcul conservé dans la condition de boucle', async () => {
-      const { document } = await fixture();
+      const { document } = await fixture(CORPS);
       await preview('Crée une boucle tant que "i < 10 / 0".');
       assert.equal(api.inspect().advisories.length, 1);
       assert.equal(api.inspect().advisories[0].code, 'INTEGER_ZERO_DIVISOR');
       assert.match(api.inspect().confirmationTitle, /avertissement/);
       assert.match(api.inspect().pedagogyEntry, /INTEGER_ZERO_DIVISOR/);
       assert.match(api.inspect().pedagogyEntry, /WHILE_PRETEST/);
-      assert.equal(document.getText(), '');
+      assert.equal(document.getText(), CORPS);
       await cancel();
     });
     for (const [phrase, code] of [
@@ -855,7 +866,7 @@ exports.run = async function run() {
       });
     }
     await test('lot 11B : DO_WHILE_POSTTEST journalisé, sans Warning', async () => {
-      const { document } = await fixture();
+      const { document } = await fixture(CORPS);
       await preview('Crée une boucle avec test final tant que "i < limite && !fini".');
       assert.deepEqual(api.inspect().advisories, []);
       assert.equal(api.inspect().information[0].code, 'DO_WHILE_POSTTEST');
@@ -895,7 +906,7 @@ exports.run = async function run() {
       });
     }
     await test('lot 11C : FOR_CLAUSE_ORDER journalisé, sans Warning', async () => {
-      await fixture();
+      await fixture(CORPS);
       await preview('Crée une boucle pour i de valeur initiale "0" tant que "i < n && actif" avec mise à jour "i + pas".');
       assert.deepEqual(api.inspect().advisories, []);
       assert.equal(api.inspect().information[0].code, 'FOR_CLAUSE_ORDER');
@@ -904,12 +915,12 @@ exports.run = async function run() {
       await inserted();
     });
     await test('lot 11C : avis dans la clause de mise à jour, sans insertion forcée', async () => {
-      const { document } = await fixture();
+      const { document } = await fixture(CORPS);
       await preview('Crée une boucle pour i de valeur initiale "0" tant que "i < 3" avec mise à jour "i + 10 / 0".');
       assert.equal(api.inspect().advisories.length, 1);
       assert.equal(api.inspect().advisories[0].code, 'INTEGER_ZERO_DIVISOR');
       assert.match(api.inspect().confirmationTitle, /avertissement/);
-      assert.equal(document.getText(), '');
+      assert.equal(document.getText(), CORPS);
       await cancel();
     });
     for (const [phrase, code] of [

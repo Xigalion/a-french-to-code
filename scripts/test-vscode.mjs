@@ -32,8 +32,12 @@ let spawnError;
 let exitCode;
 child.on('error', error => { spawnError = error; });
 child.on('exit', code => { exitCode = code; });
+// Lot 26 : la fenêtre était de 240 s. La suite hôte complète dépasse cette
+// durée sur cette machine, et le rapport arrivait APRÈS l'abandon du script,
+// qui annonçait alors « aucun rapport » alors qu'il y en avait un. Portée à
+// 600 s pour que l'échec signalé soit un vrai échec.
 const started = Date.now();
-while (!existsSync(report) && !spawnError && (exitCode === undefined || exitCode === 0) && Date.now() - started < 240_000) {
+while (!existsSync(report) && !spawnError && (exitCode === undefined || exitCode === 0) && Date.now() - started < 600_000) {
   await new Promise(resolve => setTimeout(resolve, 500));
 }
 if (spawnError) throw spawnError;

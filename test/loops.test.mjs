@@ -264,13 +264,20 @@ for (const eol of ['\n', '\r\n']) {
 }
 
 test('WHILE : fichier vide, aucun main implicite', () => {
-  const { text } = planned(input('', loop('1'), '    ', '\n', 0));
-  assert.equal(text, '// ' + loop('1') + '\nwhile (1) {\n    \n}\n');
+  // Lot 26 : le sujet du test est conservé et même renforcé. C-A n'invente
+  // toujours aucun main — et il refuse désormais la boucle au lieu de la
+  // poser à la portée fichier, où C17 ne l'admet pas.
+  placementRefused(input('', loop('1'), '    ', '\n', 0), 'STATEMENT_AT_FILE_SCOPE');
+  const head = 'int main(void) {\n';
+  const { text } = planned(input(head, loop('1'), '    ', '\n', head.length));
+  assert.equal(text, head + '// ' + loop('1') + '\nwhile (1) {\n    \n}\n');
 });
 
 for (const ending of ['', '\n', '\r\n']) {
   test(`WHILE : ligne blanche à EOF ${JSON.stringify(ending)}`, () => {
-    const text = 'int x;\n' + ending;
+    // Lot 26 : la boucle a besoin d'un corps de fonction englobant ; le
+    // sujet — ligne blanche en fin de fichier — est inchangé.
+    const text = 'int main(void) {\nint x;\n' + ending;
     planned(input(text, loop('x'), '    ', '\n', text.length));
   });
 }
@@ -364,11 +371,13 @@ test('WHILE imbriqué : la fermeture extérieure et le suffixe restent intacts',
 });
 
 test('WHILE dans une branche if et if dans une boucle', () => {
-  const inIf = 'if (a) {\n    \n}\n';
+  // Lot 26 : les chaînes écrites à la main sont placées dans une fonction,
+  // sans quoi aucune fonction n'englobe la cible.
+  const inIf = 'int main(void) {\nif (a) {\n    \n}\n}\n';
   const { text } = planned(input(inIf, loop('i < 3'), '    ', '\n', inIf.indexOf('    \n')));
   assert.ok(text.includes('    while (i < 3) {'));
   assert.ok(text.includes('if (a) {'));
-  const inLoop = 'while (i < 3) {\n    \n}\n';
+  const inLoop = 'int main(void) {\nwhile (i < 3) {\n    \n}\n}\n';
   const nested = planned(input(inLoop, 'Crée un bloc si "i == 0".', '    ', '\n', inLoop.indexOf('    \n')));
   assert.ok(nested.text.includes('    if (i == 0) {'));
   assert.ok(nested.text.includes('while (i < 3) {'));

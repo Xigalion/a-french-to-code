@@ -255,8 +255,14 @@ test('une fonction défensive, document final exact', () => {
     + '    \n}\n');
 });
 
+// Lot 26 : une instruction exécutable n'existe que dans le corps d'une
+// fonction. Le cas « document vide » de ce tableau plaçait l'instruction à
+// la portée fichier ; il est remplacé par le corps de fonction le plus
+// minimal, qui conserve le sujet — indentation de base vide — en rendant la
+// portée légale. Le refus à la portée fichier est couvert par
+// test/statementScope.test.mjs.
 for (const [label, text, offset] of [
-  ['document vide', '', 0],
+  ['corps de fonction, sans indentation', 'int main(void) {\n', 17],
   ['dans une fonction, indentée', 'int main(void) {\n    \n}\n', 21],
   ['CRLF', 'int main(void) {\r\n    \r\n}\r\n', 22],
 ]) {

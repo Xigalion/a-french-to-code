@@ -27,9 +27,13 @@ for (const [source, kind, code, parameters] of valid) {
     assert.deepEqual(translate(source), result);
   });
   test(`lot 4 commentaire sûr pour insertion suivante ${JSON.stringify(source)}`, () => {
-    const first = planPlacement({ document: { id: 'safe.c', revision: 0, text: '' }, cursorOffset: 0, translation: translate(source) });
+    // Lot 26 : un affichage est une instruction exécutable ; le sujet du test
+    // — un commentaire inséré ne casse pas l'insertion suivante — est conservé
+    // en plaçant la séquence dans un corps de fonction.
+    const head = 'int main(void) {\n';
+    const first = planPlacement({ document: { id: 'safe.c', revision: 0, text: head }, cursorOffset: head.length, translation: translate(source) });
     assert.equal(first.status, 'planned');
-    const text = first.plan.edits[0].newText;
+    const text = head + first.plan.edits[0].newText;
     const next = planPlacement({ document: { id: 'safe.c', revision: 1, text }, cursorOffset: first.plan.cursorAfter, translation: translate('Déclare un entier nommé suivant') });
     assert.equal(next.status, 'planned', JSON.stringify(next));
     assert.equal(text.slice(first.plan.cursorAfter), '\n');
@@ -121,9 +125,11 @@ for (const eol of ['\n', '\r\n']) {
 for (const phrase of ['Affiche la valeur de absent.', 'Affiche le texte "😀".', 'Inclue la bibliothèque stdio.h.']) {
   test(`lot 4 placement fidèle et invariants : ${phrase}`, () => {
     const translation = translate(phrase);
-    const request = { document: { id: 'x.c', revision: 0, text: '' }, cursorOffset: 0, translation };
+    // Lot 26 : corps de fonction requis pour un affichage.
+    const head = phrase.startsWith('Inclue') ? '' : 'int main(void) {\n';
+    const request = { document: { id: 'x.c', revision: 0, text: head }, cursorOffset: head.length, translation };
     const result = planPlacement(request);
-    assert.equal(result.status, 'planned');
+    assert.equal(result.status, 'planned', JSON.stringify(result));
     const code = result.plan.edits[0].newText;
     if (!phrase.startsWith('Inclue')) assert.ok(!code.includes('#include'));
     translation.fragments[0].code += 'int injection;\n';

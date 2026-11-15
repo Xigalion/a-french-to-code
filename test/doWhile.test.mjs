@@ -200,8 +200,11 @@ for (const eol of ['\n', '\r\n']) {
 }
 
 test('DO_WHILE : fichier vide, aucun main implicite', () => {
-  const { text } = planned(input('', doWhile('1'), '    ', '\n', 0));
-  assert.equal(text, '// ' + doWhile('1') + '\ndo {\n    \n} while (1);\n');
+  // Lot 26 : refus à la portée fichier, puis le même rendu dans un corps.
+  placementRefused(input('', doWhile('1'), '    ', '\n', 0), 'STATEMENT_AT_FILE_SCOPE');
+  const head = 'int main(void) {\n';
+  const { text } = planned(input(head, doWhile('1'), '    ', '\n', head.length));
+  assert.equal(text, head + '// ' + doWhile('1') + '\ndo {\n    \n} while (1);\n');
 });
 
 test('DO_WHILE : ligne non blanche et EOF occupée refusées', () => {

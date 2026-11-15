@@ -6,6 +6,15 @@ import { analyzeCalculations } from '../src/calculationAdvisories.ts';
 import { TranslationSession } from '../extension/out/extension/src/session.js';
 
 const phrase = condition => `Crée un bloc si "${condition}".`;
+// Lot 26 : une instruction exécutable n'existe que dans le corps d'une
+// fonction, et `Crée un bloc si` en est une. Les tests ci-dessous dont le
+// sujet est la MÉCANIQUE du placement — fins de ligne, indentation, curseur,
+// cycle de session — plaçaient leur bloc dans un document vide, donc à la
+// portée fichier. Ils placent désormais le même document derrière cet
+// en-tête : leur sujet est strictement inchangé, seule la portée est rendue
+// légale. Le refus à la portée fichier est couvert à part, par
+// test/statementScope.test.mjs.
+const corps = (eol = '\n') => `int main(void) {${eol}`;
 function translated(source) {
   const result = translate(source);
   assert.equal(result.status, 'translated', JSON.stringify(result));
@@ -174,8 +183,9 @@ for (const eol of ['\n', '\r\n']) {
     });
     for (const whitespace of ['', ' ', '\t']) {
       test(`IF EOF blanc sans EOL ${JSON.stringify([eol, unit, whitespace])}`, () => {
-        const state = insert({ id: 'end.c', revision: 0, text: whitespace }, whitespace.length, phrase('1'), unit, eol);
-        assert.equal(state.document.text, `${whitespace}// ${phrase('1')}${eol}${whitespace}if (1) {${eol}${whitespace}${unit}${eol}${whitespace}}${eol}`);
+        const head = corps(eol);
+        const state = insert({ id: 'end.c', revision: 0, text: head + whitespace }, head.length + whitespace.length, phrase('1'), unit, eol);
+        assert.equal(state.document.text, `${head}${whitespace}// ${phrase('1')}${eol}${whitespace}if (1) {${eol}${whitespace}${unit}${eol}${whitespace}}${eol}`);
       });
     }
   }
@@ -226,11 +236,11 @@ test('IF avis des deux opérandes triés et non bloquants', () => {
   const result = translated(phrase('7 / 0 < 5.0 % 2'));
   const report = analyzeCalculations(result);
   assert.deepEqual(report.advisories.map(item=>item.code), ['INTEGER_ZERO_DIVISOR', 'FLOAT_REMAINDER_OPERAND']);
-  assert.equal(planPlacement({ document:{id:'x.c',revision:0,text:''}, cursorOffset:0,translation:result }).status,'planned');
+  assert.equal(planPlacement({ document:{id:'x.c',revision:0,text:corps()}, cursorOffset:corps().length,translation:result }).status,'planned');
 });
 for (const change of ['text', 'cursor', 'indent', 'close']) {
   test(`IF session : aperçu périmé ${change}`, () => {
-    const current = { document: { id: 'x.c', revision: 1, text: '' }, cursorOffset: 0,
+    const current = { document: { id: 'x.c', revision: 1, text: corps() }, cursorOffset: corps().length,
       singleCursor:true, indentUnit:'  ', indentSignature:'true:2',eol:'\n',open:true };
     const session = new TranslationSession(current, phrase('7 / 0 > 1'));
     assert.equal(session.advisories.length,1);
@@ -238,16 +248,16 @@ for (const change of ['text', 'cursor', 'indent', 'close']) {
     assert.equal(prepared.status,'preview');
     session.reviewReady(prepared.preview.token,current);
     const changed=structuredClone(current);
-    if(change==='text') {changed.document.text=' ';changed.document.revision++;}
-    if(change==='cursor') changed.cursorOffset=1;
+    if(change==='text') {changed.document.text=corps()+' ';changed.document.revision++;}
+    if(change==='cursor') changed.cursorOffset=corps().length+1;
     if(change==='indent') changed.indentSignature='true:4';
     if(change==='close') changed.open=false;
     assert.equal(session.beginApply(prepared.preview.token,changed).status,'error');
-    assert.equal(current.document.text,'');
+    assert.equal(current.document.text,corps());
   });
 }
 test('IF session : confirmation unique du plan exact et curseur intérieur', () => {
-  const current = { document: { id: 'x.c', revision: 1, text: '' }, cursorOffset: 0,
+  const current = { document: { id: 'x.c', revision: 1, text: corps('\r\n') }, cursorOffset: corps('\r\n').length,
     singleCursor:true, indentUnit:'\t', indentSignature:'false:4',eol:'\r\n',open:true };
   const session = new TranslationSession(current, phrase('1'));
   const prepared = session.prepare(current);

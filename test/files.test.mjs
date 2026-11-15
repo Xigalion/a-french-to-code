@@ -277,7 +277,9 @@ test('cycle complet d’un fichier : document final exact', () => {
 });
 
 test('le bloc de fin de fichier se place comme tout autre bloc', () => {
-  for (const [text, offset] of [['', 0], ['int main(void) {\n    \n}\n', 21], ['int main(void) {\r\n    \r\n}\r\n', 22]]) {
+  // Lot 26 : un bloc est une instruction composée, donc refusé à la portée
+  // fichier ; le premier cas devient le corps de fonction le plus minimal.
+  for (const [text, offset] of [['int main(void) {\n', 17], ['int main(void) {\n    \n}\n', 21], ['int main(void) {\r\n    \r\n}\r\n', 22]]) {
     const result = applied(text, 'Crée un bloc si la fin du fichier f est atteinte.', offset);
     assert.ok(result.includes('if (feof(f)) {'), result);
     if (text.includes('\r\n')) assert.ok(!/[^\r]\n/u.test(result), result);

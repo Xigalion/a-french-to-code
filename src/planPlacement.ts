@@ -12,6 +12,8 @@ import type { StructTarget, StructCode } from './structTarget.ts';
 import type { ContextCode } from './enclosingStructures.ts';
 import { resolveFunctionContext, resolveFileScope } from './functionContext.ts';
 import type { FunctionContext, FunctionCode } from './functionContext.ts';
+import { resolveStatementScope, STATEMENT_KINDS } from './statementScope.ts';
+import type { ScopeCode } from './statementScope.ts';
 
 export type SuccessfulTranslation = Extract<TranslationResult, { status: 'translated' }>;
 /** Intents whose placement must agree with the enclosing function's contract. */
@@ -28,7 +30,7 @@ export type PlacementRequest = {
   fallbackEol?: '\n' | '\r\n';
 };
 export type PlacementDiagnostic = {
-  code: BranchCode | TransferCode | SwitchCode | StructCode | ContextCode | FunctionCode
+  code: BranchCode | TransferCode | SwitchCode | StructCode | ContextCode | FunctionCode | ScopeCode
     | 'RETURN_NEEDS_VALUE' | 'RETURN_IN_VOID_FUNCTION' | 'INVALID_DOCUMENT' | 'INVALID_CURSOR' | 'INVALID_INDENT_UNIT' | 'INVALID_EOL'
     | 'INVALID_TRANSLATION_RESULT' | 'TARGET_LINE_NOT_BLANK'
     | 'TARGET_IN_COMMENT' | 'LEXICAL_CONTEXT_UNDETERMINED'
@@ -221,6 +223,14 @@ export function planPlacement(request: PlacementRequest): PlacementResult {
       return reject('RETURN_IN_VOID_FUNCTION', 'unsafe-location',
         'Cette fonction déclare ne rien retourner : elle ne peut pas retourner une valeur.',
         { ...functionContext.nameRange });
+    }
+  } else if (STATEMENT_KINDS.includes(canonical.instruction.kind)) {
+    // Lot 26: an executable statement exists only inside a function body. The
+    // scan this runs already performs the lexical prefix inspection.
+    const scope = resolveStatementScope(text, lineStart);
+    if (scope.status === 'rejected') {
+      const issue = scope.diagnostic;
+      return reject(issue.code, issue.reason, issue.message, issue.range);
     }
   } else {
     const lexical = inspectPrefix(text.slice(0, lineStart));

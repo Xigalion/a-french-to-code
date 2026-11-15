@@ -8,6 +8,15 @@ const phrases = [
   'Crée un entier nommé age de valeur 20', 'Affecte la valeur 25 à age',
 ];
 
+// Lot 26 : seule `phrases[3]` est une instruction exécutable, et une
+// instruction n'existe que dans le corps d'une fonction. Les tests dont le
+// sujet est la mécanique du placement lui donnent donc cet en-tête, compté
+// dans les offsets attendus ; les trois autres phrases sont des définitions
+// ou des déclarations et restent plaçables à la portée fichier, inchangées.
+const CORPS = 'int main(void) {\n';
+const corpsRequis = phrase => phrase === phrases[3];
+const tete = phrase => corpsRequis(phrase) ? CORPS : '';
+
 function request(text = '', cursorOffset = text.length, phrase = phrases[0], extra = {}) {
   return { document: { id: 'document.c', revision: 0, text }, cursorOffset, translation: translate(phrase), ...extra };
 }
@@ -65,11 +74,12 @@ test('MAIN dans un fichier vide : sortie et curseur exacts', () => {
 
 for (const phrase of phrases.slice(1)) {
   test(`fragment simple dans un fichier vide : ${phrase}`, () => {
-    const { plan, document } = planned(request('', 0, phrase));
+    const head = tete(phrase);
+    const { plan, document } = planned(request(head, head.length, phrase));
     const fragment = translate(phrase).fragments[0];
-    assert.equal(document.text, fragment.text + '\n');
-    assert.equal(plan.cursorAfter, fragment.text.length);
-    assert.equal(plan.placedFragments[0].range.end, fragment.text.length);
+    assert.equal(document.text, head + fragment.text + '\n');
+    assert.equal(plan.cursorAfter, head.length + fragment.text.length);
+    assert.equal(plan.placedFragments[0].range.end, head.length + fragment.text.length);
   });
 }
 
@@ -131,7 +141,10 @@ for (const text of ['int x;', '// commentaire', 'int main(void) {}', ' \tX', '/*
 
 for (const text of [' \t', 'int x;\n \t', 'int x;\r\n \t', 'int x;\n', 'int x;\r\n']) {
   test(`EOF sur ligne blanche, avec ou sans terminaison : ${JSON.stringify(text)}`, () => {
-    const { plan, document } = planned(request(text, text.length, phrases[3]));
+    // Le sujet — fin de fichier sur ligne blanche, terminée ou non — est
+    // conservé : l'en-tête de fonction est seulement préfixé.
+    const base = CORPS + text;
+    const { plan, document } = planned(request(base, base.length, phrases[3]));
     assert.ok(document.text.endsWith(plan.eol));
     assert.ok(document.text.includes('age = 25;' + plan.eol));
     assert.equal(plan.eol, text.includes('\r\n') ? '\r\n' : '\n');
@@ -269,7 +282,15 @@ for (const prefix of [...openBefore, 'int main(void) {}\n', 'int age;\n']) {
     } else {
       planned(request(prefix, prefix.length, phrases[0]));
     }
-    planned(request(prefix, prefix.length, phrases[3]));
+    // Lot 26, amendement du contrat du lot 2 : une instruction exécutable
+    // n'ignore plus les accolades. Dans un corps de fonction ouvert elle est
+    // placée comme avant ; ailleurs elle est refusée, parce que C17 ne
+    // l'admet pas. Le reste du contrat du lot 2 tient : une DÉCLARATION
+    // continue d'ignorer les accolades, ce que vérifie
+    // test/functions.test.mjs.
+    if (prefix === 'int main(void) {\n') planned(request(prefix, prefix.length, phrases[3]));
+    else if (prefix === '} } {\n') rejected(request(prefix, prefix.length, phrases[3]), 'UNSUPPORTED_ENCLOSING_CONTEXT', 'unsupported-construct');
+    else rejected(request(prefix, prefix.length, phrases[3]), 'STATEMENT_AT_FILE_SCOPE', 'unsafe-location');
   });
 }
 
@@ -425,6 +446,14 @@ test('grand littéral et phrase avec tabulations conservés au placement', () =>
 
 test('fin de ligne de repli explicite CRLF dans un document sans fin de ligne', () => {
   for (const phrase of phrases) {
+    if (corpsRequis(phrase)) {
+      // Lot 26 : un document SANS aucune fin de ligne ne peut pas porter à la
+      // fois un en-tête de fonction et une ligne blanche cible. Le repli de
+      // fin de ligne est donc hors d'atteinte pour une instruction
+      // exécutable. Le refus est vérifié ici plutôt que contourné.
+      rejected(request('', 0, phrase, { fallbackEol: '\r\n' }), 'STATEMENT_AT_FILE_SCOPE', 'unsafe-location');
+      continue;
+    }
     const { document, plan } = planned(request('', 0, phrase, { fallbackEol: '\r\n' }));
     assert.equal(plan.eol, '\r\n');
     assert.ok(document.text.endsWith('\r\n'));

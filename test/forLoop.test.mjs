@@ -228,8 +228,12 @@ for (const eol of ['\n', '\r\n']) {
 }
 
 test('FOR : fichier vide, aucun main ni déclaration implicite', () => {
-  const { text } = planned(input('', standard, '    ', '\n', 0));
-  assert.equal(text, '// ' + standard + '\nfor (i = 0; i < 3; i = (i + 1)) {\n    \n}\n');
+  // Lot 26 : refus à la portée fichier, puis vérification que dans un corps
+  // valide la boucle n'invente toujours ni main ni déclaration de i.
+  placementRefused(input('', standard, '    ', '\n', 0), 'STATEMENT_AT_FILE_SCOPE');
+  const head = 'int main(void) {\n';
+  const { text } = planned(input(head, standard, '    ', '\n', head.length));
+  assert.equal(text, head + '// ' + standard + '\nfor (i = 0; i < 3; i = (i + 1)) {\n    \n}\n');
   assert.ok(!text.includes('int i;'));
 });
 
@@ -264,9 +268,10 @@ test('FOR : imbrication et préservation du code existant', () => {
 });
 
 test('FOR dans un bloc si, et bloc si dans un for', () => {
-  const inIf = 'if (a) {\n    \n}\n';
+  // Lot 26 : contextes écrits à la main placés dans une fonction.
+  const inIf = 'int main(void) {\nif (a) {\n    \n}\n}\n';
   assert.ok(planned(input(inIf, standard, '    ', '\n', inIf.indexOf('    \n'))).text.includes('    for (i = 0;'));
-  const inFor = 'for (i = 0; i < 3; i = (i + 1)) {\n    \n}\n';
+  const inFor = 'int main(void) {\nfor (i = 0; i < 3; i = (i + 1)) {\n    \n}\n}\n';
   assert.ok(planned(input(inFor, 'Crée un bloc si "i == 0".', '    ', '\n', inFor.indexOf('    \n'))).text.includes('    if (i == 0) {'));
 });
 

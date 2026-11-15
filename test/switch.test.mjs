@@ -225,7 +225,9 @@ test('un aiguillage imbriqué est la cible la plus intérieure', () => {
 });
 
 test('un aiguillage se place comme tout autre bloc', () => {
-  for (const [text, offset] of [['', 0], ['int main(void) {\n    \n}\n', 21], ['int main(void) {\r\n    \r\n}\r\n', 22]]) {
+  // Lot 26 : un bloc est une instruction composée, donc refusé à la portée
+  // fichier ; le premier cas devient le corps de fonction le plus minimal.
+  for (const [text, offset] of [['int main(void) {\n', 17], ['int main(void) {\n    \n}\n', 21], ['int main(void) {\r\n    \r\n}\r\n', 22]]) {
     const result = applied(text, 'Crée un aiguillage sur "jour".', offset);
     assert.ok(result.includes('switch (jour) {'), result);
     if (text.includes('\r\n')) assert.ok(!/[^\r]\n/u.test(result), result);
