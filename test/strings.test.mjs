@@ -342,7 +342,8 @@ test('STRING_TERMINATOR_NOT_CHECKED n’annonce aucune vérification', () => {
 
 test('ELEMENT_CHARACTER_FORMAT accompagne INDEX_NOT_CHECKED', () => {
   const codes = explainInstruction(translated('Affiche le caractère de l’élément "i" de s.')).map(entry => entry.code);
-  assert.deepEqual(codes, ['INDEX_NOT_CHECKED', 'ELEMENT_CHARACTER_FORMAT']);
+  // Lot 29 : un affichage d'élément n'écrit pas de séparateur non plus.
+  assert.deepEqual(codes, ['INDEX_NOT_CHECKED', 'ELEMENT_CHARACTER_FORMAT', 'OUTPUT_HAS_NO_SEPARATOR']);
 });
 
 test('CHARACTER_IS_INTEGER sur un littéral écrit dans une expression', () => {

@@ -276,17 +276,21 @@ test('aucune déclaration de chaîne sans dimension n’existe', () => {
 // 6. Informations pédagogiques passives
 // ---------------------------------------------------------------------------
 
+// Lot 29 : la quatrième entrée est un affichage, qui gagne donc
+// OUTPUT_HAS_NO_SEPARATOR en plus. Le quatrième champ dit combien
+// d'informations sont attendues, et le test vérifie toujours que la
+// PREMIÈRE est celle que la ligne nomme, avec sa portée exacte.
 const INFORMATION = [
-  ["Crée un caractère nommé c de valeur 'A'.", 'CHARACTER_IS_INTEGER', "'A'"],
-  ["Affecte le caractère 'A' à c.", 'CHARACTER_IS_INTEGER', "'A'"],
-  ['Déclare un caractère nommé c.', 'CHARACTER_STORAGE', 'c'],
-  ['Affiche le caractère c.', 'CHARACTER_FORMAT', 'c'],
+  ["Crée un caractère nommé c de valeur 'A'.", 'CHARACTER_IS_INTEGER', "'A'", 1],
+  ["Affecte le caractère 'A' à c.", 'CHARACTER_IS_INTEGER', "'A'", 1],
+  ['Déclare un caractère nommé c.', 'CHARACTER_STORAGE', 'c', 1],
+  ['Affiche le caractère c.', 'CHARACTER_FORMAT', 'c', 2],
 ];
-for (const [source, code, anchor] of INFORMATION) {
+for (const [source, code, anchor, count] of INFORMATION) {
   test(`information ${code} : ${source}`, () => {
     const result = translated(source);
     const entries = explainInstruction(result);
-    assert.equal(entries.length, 1, source);
+    assert.equal(entries.length, count, source);
     assert.equal(entries[0].code, code);
     assert.equal(entries[0].severity, 'information');
     assert.equal(source.slice(entries[0].range.start, entries[0].range.end), anchor);

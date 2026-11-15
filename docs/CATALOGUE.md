@@ -36,9 +36,43 @@ Conventions de lecture :
 | `Affiche age en hexadécimal.` | `printf("%x", age);` | — |
 | `Affiche age en octal.` | `printf("%o", age);` | — |
 | `Affiche le texte "Bonjour\n".` | `printf("%s", "Bonjour\n");` | — |
+| `Affiche un retour à la ligne.` | `printf("\n");` | — |
 
-Échappements acceptés dans un texte : `\"`, `\\`, `\n`, `\t`. Seul
-`stdio.h`, écrit exactement ainsi, est pris en charge.
+Échappements acceptés dans un texte : `\"`, `\\`, `\n`, `\t`. Les
+en-têtes pris en charge sont `stdio.h`, `stdlib.h`, `assert.h` et
+`limits.h`, écrits exactement ainsi.
+
+### Séparateurs d'affichage
+
+**C-A n'écrit jamais d'espace ni de retour à la ligne que la phrase n'a pas
+demandé.** Deux affichages de suite se collent donc l'un à l'autre, et une
+suite de valeurs devient illisible. C'est voulu : un séparateur est une
+décision de format, et l'inventer reviendrait à la prendre à la place de
+l'auteur.
+
+Un séparateur s'écrit, par l'une de ces deux instructions :
+
+| Phrase française | Code C produit |
+|---|---|
+| `Affiche un retour à la ligne.` | `printf("\n");` |
+| `Affiche le texte " ".` | `printf("%s", " ");` |
+
+La seconde montre la règle générale : la grammaire du texte accepte les
+échappements, donc `\n`, `\t` et l'espace s'écrivent dans n'importe quel
+texte. Une sortie lisible se **compose** :
+
+    Affiche le texte "age = ".     → printf("%s", "age = ");
+    Affiche la valeur de age.      → printf("%d", age);
+    Affiche un retour à la ligne.  → printf("\n");
+
+Tout affichage qui n'écrit pas son propre séparateur émet l'information
+passive `OUTPUT_HAS_NO_SEPARATOR`. Elle n'est **pas** émise sur un texte
+qui se termine déjà par un séparateur, ni sur le retour à la ligne
+lui-même.
+
+Un texte de l'auteur n'est **jamais** une chaîne de format :
+`Affiche le texte "age = %d".` produit `printf("%s", "age = %d");`, où le
+`%d` est une donnée et non une conversion.
 
 ## Domaine 2 — Expressions et calculs
 

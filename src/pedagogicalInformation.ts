@@ -26,7 +26,8 @@ export type PedagogicalInformation = {
     | 'POINTER_FIELD_OWNS_NOTHING' | 'TYPEDEF_IS_AN_ALIAS' | 'STRUCT_ARRAY_LAYOUT'
     | 'ASSERT_DISABLED_BY_NDEBUG' | 'ASSERT_NOT_ERROR_HANDLING'
     | 'CONST_IS_NOT_A_MACRO'
-    | 'LIMITS_ARE_IMPLEMENTATION_DEFINED' | 'LIMIT_MACROS_NOT_KNOWN';
+    | 'LIMITS_ARE_IMPLEMENTATION_DEFINED' | 'LIMIT_MACROS_NOT_KNOWN'
+    | 'OUTPUT_HAS_NO_SEPARATOR';
   severity: 'information';
   range: SourceRange;
   message: string;
@@ -228,7 +229,42 @@ const RELIABILITY_MESSAGES = {
     + 'et C-A ne vérifie aucun chemin.',
 } as const;
 
+/** Lot 29. Displays that carry no separator of their own. The problem this
+ * answers was found by the integrator exercise, whose eleven printf calls
+ * produced one unreadable run of digits — and C-A had said nothing.
+ *
+ * It is an information, never an addition: C-A does not insert a space or a
+ * newline the author did not ask for. It is also NOT emitted when the author
+ * clearly knows, which is what the trailing-separator test below is for.
+ */
+const PRINTS_WITHOUT_SEPARATOR: readonly string[] = [
+  'PRINT_INT', 'PRINT_FORMATTED', 'PRINT_CHAR', 'PRINT_STRING', 'PRINT_POINTED',
+  'NUMERIC_PRINT', 'ARRAY_PRINT', 'ARRAY_PRINT_CHAR', 'MEMBER_PRINT', 'SIZEOF_PRINT',
+];
+const SEPARATOR_MESSAGE = 'Cet affichage n’écrit rien de plus que la valeur : ni espace, ni retour à la ligne. '
+  + 'Deux affichages de suite se collent donc l’un à l’autre. Un séparateur est une instruction à part '
+  + 'entière, que C-A n’ajoutera jamais de lui-même.';
+
+function explainOutputSeparator(result: TranslationResult): PedagogicalInformation[] {
+  if (result.status !== 'translated') return [];
+  const kind = result.instruction.kind;
+  const bare = PRINTS_WITHOUT_SEPARATOR.includes(kind);
+  // A text that already ends with a separator says the author knows; saying
+  // it anyway would train them to ignore this channel.
+  const text = kind === 'PRINT_TEXT'
+    && !/[\n\t\r ]$/u.test((result.instruction.parameters as { text: string }).text);
+  if (!bare && !text) return [];
+  return [{ code: 'OUTPUT_HAS_NO_SEPARATOR', severity: 'information',
+    range: { start: 0, end: 0 }, message: SEPARATOR_MESSAGE }];
+}
+
 export function explainInstruction(result: TranslationResult): PedagogicalInformation[] {
+  // Lot 29: appended to whatever the intent's own informations are, so not one
+  // existing branch of the chain below had to be touched.
+  return [...explainInstructionCore(result), ...explainOutputSeparator(result)];
+}
+
+function explainInstructionCore(result: TranslationResult): PedagogicalInformation[] {
   if (result.status !== 'translated') return [];
   if (result.instruction.kind === 'ASSERT') {
     const anchor = result.instruction.parameters.conditionRange;

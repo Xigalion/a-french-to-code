@@ -39,9 +39,10 @@ test('lot 26 : les trois ensembles sont disjoints', () => {
   assert.equal(new Set(all).size, all.length, 'un genre est classé deux fois');
   // Lot 28 a ajouté INCLUDE_LIMITS aux déclarations : 24 -> 25.
   assert.equal(DECLARATION_KINDS.length, 25);
-  assert.equal(STATEMENT_KINDS.length, 42);
+  // Lot 29 a ajouté PRINT_NEWLINE aux instructions : 42 -> 43.
+  assert.equal(STATEMENT_KINDS.length, 43);
   assert.equal(CONTEXT_VERIFIED_KINDS.length, 15);
-  assert.equal(all.length, 82);
+  assert.equal(all.length, 83);
 });
 
 test('lot 26 : MEMBER_ASSIGN_CHAR est déclaré mais inatteignable', () => {

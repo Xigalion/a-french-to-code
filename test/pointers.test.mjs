@@ -313,7 +313,8 @@ const INFORMATION = [
   ['Déclare un pointeur de type int nommé p.', ['UNINITIALIZED_POINTER', 'POINTER_VS_OBJECT'], 'p'],
   ['Crée un pointeur de type int nommé p avec l’adresse de x.', ['ADDRESS_OF', 'POINTER_VS_OBJECT'], 'x'],
   ['Affecte l’adresse de x à p.', ['ADDRESS_OF', 'POINTER_VS_OBJECT'], 'x'],
-  ['Affiche la valeur pointée par p.', ['DEREFERENCE_MEANING', 'ADDRESS_NOT_CHECKED'], 'p'],
+  // Lot 29 : cet affichage n'écrit pas de séparateur, d'où la troisième.
+  ['Affiche la valeur pointée par p.', ['DEREFERENCE_MEANING', 'ADDRESS_NOT_CHECKED', 'OUTPUT_HAS_NO_SEPARATOR'], 'p'],
   ['Affecte la valeur 5 à la valeur pointée par p.', ['DEREFERENCE_MEANING', 'ADDRESS_NOT_CHECKED'], 'p'],
 ];
 for (const [source, codes, anchor] of INFORMATION) {

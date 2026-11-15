@@ -223,6 +223,14 @@ function* sentences() {
     yield `Crée un tableau de type char nommé s de dimension 64 avec le texte "${text}".`;
   }
   yield* ['Affiche le texte.', 'Affiche le texte "a', 'Affiche le texte a".', 'Affiche le texte ""'];
+  // Lot 29 : la formulation du retour à la ligne, et les approximations
+  // voisines qui doivent rester refusées, dont « Passe à la ligne. » qui
+  // frôle « Passe à l'itération suivante… ».
+  yield* ['Affiche un retour à la ligne.', 'Affiche un retour à la ligne',
+    '  Affiche un retour à la ligne.  ', 'AFFICHE UN RETOUR À LA LIGNE.',
+    'Passe à la ligne.', 'Affiche un retour.', 'Affiche un saut de ligne.',
+    'Affiche la ligne.', 'Affiche un retour à la ligne maintenant.',
+    'Affiche deux retours à la ligne.', 'Affiche un retour à la ligne et un espace.'];
   // Lot 14 surface. Before that lot every line here is a refusal, so each one
   // shows up as an approved extension rather than as silence.
   for (const literal of ["'A'", "'z'", "'0'", "' '", "'}'", "'" + BS + "n'", "'" + BS + "t'",

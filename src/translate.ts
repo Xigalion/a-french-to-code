@@ -48,7 +48,10 @@ export type Instruction = NumericInstruction | FunctionInstruction | CharacterIn
   | { kind: 'INCLUDE_STDIO'; parameters: Record<string, never> }
   | { kind: 'PRINT_INT'; parameters: { name: string } }
   | { kind: 'PRINT_FORMATTED'; parameters: { name: string; format: DisplayFormat } }
-  | { kind: 'PRINT_TEXT'; parameters: { text: string } };
+  | { kind: 'PRINT_TEXT'; parameters: { text: string } }
+  /** Lot 29: the one separator C-A will ever write, and only because the
+   * author asked for it in so many words. */
+  | { kind: 'PRINT_NEWLINE'; parameters: Record<string, never> };
 
 type DisplayFormat = 'decimal' | 'hexadecimal' | 'octal';
 
@@ -186,7 +189,7 @@ const C17_KEYWORDS = new Set([
 
 type Token = { text: string; range: SourceRange };
 type Parameter = { parameter: 'name' | 'value' | 'header' };
-type Rule = { kind: Exclude<Instruction['kind'], MemoryInstruction['kind'] | FileInstruction['kind'] | ModuleInstruction['kind'] | ReliabilityInstruction['kind'] | 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | FunctionInstruction['kind'] | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind'] | CharacterInstruction['kind'] | ArrayInstruction['kind'] | PointerInstruction['kind'] | SwitchInstruction['kind'] | StructInstruction['kind']>; parts: (string | Parameter)[] };
+type Rule = { kind: Exclude<Instruction['kind'], MemoryInstruction['kind'] | FileInstruction['kind'] | ModuleInstruction['kind'] | ReliabilityInstruction['kind'] | 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | FunctionInstruction['kind'] | 'PRINT_TEXT' | 'PRINT_NEWLINE' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind'] | CharacterInstruction['kind'] | ArrayInstruction['kind'] | PointerInstruction['kind'] | SwitchInstruction['kind'] | StructInstruction['kind']>; parts: (string | Parameter)[] };
 
 const RULES: [Rule, ...Rule[]] = [
   { kind: 'MAIN', parts: ['Crée', 'la', 'fonction', 'principale'] },
@@ -395,6 +398,10 @@ function render(text: string, instruction: Instruction): TranslationResult {
       break;
     }
     case 'PRINT_TEXT': code = `printf("%s", ${renderStringLiteral(instruction.parameters.text)});\n`; break;
+    // The format string here is a constant written by C-A, never author text,
+    // so passing it directly carries none of the risk that makes every other
+    // display route through "%s".
+    case 'PRINT_NEWLINE': code = 'printf("\\n");\n'; break;
   }
   const comment = `// ${text}`;
   const fragment: Fragment = {
@@ -633,6 +640,11 @@ function translateDisplayLevel1(source: string, intent: DisplayIntent): Translat
 
 /** Pure translation only: no document, I/O, symbol table or placement. */
 export function translate(text: string): TranslationResult {
+  // Lot 29: matched before tokenization, like `Affiche le texte`, so the
+  // frozen lot 4 rule table and its snapshots are left untouched.
+  if (/^[ \t]*Affiche[ \t]+un[ \t]+retour[ \t]+à[ \t]+la[ \t]+ligne[ \t]*\.?[ \t]*$/iu.test(text)) {
+    return render(text, { kind: 'PRINT_NEWLINE', parameters: {} });
+  }
   const literalPrefix = /^[ \t]*Affiche[ \t]+le[ \t]+texte(?=[ \t]|$)/iu.exec(text);
   if (literalPrefix) {
     const lineBreak = /[\r\n\u2028\u2029]/u.exec(text);
