@@ -777,7 +777,12 @@ exports.run = async function run() {
       ['Crée une boucle tant que "i = 3".', 'ASSIGNMENT_IN_CONDITION'],
       ['Crée une boucle jusqu’à "i == 3".', 'UNKNOWN_FORMULATION'],
       ['Crée une boucle avec test finale tant que "i < 3".', 'UNKNOWN_FORMULATION'],
-      ['Sors de la boucle la plus intérieure.', 'UNKNOWN_FORMULATION'],
+      // « Sors de la boucle la plus intérieure. » a quitté cette liste : le lot
+      // 11D en a fait une formulation VALIDE, qui se traduit en « break; ». Son
+      // refus a donc changé d'étape — de la traduction vers le placement — et
+      // cette attente datait du lot 11A. Elle échouait depuis le lot 11D sans
+      // que personne le voie, la suite hôte n'ayant pas pu s'exécuter. Le refus
+      // au placement est vérifié juste en dessous.
     ]) {
       await test(`lot 11A refus sans insertion : ${code} ${phrase.slice(0, 32)}`, async () => {
         const { document } = await fixture();
@@ -790,6 +795,16 @@ exports.run = async function run() {
         await cancel();
       });
     }
+    await test('lot 11D : un transfert hors boucle est refusé au placement, pas à la traduction', async () => {
+      const { document } = await fixture();
+      await start('Sors de la boucle la plus intérieure.');
+      await accept();
+      assert.equal(api.inspect().ui, 'input');
+      assert.equal(api.inspect().diagnostic.stage, 'placement');
+      assert.equal(api.inspect().diagnostic.code, 'LOOP_TARGET_NOT_FOUND');
+      assert.equal(document.getText(), '');
+      await cancel();
+    });
     await test('lot 11A : boucles imbriquées puis branche refusée après la boucle', async () => {
       const before = 'int main(void) {\n    \n}\n';
       const { document, editor } = await fixture(before, before.indexOf('    \n') + 4);

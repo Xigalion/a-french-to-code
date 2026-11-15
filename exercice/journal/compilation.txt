@@ -1,0 +1,40 @@
+Compilation et execution de l'exercice integrateur — preuves reelles
+====================================================================
+
+Compilateur : gcc.exe (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r3) 16.2.0
+Options     : -std=c17 -Wall -Wextra -pedantic
+Date        : 15 novembre 2026
+
+--- 1. VERSION BRUTE DE C-A (exercice/ca)
+ca/calcul.c: In function 'dangereuse':
+ca/calcul.c:33:19: warning: division by zero [-Wdiv-by-zero]
+   33 |     return (total / 0);
+      |                   ^
+<DOSSIER-PERSONNEL>/AppData/Local/Temp/ca-mingw/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/16.2.0/../../../../x86_64-w64-mingw32/bin/ld.exe: <DOSSIER-PERSONNEL>\AppData\Local\Temp\ccV8fCJb.o:calcul.c:(.bss+0x0): multiple definition of `compteur'; <DOSSIER-PERSONNEL>\AppData\Local\Temp\cc0DEGG5.o:carnet.c:(.bss+0x0): first defined here
+collect2.exe: error: ld returned 1 exit status
+   => ECHEC attendu a l'edition de liens.
+
+--- 2. VERSION CORRIGEE (exercice/corrige), retouche incluse
+corrige/calcul.c: In function 'dangereuse':
+corrige/calcul.c:33:19: warning: division by zero [-Wdiv-by-zero]
+   33 |     return (total / 0);
+      |                   ^
+   => code de sortie du compilateur : 0, un seul avertissement, voulu.
+
+--- 3. EXECUTION
+Carnet de notesCarnetCarnet312481513.67a revoir17
+   code de sortie du programme : 0
+
+--- 4. FICHIER PRODUIT PAR LE PROGRAMME (resultat.txt)
+Meilleure note17
+
+--- 5. COMPILATION SEPAREE puis edition de liens
+corrige/calcul.c: In function 'dangereuse':
+corrige/calcul.c:33:19: warning: division by zero [-Wdiv-by-zero]
+   33 |     return (total / 0);
+      |                   ^
+   => edition de liens separee : OK
+Carnet de notesCarnetCarnet312481513.67a revoir17
+
+--- 6. GARDE D'EN-TETE sous double inclusion
+   => OK, aucune redefinition

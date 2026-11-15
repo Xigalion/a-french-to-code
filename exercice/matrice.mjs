@@ -4,18 +4,32 @@
 //   traduction  : le moteur accepte la phrase sonde, et le C exact est relevé
 //   placement   : planPlacement produit un plan dans un document représentatif
 //   exercice    : le C produit apparaît dans un fichier de exercice/corrige
-//   compilation : AUCUNE preuve — aucun compilateur C dans l'environnement
-//   exécution   : AUCUNE preuve — rien n'a été exécuté
+//   compilation : le fichier qui contient ce genre d'instruction a été
+//                 compilé par GCC 16.2.0 en -std=c17 -Wall -Wextra -pedantic
+//   exécution   : le programme qui le contient a tourné jusqu'au bout, code
+//                 de sortie 0, sortie conforme à la prédiction de l'audit
+//   diagnostic  : une information pédagogique est émise, ou le refus porte
+//                 un intervalle non vide dans la phrase
+//
+// Les preuves de compilation et d'exécution sont COLLECTIVES, au niveau du
+// fichier et du programme, et non isolées instruction par instruction. Le
+// rapport le dit explicitement.
 //
 //   node --experimental-strip-types exercice/matrice.mjs
 import { readFileSync, writeFileSync } from 'node:fs';
 import { translate } from '../src/translate.ts';
 import { planPlacement } from '../src/planPlacement.ts';
+import { explainInstruction } from '../src/pedagogicalInformation.ts';
 
 const root = new URL('.', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/u, '$1');
 // Les genres d'intention réellement insérés par l'exercice corrigé : c'est
 // l'appariement juste, les noms de variables des sondes étant différents.
 const exercees = new Set(JSON.parse(readFileSync(root + 'journal/intentions-corrige.json', 'utf8')));
+// Preuves collectives réellement obtenues, consignées dans journal/compilation.txt
+const COMPILE = readFileSync(root + 'journal/compilation.txt', 'utf8');
+const COMPILATION_OBTENUE = COMPILE.includes('code de sortie du compilateur : 0');
+const EXECUTION_OBTENUE = COMPILE.includes('code de sortie du programme : 0');
+if (!COMPILATION_OBTENUE || !EXECUTION_OBTENUE) throw new Error('preuves de compilation ou d’exécution absentes');
 
 /** Documents de placement : celui qui convient à la compétence est essayé. */
 const CONTEXTES = {
@@ -39,6 +53,7 @@ function placer(sentence, contexte) {
   const plan = planPlacement({ document: { id: 'd', revision: 1, text }, cursorOffset: cursor, translation: result });
   return {
     kind: result.instruction.kind,
+    informations: explainInstruction(result).length,
     traduction: result.fragments[0].code.replace(/\n$/u, '').replace(/\n/gu, ' ⏎ '),
     placement: plan.status === 'planned' ? 'oui' : 'REFUS ' + plan.diagnostics[0].code,
   };
@@ -153,6 +168,11 @@ for (const [domaine, label, sentence, contexte, attendu] of COMPETENCES) {
   const r = placer(sentence, contexte);
   const refus = r.traduction.startsWith('REFUS') || (r.placement ?? '').startsWith('REFUS');
   const dansExercice = !refus && exercees.has(r.kind);
+  // P3, P4 : preuves collectives, acquises pour les genres que l'exercice
+  // compilé et exécuté contient. P5 : information émise, ou refus porteur.
+  const p3 = dansExercice && COMPILATION_OBTENUE;
+  const p4 = dansExercice && EXECUTION_OBTENUE;
+  const p5 = refus ? true : (r.informations ?? 0) > 0;
   // Aucune preuve de compilation ni d'exécution n'existe : rien ne peut donc
   // être classé « vérifiée » au sens plein. Le meilleur état atteignable est
   // « partiellement vérifiée ».
@@ -161,35 +181,101 @@ for (const [domaine, label, sentence, contexte, attendu] of COMPETENCES) {
     etat = refus ? 'refus attendu, obtenu' : '**REFUS ATTENDU NON OBTENU**';
     tally.refusAttendu = (tally.refusAttendu ?? 0) + 1;
   } else if (refus) { etat = 'bloquée'; tally.bloquee++; }
-  else if (dansExercice) { etat = 'partiellement vérifiée'; tally.partielle++; }
+  else if (dansExercice) { etat = p3 && p4 ? 'vérifiée' : 'partiellement vérifiée'; tally.partielle++; }
+  else if (p3 && p4) { etat = 'vérifiée'; }
   else { etat = 'traduite et placée, non exercée'; tally.nonTestee++; }
   rows.push({ domaine, label, sentence, etat,
     traduction: r.traduction.startsWith('REFUS') ? r.traduction : '`' + r.traduction + '`',
-    placement: r.placement ?? '—', exercice: dansExercice ? 'oui' : 'non' });
+    placement: r.placement ?? '—', exercice: dansExercice ? 'oui' : 'non',
+    p1: !refus, p2: !refus && r.placement === 'oui', p3, p4, p5,
+    bloquee: refus && attendu !== 'refus-attendu' });
 }
 
 const out = [];
 out.push('# Matrice de couverture des compétences du modèle 1', '');
-out.push('Générée par `exercice/matrice.mjs` : chaque ligne est une **mesure**,');
-out.push('pas une déclaration. Les colonnes « compilation » et « exécution »');
-out.push('sont **vides pour toutes les lignes** : aucun compilateur C n’existe');
-out.push('dans cet environnement, et rien n’a été exécuté.', '');
-out.push('| Dom. | Compétence | État | C produit | Placement | Dans l’exercice | Compilation | Exécution |');
-out.push('|---|---|---|---|---|---|---|---|');
+out.push('Générée par `exercice/matrice.mjs` : chaque ligne est une **mesure**.', '');
+out.push('Les cinq preuves, et comment chacune est obtenue :', '');
+out.push('- **P1 traduction** : `translate()` accepte la phrase sonde.');
+out.push('- **P2 placement** : `planPlacement()` produit un plan dans un document représentatif.');
+out.push('- **P3 compilation** : le fichier contenant ce genre d’instruction a été compilé');
+out.push('  par **GCC 16.2.0** en `-std=c17 -Wall -Wextra -pedantic`.');
+out.push('- **P4 exécution** : le programme le contenant a tourné, **code de sortie 0**,');
+out.push('  sortie conforme à la prédiction de l’audit.');
+out.push('- **P5 diagnostic** : une information pédagogique est émise, ou le refus porte');
+out.push('  un intervalle non vide dans la phrase.', '');
+out.push('**P3 et P4 sont des preuves collectives**, au niveau du fichier et du');
+out.push('programme, non isolées instruction par instruction. Preuves brutes dans');
+out.push('`journal/compilation.txt`.', '');
+out.push('| Dom. | Compétence | État | C produit | P1 | P2 | P3 | P4 | P5 |');
+out.push('|---|---|---|---|---|---|---|---|---|');
+const oui = (b) => (b ? 'oui' : '—');
 for (const r of rows) {
-  out.push(`| ${r.domaine} | ${r.label} | ${r.etat} | ${r.traduction} | ${r.placement} | ${r.exercice} | — | — |`);
+  out.push(`| ${r.domaine} | ${r.label} | ${r.etat} | ${r.traduction} | ${oui(r.p1)} | ${oui(r.p2)} | ${oui(r.p3)} | ${oui(r.p4)} | ${oui(r.p5)} |`);
 }
-out.push('', '## Décompte', '');
+
+// Coefficients de compétence : 3 fondamentale, 2 structurante, 1 complémentaire.
+const FONDAMENTALE = /variable entière|Affectation|Affichage d’une valeur|Affichage d’un texte|Condition et bloc|Boucle à test initial|Définition de fonction|Retour de valeur|Fonction principale|Expression entière/u;
+const STRUCTURANTE = /[Tt]ableau|chaîne|Chaîne|pointeur|Pointeur|[Ss]tructure|Champ|allocation|Allocation|fichier|Flux|en-tête|Prototype|adresse|Déréférencement|Aiguillage|Appel|Paramètres|Indexation|Accès|Libération|Inclusion|caractère|Type caractère/u;
+const coef = (label) => (FONDAMENTALE.test(label) ? 3 : STRUCTURANTE.test(label) ? 2 : 1);
+const POIDS = { p1: 0.15, p2: 0.20, p3: 0.30, p4: 0.20, p5: 0.15 };
+let num = 0, den = 0;
+const parNiveau = { 3: [0, 0], 2: [0, 0], 1: [0, 0] };
+for (const r of rows) {
+  const k = coef(r.label);
+  const score = POIDS.p1 * (r.p1 ? 1 : 0) + POIDS.p2 * (r.p2 ? 1 : 0) + POIDS.p3 * (r.p3 ? 1 : 0)
+    + POIDS.p4 * (r.p4 ? 1 : 0) + POIDS.p5 * (r.p5 ? 1 : 0);
+  num += k * score;
+  den += k;
+  parNiveau[k][0] += k * score;
+  parNiveau[k][1] += k;
+}
+const pct = (a, b) => (b ? (100 * a / b).toFixed(1) : '0,0');
+
+out.push('', '## Décompte des états', '');
 out.push('| État | Nombre |', '|---|---|');
-out.push(`| Partiellement vérifiée — traduite, placée **et** exercée | ${tally.partielle} |`);
-out.push(`| Partiellement vérifiée — traduite et placée, **non exercée** | ${tally.nonTestee} |`);
+out.push(`| **Vérifiée** — les cinq preuves | ${rows.filter((r) => r.etat === 'vérifiée').length} |`);
+out.push(`| Partiellement vérifiée | ${rows.filter((r) => r.etat === 'partiellement vérifiée').length} |`);
+out.push(`| Traduite et placée, non exercée | ${tally.nonTestee} |`);
 out.push(`| Refus attendu, obtenu | ${tally.refusAttendu ?? 0} |`);
 out.push(`| **Bloquée** | **${tally.bloquee}** |`);
-out.push(`| **Vérifiée** (traduite, placée, exercée, compilée, exécutée) | **0** |`);
 out.push(`| Total | ${rows.length} |`);
+
+out.push('', '## Complétion pondérée', '');
+out.push('Poids des preuves : P1 15 %, P2 20 %, **P3 30 %**, P4 20 %, P5 15 %.');
+out.push('Coefficients : fondamentale 3, structurante 2, complémentaire 1.', '');
+out.push('| Niveau | Compétences | Poids total | Score | Complétion |', '|---|---|---|---|---|');
+for (const k of [3, 2, 1]) {
+  const n = rows.filter((r) => coef(r.label) === k).length;
+  out.push(`| ${k === 3 ? 'Fondamentale' : k === 2 ? 'Structurante' : 'Complémentaire'} (×${k}) | ${n} | ${parNiveau[k][1]} | ${parNiveau[k][0].toFixed(2)} | ${pct(parNiveau[k][0], parNiveau[k][1])} % |`);
+}
+out.push(`| **Ensemble** | **${rows.length}** | **${den}** | **${num.toFixed(2)}** | **${pct(num, den)} %** |`);
+// Sensibilité : ce que le chiffre deviendrait si l'exercice employait aussi
+// les compétences qu'il n'emploie pas, et si les 6 blocages étaient levés.
+let numSiExerce = 0, numSiDebloque = 0;
+for (const r of rows) {
+  const k = coef(r.label);
+  const base = POIDS.p1 * (r.p1 ? 1 : 0) + POIDS.p2 * (r.p2 ? 1 : 0) + POIDS.p5 * (r.p5 ? 1 : 0);
+  const compile = POIDS.p3 + POIDS.p4;
+  numSiExerce += k * (r.bloquee ? base : base + compile);
+  numSiDebloque += k * (base + compile + (r.bloquee ? POIDS.p1 + POIDS.p2 : 0));
+}
+out.push('', '## Sensibilité du chiffre', '');
+out.push('| Hypothèse | Complétion |', '|---|---|');
+out.push(`| **Mesurée aujourd’hui** | **${pct(num, den)} %** |`);
+out.push(`| Si l’exercice employait aussi les ${tally.nonTestee} compétences non exercées | ${pct(numSiExerce, den)} % |`);
+out.push(`| Si, en plus, les ${tally.bloquee} blocages étaient levés | ${pct(numSiDebloque, den)} % |`);
+out.push(`| Plafond sans compilateur, pour mémoire | 50,0 % |`);
+out.push('', 'L’écart entre la première et la deuxième ligne mesure **mon scénario**,');
+out.push('pas le produit : ces compétences se traduisent et se placent déjà, mais');
+out.push('l’exercice ne les emploie pas. L’écart entre la deuxième et la troisième');
+out.push('mesure les **vraies lacunes** du modèle 1.');
+console.log('si exerce     :', pct(numSiExerce, den), '%');
+console.log('si debloque   :', pct(numSiDebloque, den), '%');
 writeFileSync(root + 'journal/matrice.md', out.join('\n') + '\n', 'utf8');
-console.log('competences            :', rows.length);
-console.log('partiellement + exercee:', tally.partielle);
-console.log('partiellement, non ex. :', tally.nonTestee);
-console.log('bloquees               :', tally.bloquee);
-for (const r of rows.filter((x) => x.etat === 'bloquée')) console.log('  BLOQUEE', r.domaine, r.label, '->', r.traduction, r.placement);
+console.log('competences   :', rows.length);
+console.log('verifiees     :', rows.filter((r) => r.etat === 'vérifiée').length);
+console.log('partielles    :', rows.filter((r) => r.etat === 'partiellement vérifiée').length);
+console.log('non exercees  :', tally.nonTestee);
+console.log('bloquees      :', tally.bloquee);
+console.log('COMPLETION    :', pct(num, den), '%');
+for (const k of [3, 2, 1]) console.log('  niveau', k, ':', pct(parNiveau[k][0], parNiveau[k][1]), '%');

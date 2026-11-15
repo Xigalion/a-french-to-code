@@ -8,6 +8,11 @@ struct Eleve {
     int note;
     // Ajoute un champ de type char nommé initiale.
     char initiale;
+    /* RETOUCHE MANUELLE — C-A refuse « Ajoute un champ de type char nommé nom
+       de dimension 32. » avec UNEXPECTED_TEXT, et « Ajoute un tableau … » avec
+       UNKNOWN_FORMULATION. Cette ligne n'est donc PAS produite par C-A.
+       Voir exercice/retouches.md. */
+    char nom[32];
     // Ajoute un champ pointeur de type structure Eleve nommé suivant.
     struct Eleve *suivant;
     

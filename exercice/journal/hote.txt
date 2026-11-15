@@ -1,0 +1,12 @@
+Suite hote VS Code — resultat reel
+==================================
+VS Code             : 1.138.0
+cas executes        : 99
+reussis             : 99
+echecs              : 0
+gestes manuels      : 3
+
+Restent manuels par nature :
+  - Touches physiques Ctrl+K puis A / Cmd+K puis A
+  - Composition IME et disposition de clavier
+  - Vérification visuelle du focus et du diff

@@ -147,17 +147,32 @@ en rejouant 57 entrées par `translate()` des deux moteurs) et lot 24 (88
 pertes, ajout d'un champ aux paramètres d'une intention, fragments et
 éditions de placement identiques).
 
-### Ce qui n'a PAS été exécuté
+### Ce qui a été exécuté depuis — mise à jour du 15 novembre 2026
 
-> **Les 97 tests hôte VS Code n'ont pas été exécutés.** Le téléchargement
-> de VS Code échoue sur un mutex Inno Setup (`mutex already exists`). Ils
-> **ne sont pas** présentés comme réussis. C'est la dette la plus
-> importante de cette livraison : le parcours saisie → aperçu →
-> confirmation → insertion n'est validé que par les tests Node du moteur
-> et du planificateur, pas par l'hôte réel.
+Trois dettes annoncées ici comme non réglées l'ont été le jour même, après
+autorisation du fondateur. Le texte d'origine est remplacé, parce qu'il est
+devenu faux ; les preuves sont des fichiers, pas des affirmations.
 
-Également non exécuté : la recette GCC du domaine 2, les recettes
-manuelles des domaines 3 et 4 et du lot 10, et **l'exercice intégrateur**.
+| Dette | État | Preuve |
+|---|---|---|
+| Tests hôte VS Code | **99 cas, 99 réussis, 0 échec** sur VS Code 1.138.0 | `exercice/journal/hote.txt`, `docs/VALIDATION_MANUELLE_VSCODE.md` |
+| Compilation GCC de l'exercice | **code de sortie 0**, un seul avertissement, voulu | `exercice/journal/compilation.txt` |
+| Exécution | **code de sortie 0**, sortie et fichier conformes | `exercice/journal/sortie-execution.txt` |
+| Exercice intégrateur | **exécuté**, 98 instructions, 0 refus | `docs/EVALUATION_MODELE1.md` |
+
+Deux rectifications, puisqu'elles touchent des chiffres répétés dans toute
+la documentation du projet :
+
+- la cause du blocage hôte **n'était pas** un téléchargement. Le script ne
+  télécharge rien : deux processus d'installateur orphelins détenaient le
+  mutex `vscode-updating` ;
+- la suite hôte compte **99 cas**, pas 97. Le chiffre « 97 » était périmé,
+  et un de ces tests échouait en silence **depuis le lot 11D** — invisible
+  précisément parce que la suite ne pouvait pas s'exécuter.
+
+**Toujours non exécuté** : la recette GCC du domaine 2 et les recettes
+manuelles des domaines 3 et 4 et du lot 10. Un compilateur est désormais
+disponible, donc la première n'est plus bloquée, seulement à faire.
 
 ---
 
@@ -281,14 +296,27 @@ C-A ne compile pas et ne garantit pas que le C produit compile. Si le
 compilateur se plaint, le code source est la référence : il est là pour
 être lu, modifié et compris.
 
-### Limite d'exécution connue
+L'exercice intégrateur a été compilé ainsi et **passe** (GCC 16.2.0, code
+de sortie 0). Cela ne vaut que pour ce programme : rien ne garantit la
+compilation d'un autre, et la lacune la plus sérieuse du modèle 1 est
+justement que C-A accepte des instructions à la portée fichier, ce qui
+produit du C non compilable sans un mot.
 
-`npm run test:vscode` télécharge VS Code et **échoue** aujourd'hui sur un
-mutex Inno Setup. Les 97 tests hôte restent non exécutés.
+### Tests hôte
+
+`npm run test:vscode` exige un VS Code **déjà installé** et ne télécharge
+rien. Il passe : **99 cas, 99 réussis**. Si la commande échoue avec
+« Code is currently being updated », un installateur orphelin détient le
+mutex : voir `docs/VALIDATION_MANUELLE_VSCODE.md`.
 
 ---
 
-## 6. Exercice intégrateur proposé
+## 6. Exercice intégrateur — proposé, puis exécuté
+
+> **Exécuté le 15 novembre 2026.** 98 instructions insérées, 0 refus, le C
+> produit compile et s'exécute, et la complétion pondérée mesurée est de
+> **81,7 %** avec 65 compétences vérifiées sur 91 et 6 bloquées. Rapport :
+> `docs/EVALUATION_MODELE1.md`.
 
 L'énoncé complet est dans **`docs/EXERCICE_INTEGRATEUR.md`** : un carnet
 de notes en mémoire dynamique, séparé en un en-tête protégé et deux

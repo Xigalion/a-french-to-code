@@ -1,0 +1,24 @@
+Sorties d'execution du programme corrige — deux passages, volontairement conserves
+==================================================================================
+
+Ces deux lignes ne sont PAS identiques, et c'est l'interet du fichier.
+
+--- Passage 1 : AVANT la retouche manuelle (champ char nom[32] absent)
+Carnet de notesCarnetCarnet312161513.67a revoir17
+   code de sortie : 0
+
+--- Passage 2 : APRES la retouche (exercice/retoucher.mjs applique)
+Carnet de notesCarnetCarnet312481513.67a revoir17
+   code de sortie : 0
+
+Difference : sizeof(struct Eleve) passe de 16 a 48 octets. C'est la seule
+valeur qui change, et elle mesure exactement la retouche : l'ajout du champ
+char nom[32] que C-A refuse d'ecrire (voir exercice/retouches.md).
+
+Le passage 1 a d'abord ete pris pour le resultat final, puis identifie
+comme un artefact : une regeneration de exercice/corrige avait efface la
+retouche appliquee a la main. C'est la raison d'etre de retoucher.mjs, qui
+est idempotent et scripte.
+
+La preuve de reference reste exercice/journal/compilation.txt, qui ne
+contient que le passage 2.

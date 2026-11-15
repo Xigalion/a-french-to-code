@@ -1,11 +1,15 @@
 # Audit manuel du C produit — et ce que cet audit NE vaut pas
 
-> **Aucun compilateur n'a été exécuté.** Il n'existe dans cet environnement
-> ni `gcc`, ni `clang`, ni `cl.exe`, et WSL n'est pas installé — vérifié.
-> Ce document est une **relecture humaine** du C produit, à la lumière de
-> C17. Ce n'est **pas** une preuve de compilation, et il ne doit pas être
-> lu comme telle. Les prédictions ci-dessous sont à confirmer par
-> `exercice/compiler.cmd`.
+> **Audit écrit avant toute compilation, puis confronté à GCC le 15
+> novembre 2026.** Ce document était une **relecture humaine** du C produit
+> à la lumière de C17, faite quand aucun compilateur n'existait dans cet
+> environnement. Un compilateur a depuis été installé (WinLibs GCC 16.2.0),
+> et le §4 confronte chaque prédiction au résultat réel. Le texte des
+> prédictions est **laissé tel qu'il était écrit** — y compris là où il se
+> trompe — parce qu'un audit réécrit après coup ne prouve rien.
+>
+> Résultat global : **les prédictions de compilation sont exactes**, et la
+> prédiction de sortie contient **une erreur**, relevée au §4.3.
 
 ---
 
@@ -69,7 +73,8 @@ où `?` est `sizeof(struct Eleve)`, et où « Carnet » apparaît deux fois :
 une fois par `%s`, une fois caractère par caractère par le parcours. Le
 fichier `resultat.txt` devrait contenir `Meilleure note17`.
 
-**C'est une prédiction, pas un résultat.**
+**C'est une prédiction, pas un résultat.** Voir le §4.3 : elle est
+partiellement fausse.
 
 ---
 
@@ -107,3 +112,63 @@ de rien.
 3. **Un champ de structure ne peut pas être un tableau**, ce qui était déjà
    connu, mais l'exercice montre que le blocage est **structurant** et non
    marginal : sans lui, `struct Eleve` n'a pas de nom.
+
+---
+
+## 4. Confrontation à GCC — ce que l'audit a vu juste, et ce qu'il a raté
+
+Preuves : `exercice/journal/compilation.txt`. Compilateur gcc 16.2.0
+(MinGW-W64 UCRT), options `-std=c17 -Wall -Wextra -pedantic`.
+
+### 4.1 Les prédictions de compilation : exactes
+
+| Prédiction du §2 | Résultat réel |
+|---|---|
+| la version corrigée compile | **oui**, code de sortie 0 |
+| un seul avertissement, `-Wdiv-by-zero` sur `total / 0` | **oui**, exactement un, à `calcul.c:33:19` |
+| aucun autre diagnostic sous `-Wall -Wextra -pedantic` | **oui**, aucun |
+| la version brute échoue à l'édition de liens sur `compteur` | **oui**, `multiple definition of 'compteur'` |
+| `resultat.txt` contient `Meilleure note17` | **oui**, au mot |
+
+Les deux points « dont je ne suis pas sûr » sont tranchés : l'`assert`
+redondant après la garde `NULL` **ne produit aucune remarque**, et
+`-Wextra` n'a rien signalé que l'audit n'avait pas vu.
+
+Deux vérifications que l'audit n'avait pas prévues ont été faites en plus :
+la **compilation séparée** en `.o` suivie de l'édition de liens fonctionne
+et donne la même sortie, et la **garde d'en-tête** tient sous double
+inclusion de `carnet.h`.
+
+### 4.2 `sizeof(struct Eleve)` = 48
+
+L'audit a **refusé de prédire** cette valeur, au motif qu'elle est définie
+par l'implémentation, en notant seulement qu'« on peut attendre 48 sur
+x86-64 ». La valeur réelle est **48**. Ce n'est donc pas une prédiction
+confirmée : c'est une abstention correcte, et l'ordre de grandeur annoncé
+se trouve être le bon. La distinction compte, et C-A a raison de ne jamais
+afficher cette valeur lui-même.
+
+### 4.3 L'erreur de l'audit : la ligne de sortie
+
+L'audit annonçait :
+
+    Carnet de notesCarnetCarnet3122?1513.67a revoir17
+
+La sortie réelle est :
+
+    Carnet de notesCarnetCarnet312481513.67a revoir17
+
+En remplaçant `?` par 48, la prédiction aurait dû donner
+`…Carnet312<48>1513.67…` ; elle porte **un chiffre `2` de trop** avant le
+marqueur. Chaque valeur attendue est au bon endroit — `*p` = 3,
+`premiere` = 12, puis `sizeof`, `eleves->note` = 15, `moyenne` = 13.67, la
+branche `a revoir`, `meilleure` = 17 — mais la chaîne écrite à la main
+comporte une valeur parasite, et une relecture humaine d'une concaténation
+de onze `printf` sans séparateur est exactement le genre d'exercice où
+l'œil se trompe.
+
+**Ce que cela enseigne.** La prédiction structurelle (ce qui compile, ce qui
+avertit, ce qui échoue) a tenu ; la prédiction caractère par caractère n'a
+pas tenu. C'est aussi l'argument le plus concret en faveur de la correction
+de rang 4 du rapport d'évaluation : des affichages sans aucun séparateur
+sont illisibles, pour la machine comme pour l'humain.

@@ -1,4 +1,14 @@
-# Tests hôte VS Code — diagnostic réel et validation manuelle
+# Tests hôte VS Code — diagnostic, remédiation et résultat
+
+> **Résolu le 15 novembre 2026.** Le fondateur a autorisé l'arrêt des deux
+> processus d'installateur orphelins. Le mutex est retombé, et la suite
+> hôte a été **exécutée** :
+>
+>     VS Code 1.138.0 — 99 cas, 99 réussis, 0 échec, 3 gestes manuels
+>
+> Un échec a été trouvé au premier passage, et il **datait du lot 11D** :
+> voir le §8. La procédure de validation manuelle du §6 reste utile comme
+> recette d'usage, mais elle n'est plus la seule preuve disponible.
 
 ## 1. Le diagnostic, reproduit
 
@@ -141,3 +151,41 @@ document virtuel d'aperçu, la révision du document entre l'aperçu et
 l'insertion, le comportement en CRLF, et le refus en cas de modification
 concurrente. **La validation manuelle ne les remplace pas**, et aucune
 conclusion sur l'hôte ne doit être tirée de son seul succès.
+
+
+---
+
+## 8. Le test périmé trouvé au premier passage, et depuis quand
+
+Le premier passage a donné **98 réussis, 1 échec** :
+
+    ECHEC : lot 11A refus sans insertion : UNKNOWN_FORMULATION
+            Sors de la boucle la plus intéri…
+    AssertionError : + actual 'placement'   - expected 'translation'
+
+Le test attendait que `Sors de la boucle la plus intérieure.` soit refusée
+**à la traduction** avec `UNKNOWN_FORMULATION`.
+
+**Diagnostic.** L'attente était juste au lot 11A, où cette phrase
+n'existait pas. Le **lot 11D** en a fait une formulation **valide**, qui se
+traduit en `break;`. Son refus a donc changé d'étape : il vient maintenant
+du **placement**, avec `LOOP_TARGET_NOT_FOUND`. Vérifié directement :
+
+    traduction : translated   break;
+    placement  : rejected     LOOP_TARGET_NOT_FOUND
+
+**Depuis quand.** L'attente a été écrite au commit (identifiant antérieur à la réécriture) (lot 11A), et
+la formulation est devenue valide au commit (identifiant antérieur à la réécriture) (lot 11D). Le lot 11D
+n'a pas mis ce test à jour. Il **échouait donc depuis le lot 11D**, sans que
+personne le voie — précisément parce que la suite hôte ne pouvait pas
+s'exécuter. Le fichier `test/vscode/suite.cjs` n'a pas été modifié depuis le
+lot 12 : aucun de mes lots 13 à 25 ne l'a touché.
+
+**Correction.** L'entrée a quitté la liste des refus de traduction, avec la
+raison en commentaire sur place, et un test nouveau vérifie le refus **au
+placement**. Second passage : 99 cas, 99 réussis.
+
+**Ce que cet épisode enseigne.** Une suite de tests qu'on ne peut pas
+exécuter ne protège de rien, et se périme en silence. Le chiffre « 97 tests
+hôte » répété dans la documentation du projet était lui-même périmé : la
+suite en compte **99**, et elle en comptait déjà 99 avant ma correction.
