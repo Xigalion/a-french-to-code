@@ -320,6 +320,20 @@ function* sentences() {
     'Affecte à la valeur pointée par p le résultat numérique de.',
     'Inclue la bibliothèque stddef.h.', 'Affecte à p le résultat numérique de "NULL".',
     'Crée une fonction nommée f qui retourne un pointeur de type int.'];
+  // Lot 19 surface.
+  for (const expression of ['jour', '5', 'jour + 1', '1.5', 'a > 0', "'A'", 't[i]', '*p', '']) {
+    yield `Crée un aiguillage sur "${expression}".`;
+  }
+  for (const value of ['5', '0', '-1', '+1', '1.5', '007', '0x10', 'n', 'MAX', '']) {
+    yield `Ajoute un cas pour la valeur ${value}.`;
+  }
+  for (const literal of ["'A'", "' '", "'" + BS + "0'", "'ab'", "''", 'A']) {
+    yield `Ajoute un cas pour le caractère ${literal}.`;
+  }
+  yield* ['Ajoute le cas par défaut.', 'Sors de l’aiguillage.', "Sors de l'aiguillage.",
+    'Ajoute un cas pour.', 'Ajoute un cas sur la valeur 5.', 'Ajoute le cas par defaut.',
+    'Crée un aiguillage.', 'Crée un aiguillage sur jour.', 'Sors de l’aiguillage maintenant.',
+    'Sors de la boucle la plus intérieure.'];
   for (const digits of ['0', '2', '17', '99', 'x']) {
     yield `Affiche x en notation fixe avec ${digits} décimales.`;
     yield `Affiche x en notation scientifique avec ${digits} décimales.`;
@@ -360,7 +374,9 @@ const PLACED = ['Déclare un caractère nommé c.', "Affecte le caractère ' ' �
   'Affecte la valeur 5 à la valeur pointée par p.', 'Affiche la valeur pointée par p.',
   'Affecte à n le résultat numérique de "*p + 1".',
   'Affecte à n le résultat numérique de "*(t + i)".',
-  'Crée un bloc si "*(t + i) > 0".'];
+  'Crée un bloc si "*(t + i) > 0".',
+  'Crée un aiguillage sur "jour".', 'Ajoute un cas pour la valeur 1.',
+  'Ajoute le cas par défaut.', 'Sors de l’aiguillage.'];
 
 for (const text of DOCUMENTS) {
   for (const offset of new Set([0, text.length, Math.max(0, text.length - 1), Math.floor(text.length / 2)])) {

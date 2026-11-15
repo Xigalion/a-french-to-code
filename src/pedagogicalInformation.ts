@@ -13,7 +13,9 @@ export type PedagogicalInformation = {
     | 'ADDRESS_OF' | 'POINTER_VS_OBJECT' | 'DEREFERENCE_MEANING'
     | 'UNINITIALIZED_POINTER' | 'ADDRESS_NOT_CHECKED'
     | 'ARRAY_POINTER_EQUIVALENCE' | 'POINTER_ARITHMETIC_LIMITS'
-    | 'OUT_OF_BOUNDS_UNDEFINED' | 'OFFSET_TYPE_NOT_CHECKED';
+    | 'OUT_OF_BOUNDS_UNDEFINED' | 'OFFSET_TYPE_NOT_CHECKED'
+    | 'SWITCH_INTEGER_ONLY' | 'SWITCH_FALLTHROUGH' | 'CASE_NEEDS_STATEMENT'
+    | 'DEFAULT_OPTIONAL' | 'BREAK_LEAVES_SWITCH';
   severity: 'information';
   range: SourceRange;
   message: string;
@@ -110,8 +112,41 @@ function firstCharacterRange(value: unknown): SourceRange | undefined {
   return undefined;
 }
 
+const SWITCH_MESSAGES = {
+  SWITCH_INTEGER_ONLY: 'En C17, l’expression d’un switch doit être entière, et chaque étiquette exige une constante '
+    + 'entière distincte. C-A ne relit pas le document : il ne vérifie ni l’unicité des valeurs, ni la couverture.',
+  SWITCH_FALLTHROUGH: 'Sans « break », l’exécution continue dans l’étiquette suivante. Ce n’est pas une erreur en '
+    + 'C17 : c’est le comportement par défaut, et il doit être voulu.',
+  CASE_NEEDS_STATEMENT: 'En C17, une étiquette doit être suivie d’une instruction : une étiquette seule avant « } » '
+    + 'ne compile pas. C-A crée les blocs vides et n’ajoute aucune instruction ici.',
+  DEFAULT_OPTIONAL: '« default » est facultatif. Sans lui, une valeur qui ne correspond à aucune étiquette ne '
+    + 'déclenche rien, et l’exécution se poursuit après l’aiguillage.',
+  BREAK_LEAVES_SWITCH: '« break » quitte l’aiguillage, pas la fonction, et pas une boucle qui l’englobe. Pour '
+    + 'sortir d’une boucle, la phrase est « Sors de la boucle la plus intérieure. ».',
+} as const;
+
 export function explainInstruction(result: TranslationResult): PedagogicalInformation[] {
   if (result.status !== 'translated') return [];
+  if (result.instruction.kind === 'SWITCH') {
+    return [{ code: 'SWITCH_INTEGER_ONLY', severity: 'information',
+      range: { ...result.instruction.parameters.expressionRange }, message: SWITCH_MESSAGES.SWITCH_INTEGER_ONLY }];
+  }
+  if (result.instruction.kind === 'CASE_INT' || result.instruction.kind === 'CASE_CHAR'
+    || result.instruction.kind === 'CASE_DEFAULT') {
+    const anchor = result.instruction.kind === 'CASE_INT' ? result.instruction.parameters.valueRange
+      : result.instruction.kind === 'CASE_CHAR' ? result.instruction.parameters.literalRange
+        : result.instruction.parameters.keywordRange;
+    const entries: PedagogicalInformation[] = [
+      { code: 'SWITCH_FALLTHROUGH', severity: 'information', range: { ...anchor }, message: SWITCH_MESSAGES.SWITCH_FALLTHROUGH },
+      { code: 'CASE_NEEDS_STATEMENT', severity: 'information', range: { ...anchor }, message: SWITCH_MESSAGES.CASE_NEEDS_STATEMENT },
+    ];
+    if (result.instruction.kind !== 'CASE_DEFAULT') return entries;
+    return [...entries, { code: 'DEFAULT_OPTIONAL', severity: 'information', range: { ...anchor }, message: SWITCH_MESSAGES.DEFAULT_OPTIONAL }];
+  }
+  if (result.instruction.kind === 'BREAK_SWITCH') {
+    return [{ code: 'BREAK_LEAVES_SWITCH', severity: 'information',
+      range: { ...result.instruction.parameters.keywordRange }, message: SWITCH_MESSAGES.BREAK_LEAVES_SWITCH }];
+  }
   // A text initialiser IS a string, so CHAR_ARRAY_NOT_STRING must not fire
   // here: the two declarations teach opposite halves of the same fact.
   if (result.instruction.kind === 'STRING_INIT') {

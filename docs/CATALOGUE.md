@@ -322,6 +322,44 @@ Ni `p - i`, ni `p - q`, ni `ptrdiff_t`, ni `++`/`--` sur un pointeur.
 
 ---
 
+## Domaine 3 — Aiguillage `switch` (lot 19)
+
+Dernier manque du domaine 3, que la documentation fondatrice signalait
+comme non livré. `switch` était déjà **reconnu** par le balayage
+contextuel ; il est désormais **produit**.
+
+| Phrase française | Code C produit | Information |
+|---|---|---|
+| `Crée un aiguillage sur "jour".` | `switch (jour) { ⏎ ⏎ }` | SWITCH_INTEGER_ONLY |
+| `Ajoute un cas pour la valeur 5.` | `case 5:` | SWITCH_FALLTHROUGH, CASE_NEEDS_STATEMENT |
+| `Ajoute un cas pour le caractère 'A'.` | `case 'A':` | SWITCH_FALLTHROUGH, CASE_NEEDS_STATEMENT |
+| `Ajoute le cas par défaut.` | `default:` | + DEFAULT_OPTIONAL |
+| `Sors de l'aiguillage.` | `break;` | BREAK_LEAVES_SWITCH |
+
+L'expression contrôlée est analysée par le **profil entier du lot 6**,
+inchangé : ni flottant, ni conversion, ni comparaison. Une étiquette exige
+une **constante** — entier décimal, signe moins admis, ou constante
+caractère. Un nom est refusé (`CASE_NEEDS_CONSTANT`) : C-A ne résout aucun
+symbole et ne peut pas distinguer une énumération d'une variable.
+
+**Placement contextuel symétrique.** Une étiquette et la sortie
+d'aiguillage exigent un `switch` englobant prouvé
+(`SWITCH_TARGET_NOT_FOUND` sinon). Et les deux sorties se refusent
+mutuellement quand l'autre structure est plus proche :
+
+| Situation | Phrase | Résultat |
+|---|---|---|
+| `switch` plus proche | `Sors de la boucle la plus intérieure.` | `BREAK_TARGET_IS_SWITCH` (lot 11D) |
+| boucle plus proche | `Sors de l'aiguillage.` | `BREAK_TARGET_IS_LOOP` (lot 19) |
+
+Dans les deux sens la phrase serait **fausse**, et C-A refuse plutôt que
+de produire un `break;` qui ne fait pas ce qui est annoncé.
+
+Non livré : plages de cas (`case 1 ... 5:`, extension GNU), cas groupés en
+une phrase, vérification d'unicité ou de couverture, et `goto`.
+
+---
+
 ## Limites de complexité
 
 | Limite | Valeur |

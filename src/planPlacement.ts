@@ -5,6 +5,8 @@ import { resolveBranchTarget } from './branchTarget.ts';
 import type { Attachment, BranchCode } from './branchTarget.ts';
 import { resolveLoopTarget } from './loopTarget.ts';
 import type { LoopTarget, TransferCode } from './loopTarget.ts';
+import { resolveSwitchTarget } from './switchTarget.ts';
+import type { SwitchTarget, SwitchCode } from './switchTarget.ts';
 import type { ContextCode } from './enclosingStructures.ts';
 import { resolveFunctionContext, resolveFileScope } from './functionContext.ts';
 import type { FunctionContext, FunctionCode } from './functionContext.ts';
@@ -12,6 +14,8 @@ import type { FunctionContext, FunctionCode } from './functionContext.ts';
 export type SuccessfulTranslation = Extract<TranslationResult, { status: 'translated' }>;
 /** Intents whose placement must agree with the enclosing function's contract. */
 const RETURN_KINDS: readonly string[] = ['RETURN', 'RETURN_INT', 'RETURN_EXPRESSION', 'RETURN_NUMERIC'];
+/** Labels and the switch exit: each needs its enclosing switch proven first. */
+const SWITCH_KINDS: readonly string[] = ['CASE_INT', 'CASE_CHAR', 'CASE_DEFAULT', 'BREAK_SWITCH'];
 export type DocumentSnapshot = { id: string; revision: string | number; text: string };
 export type PlacementRequest = {
   document: DocumentSnapshot;
@@ -22,7 +26,7 @@ export type PlacementRequest = {
   fallbackEol?: '\n' | '\r\n';
 };
 export type PlacementDiagnostic = {
-  code: BranchCode | TransferCode | ContextCode | FunctionCode
+  code: BranchCode | TransferCode | SwitchCode | ContextCode | FunctionCode
     | 'RETURN_NEEDS_VALUE' | 'RETURN_IN_VOID_FUNCTION' | 'INVALID_DOCUMENT' | 'INVALID_CURSOR' | 'INVALID_INDENT_UNIT' | 'INVALID_EOL'
     | 'INVALID_TRANSLATION_RESULT' | 'TARGET_LINE_NOT_BLANK'
     | 'TARGET_IN_COMMENT' | 'LEXICAL_CONTEXT_UNDETERMINED'
@@ -39,6 +43,7 @@ export type PlacementPlan = {
   branchContext?: { indentUnit: string };
   /** Set for break/continue: the loop the transfer was proven to control. */
   loopTarget?: LoopTarget;
+  switchTarget?: SwitchTarget;
   /** Set for a return: the function the line was proven to belong to. */
   functionContext?: FunctionContext;
   /** Captured when a contextual recognizer ran, so freshness can rebuild. */
@@ -150,7 +155,11 @@ export function planPlacement(request: PlacementRequest): PlacementResult {
   const defining = canonical.instruction.kind === 'FUNC_DEF' || canonical.instruction.kind === 'MAIN';
   let attachment: Attachment | undefined;
   let loopTarget: LoopTarget | undefined;
+  let switchTarget: SwitchTarget | undefined;
   let functionContext: FunctionContext | undefined;
+  // A label or a switch exit is placed only once the switch it belongs to is
+  // proven, never from brace depth and never from indentation.
+  const inSwitch = SWITCH_KINDS.includes(canonical.instruction.kind);
   if (isBranch) {
     const resolved = resolveBranchTarget(text, lineStart, lineEnd, baseIndent);
     if (resolved.status === 'rejected') {
@@ -167,6 +176,13 @@ export function planPlacement(request: PlacementRequest): PlacementResult {
       return reject(issue.code, issue.reason, issue.message, issue.range);
     }
     loopTarget = resolved.target;
+  } else if (inSwitch) {
+    const resolved = resolveSwitchTarget(text, lineStart, canonical.instruction.kind !== 'BREAK_SWITCH');
+    if (resolved.status === 'rejected') {
+      const issue = resolved.diagnostic;
+      return reject(issue.code, issue.reason, issue.message, issue.range);
+    }
+    switchTarget = resolved.target;
   } else if (defining) {
     // C17 forbids nested function definitions, for MAIN as for any other.
     const scope = resolveFileScope(text, lineStart);
@@ -218,8 +234,9 @@ export function planPlacement(request: PlacementRequest): PlacementResult {
     plan: {
       ...(attachment ? { attachment, branchContext: { indentUnit } } : {}),
       ...(loopTarget ? { loopTarget } : {}),
+      ...(switchTarget ? { switchTarget } : {}),
       ...(functionContext ? { functionContext } : {}),
-      ...(loopTarget || functionContext || defining ? { recognizerContext: { indentUnit } } : {}),
+      ...(loopTarget || switchTarget || functionContext || defining ? { recognizerContext: { indentUnit } } : {}),
       base: { documentId: document.id, revision: document.revision, text },
       source: { text: canonical.source.text, instruction: canonical.instruction },
       edits: [{ range: { start: lineStart, end: lineEnd }, newText }],
@@ -237,8 +254,9 @@ export function validatePlan(plan: PlacementPlan, document: DocumentSnapshot): P
   if (plan.base.documentId !== document.id || plan.base.revision !== document.revision || plan.base.text !== document.text) {
     return reject('STALE_PLAN', 'stale-plan', 'Le document a changé : un nouveau plan et un nouvel aperçu sont nécessaires.');
   }
-  const contextual = plan.loopTarget || plan.functionContext
+  const contextual = plan.loopTarget || plan.switchTarget || plan.functionContext
     || plan.source.instruction.kind === 'BREAK' || plan.source.instruction.kind === 'CONTINUE'
+    || SWITCH_KINDS.includes(plan.source.instruction.kind)
     || plan.source.instruction.kind === 'FUNC_DEF' || plan.source.instruction.kind === 'MAIN'
     || RETURN_KINDS.includes(plan.source.instruction.kind);
   if (contextual) {

@@ -15,11 +15,13 @@ import type { ArrayInstruction } from './arrayInstructions.ts';
 import { parseStringLiteral, renderStringLiteral } from './stringLiteral.ts';
 import { analyzePointerInstruction } from './pointerInstructions.ts';
 import type { PointerInstruction } from './pointerInstructions.ts';
+import { analyzeSwitchInstruction } from './switchInstructions.ts';
+import type { SwitchInstruction } from './switchInstructions.ts';
 
 /** Half-open offsets in UTF-16 code units, relative to the original input. */
 export type SourceRange = { start: number; end: number };
 
-export type Instruction = NumericInstruction | FunctionInstruction | CharacterInstruction | ArrayInstruction | PointerInstruction
+export type Instruction = NumericInstruction | FunctionInstruction | CharacterInstruction | ArrayInstruction | PointerInstruction | SwitchInstruction
   | { kind: 'IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE_IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE'; parameters: Record<string, never> }
@@ -44,7 +46,7 @@ type DisplayFormat = 'decimal' | 'hexadecimal' | 'octal';
  * cursor placed inside. Shared by the translator and the placement planner so
  * both stay in step.
  */
-export const BLOCK_KINDS: readonly string[] = ['MAIN', 'IF', 'ELSE_IF', 'ELSE', 'WHILE', 'DO_WHILE', 'FOR', 'FUNC_DEF'];
+export const BLOCK_KINDS: readonly string[] = ['MAIN', 'IF', 'ELSE_IF', 'ELSE', 'WHILE', 'DO_WHILE', 'FOR', 'FUNC_DEF', 'SWITCH'];
 
 /** Intents whose only parameter is a bounded condition of the lot 10 profile. */
 export function instructionCondition(instruction: Instruction): Condition | undefined {
@@ -112,6 +114,7 @@ export type DiagnosticCode =
   | 'INVALID_DEREFERENCE_OPERAND'
   | 'UNSUPPORTED_INDIRECTION_LEVEL'
   | 'INVALID_POINTER_OFFSET'
+  | 'CASE_NEEDS_CONSTANT'
   | 'UNEXPECTED_TEXT';
 
 export type Diagnostic = {
@@ -159,7 +162,7 @@ const C17_KEYWORDS = new Set([
 
 type Token = { text: string; range: SourceRange };
 type Parameter = { parameter: 'name' | 'value' | 'header' };
-type Rule = { kind: Exclude<Instruction['kind'], 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | FunctionInstruction['kind'] | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind'] | CharacterInstruction['kind'] | ArrayInstruction['kind'] | PointerInstruction['kind']>; parts: (string | Parameter)[] };
+type Rule = { kind: Exclude<Instruction['kind'], 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | FunctionInstruction['kind'] | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind'] | CharacterInstruction['kind'] | ArrayInstruction['kind'] | PointerInstruction['kind'] | SwitchInstruction['kind']>; parts: (string | Parameter)[] };
 
 const RULES: [Rule, ...Rule[]] = [
   { kind: 'MAIN', parts: ['Crée', 'la', 'fonction', 'principale'] },
@@ -277,6 +280,14 @@ function render(text: string, instruction: Instruction): TranslationResult {
     case 'ASSIGN_POINTED_INT': code = `*${instruction.parameters.name} = ${instruction.parameters.value};\n`; break;
     case 'ASSIGN_POINTED_EXPRESSION': code = `*${instruction.parameters.name} `
       + `= ${renderNumericExpression(instruction.parameters.expression)};\n`; break;
+    // A switch body is created empty, like every other block. Its labels are
+    // written one per instruction, and no label is ever added implicitly.
+    case 'SWITCH': code = `switch (${renderExpression(instruction.parameters.expression)}) {\n    \n}\n`; break;
+    case 'CASE_INT': code = `case ${instruction.parameters.value}:\n`; break;
+    case 'CASE_CHAR': code = `case ${instruction.parameters.literal}:\n`; break;
+    case 'CASE_DEFAULT': code = 'default:\n'; break;
+    // Not the same intent as « sors de la boucle » : the target is the switch.
+    case 'BREAK_SWITCH': code = 'break;\n'; break;
     case 'INCLUDE_STDIO': code = '#include <stdio.h>\n'; break;
     case 'PRINT_INT': code = `printf("%d", ${instruction.parameters.name});\n`; break;
     case 'PRINT_FORMATTED': {
@@ -591,6 +602,10 @@ export function translate(text: string): TranslationResult {
   const arrays = analyzeArrayInstruction(text, tokens, end, identifierDiagnostic);
   if (arrays?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [arrays.diagnostic] };
   if (arrays?.status === 'recognized') return render(text, arrays.instruction);
+
+  const switches = analyzeSwitchInstruction(text, tokens, end, identifierDiagnostic);
+  if (switches?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [switches.diagnostic] };
+  if (switches?.status === 'recognized') return render(text, switches.instruction);
 
   const pointers = analyzePointerInstruction(text, tokens, end, identifierDiagnostic);
   if (pointers?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [pointers.diagnostic] };
