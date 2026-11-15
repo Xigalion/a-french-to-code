@@ -11,7 +11,9 @@ export type PedagogicalInformation = {
     | 'NULL_TERMINATOR' | 'ARRAY_SIZE_VS_LENGTH' | 'STRING_TERMINATOR_NOT_CHECKED'
     | 'ELEMENT_CHARACTER_FORMAT'
     | 'ADDRESS_OF' | 'POINTER_VS_OBJECT' | 'DEREFERENCE_MEANING'
-    | 'UNINITIALIZED_POINTER' | 'ADDRESS_NOT_CHECKED';
+    | 'UNINITIALIZED_POINTER' | 'ADDRESS_NOT_CHECKED'
+    | 'ARRAY_POINTER_EQUIVALENCE' | 'POINTER_ARITHMETIC_LIMITS'
+    | 'OUT_OF_BOUNDS_UNDEFINED' | 'OFFSET_TYPE_NOT_CHECKED';
   severity: 'information';
   range: SourceRange;
   message: string;
@@ -80,6 +82,17 @@ const POINTER_MESSAGES = {
     + 'n’en reçoit pas une. Le déréférencer avant cela a, en C17, un comportement indéfini.',
   ADDRESS_NOT_CHECKED: 'C-A ne vérifie ni que ce pointeur a reçu une adresse, ni qu’elle est encore valide, ni '
     + 'qu’elle désigne bien le type attendu. Aucune mémoire n’est analysée ici.',
+  ARRAY_POINTER_EQUIVALENCE: 'En C17, « t[i] » et « *(t + i) » désignent le même élément. Dans une expression, le '
+    + 'nom d’un tableau est converti en pointeur vers son premier élément ; un tableau et un pointeur ne sont pas '
+    + 'pour autant du même type.',
+  POINTER_ARITHMETIC_LIMITS: 'L’addition se compte en éléments, pas en octets. Elle n’est définie qu’à l’intérieur '
+    + 'du tableau et jusqu’à une position au-delà du dernier élément : cette position peut être formée, mais elle '
+    + 'ne doit pas être déréférencée.',
+  OUT_OF_BOUNDS_UNDEFINED: 'Lire ou écrire hors des limites a, en C17, un comportement indéfini, et rien ne le '
+    + 'signale à l’exécution. C-A ne vérifie ni les bornes, ni la validité de l’adresse formée.',
+  OFFSET_TYPE_NOT_CHECKED: 'Cette forme est syntaxiquement celle d’un décalage, et rien de plus : C-A ne vérifie ni '
+    + 'que ce nom désigne un tableau ou un pointeur, ni que le décalage est bien un entier. Une forme acceptée ici '
+    + 'ne garantit pas que le C produit soit correct.',
 } as const;
 
 /** The first character constant written inside an expression. Walked the same
@@ -169,13 +182,23 @@ export function explainInstruction(result: TranslationResult): PedagogicalInform
         + 'décimal. C-A ne vérifie ni que ce tableau est de type char, ni que cet élément a été écrit.' });
   }
   // The two unary operators written inside an expression carry the same facts
-  // as the dedicated envelopes do.
+  // as the dedicated envelopes do. A `*(nom + décalage)` carries four more,
+  // and replaces ADDRESS_NOT_CHECKED with the more precise bounds statement.
   const dereferenced = firstNodeRange(parameters, 'dereference', 'operatorRange');
+  const offset = firstNodeRange(parameters, 'pointer-sum', 'operatorRange');
   if (dereferenced) {
     entries.push({ code: 'DEREFERENCE_MEANING', severity: 'information', range: { ...dereferenced },
       message: POINTER_MESSAGES.DEREFERENCE_MEANING });
-    entries.push({ code: 'ADDRESS_NOT_CHECKED', severity: 'information', range: { ...dereferenced },
-      message: POINTER_MESSAGES.ADDRESS_NOT_CHECKED });
+    if (!offset) {
+      entries.push({ code: 'ADDRESS_NOT_CHECKED', severity: 'information', range: { ...dereferenced },
+        message: POINTER_MESSAGES.ADDRESS_NOT_CHECKED });
+    }
+  }
+  if (offset) {
+    for (const code of ['ARRAY_POINTER_EQUIVALENCE', 'POINTER_ARITHMETIC_LIMITS',
+      'OUT_OF_BOUNDS_UNDEFINED', 'OFFSET_TYPE_NOT_CHECKED'] as const) {
+      entries.push({ code, severity: 'information', range: { ...offset }, message: POINTER_MESSAGES[code] });
+    }
   }
   const addressed = firstNodeRange(parameters, 'address', 'operatorRange');
   if (addressed) {

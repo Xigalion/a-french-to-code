@@ -22,29 +22,30 @@ test('capacités déclarées des quatre profils', () => {
   // The lot 6 profile stays exactly as lot 13 sealed it: lot 15 added two
   // fields, and left `indexing` off here on purpose.
   assert.deepEqual(INTEGER_CAPABILITIES, {
-    literals: 'integer', literalKind: 'integer', indexing: false, characters: false, addressOf: false, dereference: false,
+    literals: 'integer', literalKind: 'integer', indexing: false, characters: false, addressOf: false, dereference: false, pointerOffset: false,
     casts: false, castTypes: [], logic: false,
     invalidTokenMessage: 'Cet élément n’appartient pas à une expression entière prise en charge.',
     invariantMessage: 'Invariant interne : expression analysée absente.',
   });
   // `char` entered castTypes at lot 14 by decision D2; `indexing` was opened
   // at lot 15, `characters` at lot 16, `addressOf` and `dereference` at lot
-  // 17, in these two profiles only, each time as an approved extension.
+  // 17, `pointerOffset` at lot 18, in these two profiles only, each time as
+  // an approved and documented extension.
   assert.deepEqual(NUMERIC_CAPABILITIES, {
-    literals: 'numeric', literalKind: 'literal', indexing: true, characters: true, addressOf: true, dereference: true,
+    literals: 'numeric', literalKind: 'literal', indexing: true, characters: true, addressOf: true, dereference: true, pointerOffset: true,
     casts: true, castTypes: ['int', 'unsigned int', 'float', 'double', 'char'], logic: false,
     invalidTokenMessage: 'Cet élément n’appartient pas à une expression numérique prise en charge.',
     invariantMessage: 'Invariant interne : expression numérique analysée absente.',
   });
   assert.deepEqual(CONDITION_CAPABILITIES, {
-    literals: 'numeric', literalKind: 'literal', indexing: true, characters: true, addressOf: true, dereference: true,
+    literals: 'numeric', literalKind: 'literal', indexing: true, characters: true, addressOf: true, dereference: true, pointerOffset: true,
     casts: true, castTypes: ['int', 'unsigned int', 'float', 'double', 'char'], logic: true,
     invalidTokenMessage: 'Cet élément n’appartient pas à une expression numérique prise en charge.',
     invariantMessage: 'Invariant interne : expression numérique analysée absente.',
   });
   // Never published as a profile: selected only between `[` and `]`.
   assert.deepEqual(INDEX_CAPABILITIES, {
-    literals: 'integer', literalKind: 'literal', indexing: true, characters: false, addressOf: false, dereference: false,
+    literals: 'integer', literalKind: 'literal', indexing: true, characters: false, addressOf: false, dereference: false, pointerOffset: false,
     casts: false, castTypes: [], logic: false,
     invalidTokenMessage: 'Cet élément n’appartient pas à un indice entier pris en charge.',
     invariantMessage: 'Invariant interne : indice analysé absent.',

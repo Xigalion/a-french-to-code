@@ -20,6 +20,9 @@ export type CoreNode =
    * point at the operator rather than at the whole operand. */
   | { kind: 'address'; operand: CoreNode; range: SourceRange; operatorRange: SourceRange }
   | { kind: 'dereference'; operand: CoreNode; range: SourceRange; operatorRange: SourceRange }
+  /** `nom + décalage` under a dereference, and nowhere else: the lot 18 frame
+   * for the array/pointer relation. One `+`, one level of parentheses. */
+  | { kind: 'pointer-sum'; pointer: CoreNode; offset: CoreNode; range: SourceRange; operatorRange: SourceRange }
   /** `bracketRange` covers the subscript delimiters alone, so the passive
    * pedagogy can point at the designation without the array name. */
   | { kind: 'index'; array: CoreNode; index: CoreNode; range: SourceRange; bracketRange: SourceRange }
@@ -56,6 +59,8 @@ export type ExpressionCapabilities = {
   /** Unary `*` in operand position only; the binary `*` is consumed by the
    * product rule before any operand is read, so it is unaffected. */
   readonly dereference: boolean;
+  /** `*(nom + décalage)`. Requires `dereference`; off in the frozen profiles. */
+  readonly pointerOffset: boolean;
   /** Parenthesized conversions `(type) operand`. */
   readonly casts: boolean;
   /** The exact type designations a conversion accepts. Listed rather than
@@ -74,6 +79,7 @@ export const INTEGER_CAPABILITIES: ExpressionCapabilities = {
   characters: false,
   addressOf: false,
   dereference: false,
+  pointerOffset: false,
   casts: false,
   castTypes: [],
   logic: false,
@@ -88,6 +94,7 @@ export const NUMERIC_CAPABILITIES: ExpressionCapabilities = {
   characters: true,
   addressOf: true,
   dereference: true,
+  pointerOffset: true,
   casts: true,
   castTypes: ['int', 'unsigned int', 'float', 'double', 'char'],
   logic: false,
@@ -102,6 +109,7 @@ export const CONDITION_CAPABILITIES: ExpressionCapabilities = {
   characters: true,
   addressOf: true,
   dereference: true,
+  pointerOffset: true,
   casts: true,
   castTypes: ['int', 'unsigned int', 'float', 'double', 'char'],
   logic: true,
@@ -121,6 +129,7 @@ export const INDEX_CAPABILITIES: ExpressionCapabilities = {
   characters: false,
   addressOf: false,
   dereference: false,
+  pointerOffset: false,
   casts: false,
   castTypes: [],
   logic: false,
@@ -277,6 +286,21 @@ export function parseCore(source: string, start: number, end: number, validateNa
       return fail('UNSUPPORTED_INDIRECTION_LEVEL', 'Un seul niveau d’indirection est pris en charge.',
         { start: opening.range.start, end: operand.range.end });
     }
+    // Lot 18: under a `*`, a parenthesized `nom + décalage` is the frame that
+    // teaches the array/pointer relation. The offset is checked against the
+    // integer forms of the subscript profile, node by node, so a float, a
+    // conversion, a character or another indirection is refused where it is.
+    if (kind === 'dereference' && capabilities.pointerOffset && operand.kind === 'binary') {
+      if (operand.operator !== '+' || operand.left.kind !== 'name') return fail('INVALID_POINTER_OFFSET',
+        'Seule la forme *(nom + décalage entier) est prise en charge.', operand.range);
+      const invalid = nonIntegerOffset(operand.right);
+      if (invalid) return fail('INVALID_POINTER_OFFSET',
+        'Le décalage doit être une expression entière : noms, entiers décimaux, opérations et indexation.', invalid);
+      const sum: CoreNode = { kind: 'pointer-sum', pointer: operand.left, offset: operand.right,
+        range: { ...operand.range }, operatorRange: { ...operand.left.range } };
+      return { kind, operand: sum, range: { start: opening.range.start, end: operand.range.end },
+        operatorRange: { ...opening.range } };
+    }
     const allowed = kind === 'address' ? ['name', 'index'] : ['name'];
     if (!allowed.includes(operand.kind)) {
       return fail(kind === 'address' ? 'INVALID_ADDRESS_OPERAND' : 'INVALID_DEREFERENCE_OPERAND',
@@ -285,6 +309,17 @@ export function parseCore(source: string, start: number, end: number, validateNa
     }
     return { kind, operand, range: { start: opening.range.start, end: operand.range.end },
       operatorRange: { ...opening.range } };
+  }
+  /** The first node of an offset subtree that is not an integer form. */
+  function nonIntegerOffset(node: CoreNode): SourceRange | undefined {
+    if (node.kind === 'name') return undefined;
+    if (node.kind === 'literal' || node.kind === 'integer') {
+      return /^(?:0|[1-9][0-9]*)[uU]?$/u.test(node.value) ? undefined : { ...node.range };
+    }
+    if (node.kind === 'negation') return nonIntegerOffset(node.operand);
+    if (node.kind === 'binary') return nonIntegerOffset(node.left) ?? nonIntegerOffset(node.right);
+    if (node.kind === 'index') return nonIntegerOffset(node.index);
+    return { ...node.range };
   }
   function unary(depth: number): CoreNode | undefined {
     const token = peek();

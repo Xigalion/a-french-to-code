@@ -111,6 +111,7 @@ export type DiagnosticCode =
   | 'INVALID_ADDRESS_OPERAND'
   | 'INVALID_DEREFERENCE_OPERAND'
   | 'UNSUPPORTED_INDIRECTION_LEVEL'
+  | 'INVALID_POINTER_OFFSET'
   | 'UNEXPECTED_TEXT';
 
 export type Diagnostic = {

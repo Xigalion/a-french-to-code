@@ -170,6 +170,12 @@ const EXPRESSIONS = ['2 + 3 * 4', 'a + b', '-a', '(a + b) * c', 'a / 0', 'a % b'
   '&x', '*p', '&t[0]', '&t[i + 1]', '* *p', '& &x', '&*p', '*&x', '&5', '&(a + b)', '&-x', "&'A'",
   '*5', '*(p + 1)', '*t[0]', '*(p)', '(*p)', '&', '*', '*p + 1', '&x + 1', 'a * *b', '-*p', '!*p',
   '&&x', '**p', 'a & b', 'a && b', 'a ** b', '*p * 2', '&x == &y', '*p != 0',
+  // Lot 18 surface.
+  '*(t + i)', '*(t + 0)', '*(t + i * 2)', '*(t + (i + 1))', '*(t + u[i])', '*(t + -i)', '*(t + (i))',
+  '*(t + i) + 1', '*(i + t)', '*(p + q)', '*(p - i)', '*(t + i + j)', '*(t * i)', '*(t / i)',
+  '*(t + 1.5)', '*(t + 1e3)', '*(t + (int) 1)', "*(t + 'A')", '*(t + *q)', '*(t + &x)',
+  '*(t[0] + i)', '*(-t + i)', '*((t) + i)', '*(t + i', '*(t + )', '*( + i)', '*(t +)',
+  '*(t + i) + *(u + j)', '&*(t + i)', '* *(t + i)', 't[*(u + i)]',
   'a +', '+ a', '1u', '2.5f', '0x1f', '12abc', 'a, b', 'a; b', '😀', 'a' + ' + a'.repeat(600)];
 const TYPES = ['int', 'unsigned int', 'float', 'double', 'char', 'long'];
 const FORMATS = ['décimal', 'hexadécimal', 'octal', 'décimal non signé', 'binaire'];
@@ -352,7 +358,9 @@ const PLACED = ['Déclare un caractère nommé c.', "Affecte le caractère ' ' �
   `Crée une boucle tant que "s[i] != '${BS}0'".`,
   'Déclare un pointeur de type int nommé p.', 'Affecte l’adresse de x à p.',
   'Affecte la valeur 5 à la valeur pointée par p.', 'Affiche la valeur pointée par p.',
-  'Affecte à n le résultat numérique de "*p + 1".'];
+  'Affecte à n le résultat numérique de "*p + 1".',
+  'Affecte à n le résultat numérique de "*(t + i)".',
+  'Crée un bloc si "*(t + i) > 0".'];
 
 for (const text of DOCUMENTS) {
   for (const offset of new Set([0, text.length, Math.max(0, text.length - 1), Math.floor(text.length / 2)])) {

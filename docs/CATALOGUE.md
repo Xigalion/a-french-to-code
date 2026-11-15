@@ -286,6 +286,42 @@ Le profil entier et le profil d'indice restent fermés aux deux opérateurs.
 
 ---
 
+## Domaine 5 — Relation tableaux/pointeurs (lot 18)
+
+**Aucune enveloppe nouvelle** : la relation à enseigner est une relation
+d'expressions, elle s'écrit donc dans les expressions existantes.
+
+| Phrase française | Code C produit | Information |
+|---|---|---|
+| `Affecte à n le résultat numérique de "*(t + i)".` | `n = (*(t + i));` | DEREFERENCE_MEANING, ARRAY_POINTER_EQUIVALENCE, POINTER_ARITHMETIC_LIMITS, OUT_OF_BOUNDS_UNDEFINED, OFFSET_TYPE_NOT_CHECKED |
+| `Crée un bloc si "*(t + i) > 0".` | `if ((*(t + i)) > 0) { ⏎ ⏎ }` | les cinq mêmes |
+| `Retourne le résultat numérique de "*(t + i * 2)".` | `return (*(t + (i * 2)));` | + RETURN_ENDS_FUNCTION |
+| `Appelle traiter avec "*(t + i)".` | `traiter((*(t + i)));` | + CALL_NOT_RESOLVED |
+| `Affiche l'élément "i" de t.` | `printf("%d", t[i]);` | INDEX_NOT_CHECKED |
+
+Les deux dernières lignes sont la leçon du lot : `t[i]` et `*(t + i)`
+désignent **le même élément**.
+
+**Grammaire, strictement** : `*(nom + décalage)`, un seul `+`, un seul
+niveau de parenthèses, membre gauche un **nom**, décalage dans la
+grammaire **entière** du lot 15 (noms, entiers décimaux, `+ - * / %`,
+parenthèses, négation, indexation).
+
+Refusés avec `INVALID_POINTER_OFFSET` : `*(p - i)`, `*(t + i + j)`,
+`*(t * i)`, `*(t + 1.5)`, `*(t + (int) 1)`, `*(t + 'A')`, `*(t + *q)`,
+`*(t + &x)`, `*(t[0] + i)`, `*(-t + i)`. Acceptés : `*(p)`, `*((t) + i)`,
+`*(t + (i + 1))`.
+
+**Ce que la grammaire ne garantit pas.** `*(p + q)` et `*(i + t)` sont
+acceptés : un identifiant est syntaxiquement une expression entière et
+C-A ne résout aucun symbole. `OFFSET_TYPE_NOT_CHECKED` le dit à chaque
+occurrence — une forme acceptée ici **ne garantit pas** que le C produit
+soit correct.
+
+Ni `p - i`, ni `p - q`, ni `ptrdiff_t`, ni `++`/`--` sur un pointeur.
+
+---
+
 ## Limites de complexité
 
 | Limite | Valeur |

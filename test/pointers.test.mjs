@@ -150,8 +150,9 @@ test('priorité : *p + 1 n’est jamais *(p + 1)', () => {
   const code = translated('Affecte à n le résultat numérique de "*p + 1".').fragments[0].code;
   assert.equal(code, 'n = ((*p) + 1);\n');
   assert.ok(!code.includes('*(p'), code);
-  // The arithmetic form under a dereference is refused, not reinterpreted.
-  refused('Affecte à n le résultat numérique de "*(p + 1)".', 'INVALID_DEREFERENCE_OPERAND');
+  // `*(p + 1)` became the lot 18 frame for the array/pointer relation; the
+  // subtraction form is still refused, and that is what this test now fixes.
+  refused('Affecte à n le résultat numérique de "*(p - 1)".', 'INVALID_POINTER_OFFSET');
 });
 
 test('les nœuds produits portent l’opérateur et son intervalle', () => {
@@ -223,7 +224,8 @@ for (const [source, code, start, end] of [
   ['& &x', 'UNSUPPORTED_INDIRECTION_LEVEL', 0, 4],
   ['&*p', 'UNSUPPORTED_INDIRECTION_LEVEL', 0, 3],
   ['*5', 'INVALID_DEREFERENCE_OPERAND', 1, 2],
-  ['*(p + 1)', 'INVALID_DEREFERENCE_OPERAND', 1, 8],
+  // `*(p + 1)` left this list at lot 18, which opened `*(nom + décalage)`.
+  ['*(p - 1)', 'INVALID_POINTER_OFFSET', 1, 8],
   ['*t[0]', 'INVALID_DEREFERENCE_OPERAND', 1, 5],
   ['* *p', 'UNSUPPORTED_INDIRECTION_LEVEL', 0, 4],
   ['*&x', 'UNSUPPORTED_INDIRECTION_LEVEL', 0, 3],
@@ -241,9 +243,9 @@ for (const [source, code, start, end] of [
 }
 
 test('les plages sont absolues dans la phrase d’origine', () => {
-  const source = 'Crée un bloc si "*(p + 1) > 0".';
-  const diagnostic = refused(source, 'INVALID_DEREFERENCE_OPERAND');
-  assert.equal(source.slice(diagnostic.range.start, diagnostic.range.end), '(p + 1)');
+  const source = 'Crée un bloc si "*(p - 1) > 0".';
+  const diagnostic = refused(source, 'INVALID_POINTER_OFFSET');
+  assert.equal(source.slice(diagnostic.range.start, diagnostic.range.end), '(p - 1)');
 });
 
 // ---------------------------------------------------------------------------
@@ -277,8 +279,8 @@ test('le profil d’indice reste fermé : un indice n’est ni une adresse ni un
 test('aucune arithmétique de pointeurs n’est produite par une formulation du lot', () => {
   // Every output of the lot is checked: none contains a pointer sum.
   for (const [, code] of EXACT) assert.ok(!/\*\s*\w+\s*[-+]/u.test(code.replace('*p = (a + 1);', '')), code);
-  refused('Affecte à n le résultat numérique de "*(p + 1)".', 'INVALID_DEREFERENCE_OPERAND');
-  refused('Affecte à n le résultat numérique de "*(p - 1)".', 'INVALID_DEREFERENCE_OPERAND');
+  // The sum form is the lot 18 frame; the subtraction stays closed.
+  refused('Affecte à n le résultat numérique de "*(p - 1)".', 'INVALID_POINTER_OFFSET');
   refused('Affiche la valeur pointée par p + 1.', 'UNEXPECTED_TEXT');
 });
 

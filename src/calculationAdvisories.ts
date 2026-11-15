@@ -63,6 +63,7 @@ export function analyzeCalculations(translation: TranslationResult): Calculation
     // The two unary operators are transparent: a division written under them
     // is the same local fact as anywhere else.
     if (node.kind === 'address' || node.kind === 'dereference') { stack.push(node.operand); continue; }
+    if (node.kind === 'pointer-sum') { stack.push(node.offset); continue; }
     if (node.kind !== 'binary') continue;
     stack.push(node.right, node.left);
     if (node.operator !== '/' && node.operator !== '%') continue;

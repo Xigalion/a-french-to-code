@@ -8,7 +8,8 @@ export type NumericExpression =
   | { kind: 'name'; name: string; range: SourceRange }
   | { kind: 'character'; value: string; range: SourceRange }
   | { kind: 'address'; operand: NumericName | IndexedElement; range: SourceRange; operatorRange: SourceRange }
-  | { kind: 'dereference'; operand: NumericName; range: SourceRange; operatorRange: SourceRange }
+  | { kind: 'dereference'; operand: NumericName | PointerSum; range: SourceRange; operatorRange: SourceRange }
+  | { kind: 'pointer-sum'; pointer: NumericName; offset: NumericExpression; range: SourceRange; operatorRange: SourceRange }
   /** Only a name is indexable, which is why `array` is not the whole union. */
   | { kind: 'index'; array: NumericName; index: NumericExpression; range: SourceRange; bracketRange: SourceRange }
   | { kind: 'negation'; operand: NumericExpression; range: SourceRange }
@@ -16,6 +17,7 @@ export type NumericExpression =
   | { kind: 'binary'; operator: '+' | '-' | '*' | '/' | '%'; left: NumericExpression; right: NumericExpression; range: SourceRange };
 
 export type NumericName = { kind: 'name'; name: string; range: SourceRange };
+export type PointerSum = Extract<NumericExpression, { kind: 'pointer-sum' }>;
 export type IndexedElement = Extract<NumericExpression, { kind: 'index' }>;
 export type NameValidator = CoreNameValidator;
 export type NumericExpressionResult = { status: 'parsed'; expression: NumericExpression } | { status: 'rejected'; diagnostic: Diagnostic };
@@ -51,7 +53,9 @@ export function renderNumericExpression(expression: NumericExpression): string {
     // Parenthesized like the negation since lot 6: the priority the student
     // reads is the priority that applies, so `*p + 1` can never be `*(p + 1)`.
     case 'address': return `(&${renderNumericExpression(expression.operand)})`;
-    case 'dereference': return `(*${expression.operand.name})`;
+    case 'dereference': return expression.operand.kind === 'name'
+      ? `(*${expression.operand.name})` : `(*${renderNumericExpression(expression.operand)})`;
+    case 'pointer-sum': return `(${expression.pointer.name} + ${renderNumericExpression(expression.offset)})`;
     // No parentheses: `t[i]` is already a postfix designation in C17.
     case 'index': return `${expression.array.name}[${renderNumericExpression(expression.index)}]`;
     case 'negation': return `(-${renderNumericExpression(expression.operand)})`;
