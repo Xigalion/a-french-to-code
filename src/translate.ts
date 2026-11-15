@@ -21,11 +21,13 @@ import { analyzeStructInstruction, renderMemberTarget } from './structInstructio
 import type { StructInstruction } from './structInstructions.ts';
 import { analyzeMemoryInstruction, renderMeasuredType } from './memoryInstructions.ts';
 import type { MemoryInstruction } from './memoryInstructions.ts';
+import { analyzeFileInstruction } from './fileInstructions.ts';
+import type { FileInstruction } from './fileInstructions.ts';
 
 /** Half-open offsets in UTF-16 code units, relative to the original input. */
 export type SourceRange = { start: number; end: number };
 
-export type Instruction = NumericInstruction | FunctionInstruction | CharacterInstruction | ArrayInstruction | PointerInstruction | SwitchInstruction | StructInstruction | MemoryInstruction
+export type Instruction = NumericInstruction | FunctionInstruction | CharacterInstruction | ArrayInstruction | PointerInstruction | SwitchInstruction | StructInstruction | MemoryInstruction | FileInstruction
   | { kind: 'IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE_IF'; parameters: { condition: Condition } }
   | { kind: 'ELSE'; parameters: Record<string, never> }
@@ -50,7 +52,7 @@ type DisplayFormat = 'decimal' | 'hexadecimal' | 'octal';
  * cursor placed inside. Shared by the translator and the placement planner so
  * both stay in step.
  */
-export const BLOCK_KINDS: readonly string[] = ['MAIN', 'IF', 'ELSE_IF', 'ELSE', 'WHILE', 'DO_WHILE', 'FOR', 'FUNC_DEF', 'SWITCH', 'STRUCT_DECL'];
+export const BLOCK_KINDS: readonly string[] = ['MAIN', 'IF', 'ELSE_IF', 'ELSE', 'WHILE', 'DO_WHILE', 'FOR', 'FUNC_DEF', 'SWITCH', 'STRUCT_DECL', 'FILE_AT_END'];
 
 /** Intents whose only parameter is a bounded condition of the lot 10 profile. */
 export function instructionCondition(instruction: Instruction): Condition | undefined {
@@ -121,6 +123,8 @@ export type DiagnosticCode =
   | 'CASE_NEEDS_CONSTANT'
   | 'MISSING_MEMBER_NAME'
   | 'MISSING_STRUCT_TAG'
+  | 'MISSING_FILE_MODE'
+  | 'UNSUPPORTED_FILE_MODE'
   | 'FIELD_OUTSIDE_STRUCT'
   | 'UNEXPECTED_TEXT';
 
@@ -169,7 +173,7 @@ const C17_KEYWORDS = new Set([
 
 type Token = { text: string; range: SourceRange };
 type Parameter = { parameter: 'name' | 'value' | 'header' };
-type Rule = { kind: Exclude<Instruction['kind'], MemoryInstruction['kind'] | 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | FunctionInstruction['kind'] | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind'] | CharacterInstruction['kind'] | ArrayInstruction['kind'] | PointerInstruction['kind'] | SwitchInstruction['kind'] | StructInstruction['kind']>; parts: (string | Parameter)[] };
+type Rule = { kind: Exclude<Instruction['kind'], MemoryInstruction['kind'] | FileInstruction['kind'] | 'IF' | 'ELSE_IF' | 'ELSE' | 'WHILE' | 'DO_WHILE' | 'FOR' | FunctionInstruction['kind'] | 'PRINT_TEXT' | 'PRINT_FORMATTED' | 'ASSIGN_EXPRESSION' | NumericInstruction['kind'] | CharacterInstruction['kind'] | ArrayInstruction['kind'] | PointerInstruction['kind'] | SwitchInstruction['kind'] | StructInstruction['kind']>; parts: (string | Parameter)[] };
 
 const RULES: [Rule, ...Rule[]] = [
   { kind: 'MAIN', parts: ['Crée', 'la', 'fonction', 'principale'] },
@@ -320,6 +324,19 @@ function render(text: string, instruction: Instruction): TranslationResult {
     case 'REALLOCATE': code = `${instruction.parameters.name} = realloc(${instruction.parameters.source}, `
       + `${instruction.parameters.count.text} * sizeof(${renderMeasuredType(instruction.parameters.type)}));\n`; break;
     case 'FREE': code = `free(${instruction.parameters.name});\n`; break;
+    // A stream is a pointer to FILE, which stdio.h declares; the star stays
+    // against the name, as decision D2 of lot 17 settled for every pointer.
+    case 'FILE_DECL': code = `FILE *${instruction.parameters.name};\n`; break;
+    case 'FILE_OPEN': code = `${instruction.parameters.name} = fopen(${renderStringLiteral(instruction.parameters.path)}, `
+      + `"${instruction.parameters.mode}");\n`; break;
+    case 'FILE_CLOSE': code = `fclose(${instruction.parameters.name});\n`; break;
+    case 'FILE_WRITE_TEXT': code = `fprintf(${instruction.parameters.name}, "%s", `
+      + `${renderStringLiteral(instruction.parameters.text)});\n`; break;
+    case 'FILE_WRITE_INT': code = `fprintf(${instruction.parameters.name}, "%d", ${instruction.parameters.value});\n`; break;
+    // The address operator is written out: fscanf needs where to store, and
+    // seeing `&` here is the lesson, not an implementation detail.
+    case 'FILE_READ_INT': code = `fscanf(${instruction.parameters.name}, "%d", &${instruction.parameters.target});\n`; break;
+    case 'FILE_AT_END': code = `if (feof(${instruction.parameters.name})) {\n    \n}\n`; break;
     case 'PRINT_INT': code = `printf("%d", ${instruction.parameters.name});\n`; break;
     case 'PRINT_FORMATTED': {
       const specifiers: Record<DisplayFormat, string> = { decimal: '%d', hexadecimal: '%x', octal: '%o' };
@@ -594,6 +611,13 @@ export function translate(text: string): TranslationResult {
     text: match[0],
     range: { start: start + match.index, end: start + match.index + match[0].length },
   }));
+
+  // Before the IF branch, and only because of it: « Crée un bloc si la fin du
+  // fichier f est atteinte. » shares the four words that select a condition
+  // block. The module declines every other sentence, so nothing else moves.
+  const files = analyzeFileInstruction(text, tokens, end, identifierDiagnostic);
+  if (files?.status === 'rejected') return { status: 'rejected', source: { text }, diagnostics: [files.diagnostic] };
+  if (files?.status === 'recognized') return render(text, files.instruction);
 
   if (['crée', 'un', 'bloc', 'si'].every((word, index) => tokens[index]?.text.toLowerCase() === word)) {
     return translateIf(text, tokens[3]!.range.end, end);

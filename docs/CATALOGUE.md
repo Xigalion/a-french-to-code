@@ -435,6 +435,33 @@ vérification de durée de vie, de cohérence ou de fuite.
 
 ---
 
+## Domaine 7 — Fichiers et flux (lot 22)
+
+| Phrase française | Code C produit | Information |
+|---|---|---|
+| `Déclare un fichier nommé f.` | `FILE *f;` | FILE_MUST_BE_CLOSED |
+| `Affecte à f l'ouverture du fichier "donnees.txt" en lecture.` | `f = fopen("donnees.txt", "r");` | FOPEN_CAN_FAIL, FILE_MODE_MEANING |
+| `Ferme le fichier f.` | `fclose(f);` | FILE_MUST_BE_CLOSED |
+| `Écris le texte "bonjour" dans le fichier f.` | `fprintf(f, "%s", "bonjour");` | — |
+| `Écris la valeur de x dans le fichier f.` | `fprintf(f, "%d", x);` | — |
+| `Lis un entier depuis le fichier f dans x.` | `fscanf(f, "%d", &x);` | SCANF_NEEDS_ADDRESS |
+| `Crée un bloc si la fin du fichier f est atteinte.` | `if (feof(f)) { ⏎ ⏎ }` | EOF_AFTER_READ |
+
+Six modes : `lecture`, `écriture`, `ajout`, chacun suivi ou non de
+`binaire` — soit `r`, `w`, `a`, `rb`, `wb`, `ab`. Les modes de mise à jour
+`r+`, `w+`, `a+` ne sont pas pris en charge.
+
+Les chemins et les textes écrits obéissent à la **grammaire de texte du
+lot 16**, partagée telle quelle ; un chemin peut contenir des espaces.
+`stdio.h` n'est **jamais ajouté** de lui-même.
+
+Non livré : `fgets`, `fputs`, `fgetc`, `fputc`, `fread`, `fwrite`,
+`fseek`, `ftell`, `rewind`, `fflush`, `remove`, `rename`, `errno`,
+`perror`, `ferror`, `stdin`/`stdout`/`stderr` nommés, lecture d'autre
+chose qu'un entier, et toute vérification de flux, de chemin ou d'ordre.
+
+---
+
 ## Limites de complexité
 
 | Limite | Valeur |

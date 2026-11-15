@@ -372,6 +372,25 @@ function* sentences() {
     'Libère la mémoire pointée par.', 'Affiche la taille.', 'Affiche la taille du type.',
     'Affecte à p l’allocation de 10 objets de type int.', 'Appelle calloc avec "10" et "4".',
     'Crée un bloc si "p == NULL".'];
+  // Lot 22 surface.
+  for (const mode of ['lecture', 'écriture', 'ajout', 'lecture binaire', 'écriture binaire',
+    'ajout binaire', 'mise à jour', 'texte', '']) {
+    yield `Affecte à f l’ouverture du fichier "d.txt" en ${mode}.`;
+  }
+  for (const path of ['d.txt', '', 'a b c', 'a' + BS + 'nb', 'a' + BS + 'qb', 'a??=b']) {
+    yield `Affecte à f l’ouverture du fichier "${path}" en lecture.`;
+    yield `Écris le texte "${path}" dans le fichier f.`;
+  }
+  for (const name of ['f', '1f', 'int', '']) {
+    yield* [`Déclare un fichier nommé ${name}.`, `Ferme le fichier ${name}.`,
+      `Écris la valeur de x dans le fichier ${name}.`,
+      `Lis un entier depuis le fichier ${name} dans x.`,
+      `Crée un bloc si la fin du fichier ${name} est atteinte.`];
+  }
+  yield* ['Déclare un fichier f.', 'Ferme le fichier.', 'Lis un entier du fichier f dans x.',
+    'Lis une ligne depuis le fichier f dans s.', 'Vide le tampon du fichier f.',
+    'Crée un bloc si la fin du fichier f est atteint.', 'Crée un bloc si "f == NULL".',
+    'Crée un bloc si a > 0.', 'Crée un bloc si.', 'Crée un bloc si "a > 0" encore.'];
   for (const digits of ['0', '2', '17', '99', 'x']) {
     yield `Affiche x en notation fixe avec ${digits} décimales.`;
     yield `Affiche x en notation scientifique avec ${digits} décimales.`;
@@ -418,6 +437,9 @@ const PLACED = ['Déclare un caractère nommé c.', "Affecte le caractère ' ' �
   'Affiche le champ x de p.', 'Affecte à n le résultat numérique de "q->x".',
   'Inclue la bibliothèque stdlib.h.', 'Affecte à p l’allocation de 4 éléments de type int.',
   'Libère la mémoire pointée par p.', 'Affiche la taille du type int.',
+  'Déclare un fichier nommé f.', 'Ferme le fichier f.',
+  'Affecte à f l’ouverture du fichier "d.txt" en lecture.',
+  'Crée un bloc si la fin du fichier f est atteinte.',
   'Ajoute le cas par défaut.', 'Sors de l’aiguillage.'];
 
 for (const text of DOCUMENTS) {

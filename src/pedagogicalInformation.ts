@@ -18,7 +18,9 @@ export type PedagogicalInformation = {
     | 'DEFAULT_OPTIONAL' | 'BREAK_LEAVES_SWITCH'
     | 'STRUCT_TAG_NEEDS_KEYWORD' | 'STRUCT_LAYOUT' | 'MEMBER_ACCESS_FORM' | 'MEMBER_NOT_CHECKED'
     | 'SIZEOF_IS_BYTES' | 'ALLOCATION_CAN_FAIL' | 'ALLOCATION_NOT_INITIALIZED'
-    | 'REALLOC_MAY_MOVE' | 'FREE_ONCE' | 'HEADER_DECLARES_ONLY';
+    | 'REALLOC_MAY_MOVE' | 'FREE_ONCE' | 'HEADER_DECLARES_ONLY'
+    | 'FOPEN_CAN_FAIL' | 'FILE_MODE_MEANING' | 'FILE_MUST_BE_CLOSED'
+    | 'SCANF_NEEDS_ADDRESS' | 'EOF_AFTER_READ';
   severity: 'information';
   range: SourceRange;
   message: string;
@@ -155,8 +157,43 @@ const MEMORY_MESSAGES = {
     + 'allocation n’a lieu ici, et C-A n’ajoute jamais un en-tête de lui-même.',
 } as const;
 
+const FILE_MESSAGES = {
+  FOPEN_CAN_FAIL: 'fopen renvoie NULL si le fichier ne peut pas être ouvert — chemin absent, droits refusés, autre '
+    + 'raison. C-A n’ajoute aucun test : écrire « Crée un bloc si "f == NULL". » avant d’utiliser ce flux revient à '
+    + 'l’étudiant.',
+  FILE_MODE_MEANING: 'Le mode choisi décide de tout : « r » échoue si le fichier n’existe pas, « w » le crée et '
+    + 'efface son contenu existant, « a » écrit à la fin. Le suffixe « b » demande le mode binaire, qui ne traduit '
+    + 'pas les fins de ligne.',
+  FILE_MUST_BE_CLOSED: 'Un flux ouvert doit être fermé. Avant fclose, des données écrites peuvent n’être encore que '
+    + 'dans le tampon : sans fermeture, elles peuvent ne jamais atteindre le fichier. C-A ne suit aucun flux.',
+  SCANF_NEEDS_ADDRESS: 'fscanf écrit dans la variable, il lui faut donc son adresse : c’est le rôle du « & ». La '
+    + 'valeur renvoyée dit combien de conversions ont réussi, et C-A ne la teste pas.',
+  EOF_AFTER_READ: 'feof ne regarde pas devant : il devient vrai seulement après une lecture qui a échoué parce que '
+    + 'la fin était atteinte. Tester feof avant de lire fait lire une fois de trop.',
+} as const;
+
 export function explainInstruction(result: TranslationResult): PedagogicalInformation[] {
   if (result.status !== 'translated') return [];
+  if (result.instruction.kind === 'FILE_OPEN') {
+    return [
+      { code: 'FOPEN_CAN_FAIL', severity: 'information', range: { ...result.instruction.parameters.nameRange },
+        message: FILE_MESSAGES.FOPEN_CAN_FAIL },
+      { code: 'FILE_MODE_MEANING', severity: 'information', range: { ...result.instruction.parameters.modeRange },
+        message: FILE_MESSAGES.FILE_MODE_MEANING },
+    ];
+  }
+  if (result.instruction.kind === 'FILE_DECL' || result.instruction.kind === 'FILE_CLOSE') {
+    return [{ code: 'FILE_MUST_BE_CLOSED', severity: 'information',
+      range: { ...result.instruction.parameters.nameRange }, message: FILE_MESSAGES.FILE_MUST_BE_CLOSED }];
+  }
+  if (result.instruction.kind === 'FILE_READ_INT') {
+    return [{ code: 'SCANF_NEEDS_ADDRESS', severity: 'information',
+      range: { ...result.instruction.parameters.targetRange }, message: FILE_MESSAGES.SCANF_NEEDS_ADDRESS }];
+  }
+  if (result.instruction.kind === 'FILE_AT_END') {
+    return [{ code: 'EOF_AFTER_READ', severity: 'information',
+      range: { ...result.instruction.parameters.nameRange }, message: FILE_MESSAGES.EOF_AFTER_READ }];
+  }
   if (result.instruction.kind === 'INCLUDE_STDLIB') {
     return [{ code: 'HEADER_DECLARES_ONLY', severity: 'information', range: { start: 0, end: 0 },
       message: MEMORY_MESSAGES.HEADER_DECLARES_ONLY }];
