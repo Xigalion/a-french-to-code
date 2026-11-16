@@ -375,7 +375,17 @@ function* sentences() {
     yield `Ajoute un champ de type ${type} nommé v de taille 3.`;
     yield `Ajoute un champ pointeur de type ${type} nommé v de dimension 10.`;
   }
-  for (const target of ['x de p', 'x pointé par q', 'x pointée par q', 'x de 1p', '1x de p', 'x', 'x de', 'x dans p']) {
+  // Lot 32 : le champ d'un ELEMENT de tableau de structures. Les formes
+  // valides et malformées de la désignation sont ici, sinon le différentiel
+  // prouverait l'absence de régression sans couvrir ce que le lot livre.
+  const cibles = ['x de p', 'x pointé par q', 'x pointée par q', 'x de 1p', '1x de p', 'x', 'x de', 'x dans p',
+    'x de l’élément "0" de promo', "x de l'élément \"i\" de promo", 'x de l’élément "i + 1" de promo',
+    'x de l’élément "i * 3" de promo', 'x de l’élément "" de promo', 'x de l’élément "0" de 1promo',
+    'x de l’élément "0" promo', 'x de l’élément "0" de promo trop', 'x de l’élément 0 de promo',
+    'x de l’élément "0 de promo', 'x de l’élément "\'A\'" de promo', 'x de l’élément "*p" de promo',
+    'x de l’élément "&y" de promo', 'x de l’élément "t[i]" de promo', 'x de l’élément "p.x" de promo',
+    'x pointé par l’élément "0" de promo', 'x de l’élément', 'x de l’élément "0" de'];
+  for (const target of cibles) {
     yield `Affecte la valeur 5 au champ ${target}.`;
     yield `Affiche le champ ${target}.`;
     // Lot 30 : l'affectation d'un caractère à un champ, genre déclaré depuis

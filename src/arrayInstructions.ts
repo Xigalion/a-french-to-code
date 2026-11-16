@@ -1,6 +1,7 @@
 import type { Diagnostic, SourceRange } from './translate.ts';
 import { parseCharacterLiteral } from './characterLiteral.ts';
-import { parseIndexExpression, parseNumericExpression } from './numericExpression.ts';
+import { parseNumericExpression } from './numericExpression.ts';
+import { parseElementDesignation } from './elementDesignation.ts';
 import { parseStringLiteral } from './stringLiteral.ts';
 import type { IndexedElement, NumericExpression, NumericType } from './numericExpression.ts';
 
@@ -63,12 +64,6 @@ export function analyzeArrayInstruction(source: string, tokens: Token[], end: nu
     if (!same(expected, token.text)) return fail('UNKNOWN_FORMULATION', UNKNOWN, token.range);
     return token;
   }
-  function identifier(position: number, message: string): Token | undefined {
-    const token = rawWord(position);
-    if (!token) return fail('INCOMPLETE_INSTRUCTION', message, { start: end, end });
-    diagnostic = validateName(token);
-    return diagnostic ? undefined : token;
-  }
   function finish(position: number): boolean {
     const extra = rawWord(position);
     if (!extra) return true;
@@ -87,30 +82,12 @@ export function analyzeArrayInstruction(source: string, tokens: Token[], end: nu
   }
 
   /** `"{indice}" de {nom}` — the designation shared by four formulations.
-   * The whole quoted segment is what the passive pedagogy points at. */
+   * Lot 32: the reader lives in `elementDesignation.ts`, because the
+   * structure envelopes name an element with the very same grammar. */
   function designation(position: number): { element: IndexedElement; end: number } | undefined {
-    const quotes = quoted(position, 'MISSING_INDEX', 'Il manque l’indice de l’élément.',
-      'Il manque le guillemet ouvrant de l’indice.', 'Il manque le guillemet fermant de l’indice.');
-    if (!quotes) return undefined;
-    // An empty designation is a missing index, not a missing expression: the
-    // code must be the one `t[]` produces inside an expression.
-    if (!/[^ \t]/u.test(source.slice(quotes.opening + 1, quotes.closing))) {
-      return fail('MISSING_INDEX', 'Il manque l’indice de l’élément.', { start: quotes.closing, end: quotes.closing });
-    }
-    const parsed = parseIndexExpression(source, quotes.opening + 1, quotes.closing, validateName);
-    if (parsed.status === 'rejected') { diagnostic = parsed.diagnostic; return undefined; }
-    const after = expectWord(quotes.closing + 1, 'de', 'INCOMPLETE_INSTRUCTION', 'Instruction incomplète : « de » attendu.');
-    if (!after) return undefined;
-    const array = identifier(after.range.end, 'Il manque le nom du tableau.');
-    if (!array) return undefined;
-    const range = { start: quotes.opening, end: quotes.closing + 1 };
-    return {
-      element: {
-        kind: 'index', array: { kind: 'name', name: array.text, range: { ...array.range } },
-        index: parsed.expression, range: { ...range }, bracketRange: { ...range },
-      },
-      end: array.range.end,
-    };
+    const read = parseElementDesignation(source, position, end, validateName);
+    if (read.status === 'rejected') { diagnostic ??= read.diagnostic; return undefined; }
+    return { element: read.element, end: read.end };
   }
 
   function declaration(initialised: boolean): ArrayInstruction | undefined {

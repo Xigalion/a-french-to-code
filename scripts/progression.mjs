@@ -43,6 +43,15 @@ console.log('       ' + barre(p.sondesVerifiees, p.sondesTotal) + '  '
   + p.sondesVerifiees + '/' + p.sondesTotal + ' sondes  — complétion pondérée '
   + String(p.completionPonderee).replace('.', ',') + ' %');
 console.log('       barème : ' + p.bareme);
+if (p.cloture) {
+  const c = p.cloture;
+  console.log('   2a bis. exercice de clôture — couverture des INTENTIONS du catalogue');
+  console.log('       ' + barre(c.intentionsEmployees, c.intentionsCatalogue) + '  '
+    + c.intentionsEmployees + '/' + c.intentionsCatalogue + ' intentions employées dans un programme compilé');
+  console.log('       ' + c.programmesCompiles + ' programmes compilés, ' + c.programmesExecutes
+    + ' exécutés, ' + c.retouchesManuelles + ' retouche manuelle');
+  console.log('       ' + c.note);
+}
 console.log('   2b. usage réel observé');
 console.log('       ' + barre(u.seancesObservees, u.seancesObjectif) + '  '
   + u.seancesObservees + '/' + u.seancesObjectif + ' séances, ' + u.etudiants + ' étudiant(s)');

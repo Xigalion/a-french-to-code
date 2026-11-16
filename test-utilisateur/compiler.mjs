@@ -7,7 +7,7 @@
 // Les sorties relevées ici sont celles que les énoncés citent. Une sortie
 // prédite de mémoire n'a aucune valeur : la campagne 1 l'a payé une fois.
 import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { EXERCICES } from './enonces.mjs';
 
 const root = new URL('.', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/u, '$1');
@@ -30,7 +30,11 @@ let anomalies = 0;
 for (const exercice of EXERCICES) {
   const source = root + 'corriges/' + exercice.name;
   const binaire = travail + '/' + exercice.name.replace(/\.c$/u, '.exe');
-  const compilation = spawnSync(gcc, [...OPTIONS, source, '-o', binaire], { encoding: 'utf8' });
+  // Chemins relatifs depuis le dossier de travail : les avertissements de
+  // GCC citent le chemin donne, et un journal publie ce qu'il contient.
+  copyFileSync(source, travail + '/' + exercice.name);
+  const compilation = spawnSync(gcc, [...OPTIONS, exercice.name, '-o', exercice.name.replace(/\.c$/u, '.exe')],
+    { encoding: 'utf8', cwd: travail });
   const avertissements = (compilation.stderr ?? '').trim();
 
   lignes.push('--- ' + exercice.name + ' ---');

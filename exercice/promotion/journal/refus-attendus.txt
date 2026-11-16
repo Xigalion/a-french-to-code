@@ -1,0 +1,7 @@
+Refus attendus par l’enonce
+===========================
+refusee            liste d’initialisation entre accolades | Crée un tableau de type int nommé t de dimension 3 avec les valeurs 1, 2, 3. -> UNKNOWN_FORMULATION
+refusee            paramètre de type structure | Crée une fonction nommée afficher qui ne retourne rien et prend une structure Etudiant nommée e. -> UNKNOWN_FORMULATION
+refusee            tableau à deux dimensions | Déclare un tableau de type int nommé grille de dimension 3 de dimension 3. -> UNEXPECTED_TEXT
+refusee            affichage d’une chaîne de structure | Affiche la chaîne promo[i].nom. -> INVALID_IDENTIFIER
+refusee            tri fourni par une commande | Trie le tableau rang par ordre décroissant. -> UNKNOWN_FORMULATION

@@ -9,4 +9,7 @@ exercice/**/*.o
 
 # Paquet .vsix et dossier de travail de la compilation du test utilisateur
 dist/
+# Dossiers de travail des compilations : le C de reference est ailleurs
 test-utilisateur/journal/build/
+exercice/promotion/journal/build/
+exercice/promotion/journal-complements/build/

@@ -1,6 +1,6 @@
 {
   "_lisezMoi": "État du test utilisateur. Édité à la main après chaque séance, lu par scripts/progression.mjs. Les scores des campagnes 1 à 3 sont historiques et ne se recalculent jamais.",
-  "version": "C-A 0.4.0",
+  "version": "C-A 0.4.0 + lot 32",
   "miseAJour": "2026-11-16",
   "couverture": {
     "domaines": 9,
@@ -15,9 +15,18 @@
     "limites": [
       "deux sondes mesurent une formulation jamais livrée (défauts de mesure assumés)",
       "le choix des 91 sondes n’a jamais été validé",
-      "cinq programmes compilés, pas l’ensemble du catalogue",
+      "cinq programmes compilés au moment de la campagne 3 ; dix-neuf après l'exercice de clôture",
       "le barème annonce cinq preuves et n’en mesure que deux (docs/AUDIT_BAREME.md)"
-    ]
+    ],
+    "cloture": {
+      "intentionsCatalogue": 84,
+      "intentionsEmployees": 84,
+      "programmesCompiles": 19,
+      "programmesExecutes": 18,
+      "retouchesManuelles": 0,
+      "dicteeVSCode": "101 instructions insérées par l'interface réelle, C identique au moteur, compilé et exécuté",
+      "note": "Couverture des INTENTIONS du catalogue, à ne pas confondre avec les 91 sondes du barème historique, qui n'est pas recalculé."
+    }
   },
   "usageReel": {
     "seancesObservees": 0,
@@ -36,6 +45,11 @@
       "defautDeLHote": 0,
       "limitationVolontaire": 0
     },
-    "paliersAide": { "A1": 0, "A2": 0, "A3": 0, "A4": 0 }
+    "paliersAide": {
+      "A1": 0,
+      "A2": 0,
+      "A3": 0,
+      "A4": 0
+    }
   }
 }

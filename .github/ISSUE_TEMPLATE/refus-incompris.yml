@@ -1,0 +1,56 @@
+name: Refus incompris
+description: Une phrase a été refusée et le message ne vous a pas suffi.
+title: "[refus] "
+labels: ["refus", "pédagogie"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Un refus est **normal** : tout ce qui n'est pas dans
+        `docs/CATALOGUE.md` est refusé, volontairement. Ce formulaire sert à
+        signaler qu'un refus était **incompréhensible**, pas qu'il a eu lieu.
+
+        C-A ne donne pas la phrase correcte à recopier : c'est une règle du
+        projet, pas un oubli. Mais un message qui n'aide pas à chercher est
+        un défaut.
+  - type: textarea
+    id: phrase
+    attributes:
+      label: La phrase, copiée exactement
+      description: Accents, apostrophes et ponctuation compris. Ne pas la remettre « au propre ».
+      placeholder: Crée un entier age = 20.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: message
+    attributes:
+      label: Le message et son code, copiés tels quels
+      placeholder: |
+        UNKNOWN_FORMULATION
+        Cette formulation n’appartient pas au catalogue C-A.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: attendu
+    attributes:
+      label: Ce que vous vouliez écrire en C
+      placeholder: int age = 20;
+      render: c
+    validations:
+      required: true
+  - type: textarea
+    id: cherche
+    attributes:
+      label: Qu'avez-vous essayé avant d'ouvrir ce ticket ?
+      description: Relu le message, cherché dans le catalogue, essayé d'autres formulations… C'est la partie la plus utile.
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      placeholder: "C-A 0.4.0, VS Code 1.138.0, Windows 11"
+    validations:
+      required: true

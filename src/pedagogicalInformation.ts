@@ -152,7 +152,15 @@ const SWITCH_MESSAGES = {
     + 'sortir d’une boucle, la phrase est « Sors de la boucle la plus intérieure. ».',
 } as const;
 
+/** Lot 32: the bound lesson of lot 15 is now reached by two paths — an element
+ * designation, and the field of an element. One wording, defined once: a
+ * message said twice is a measured redundancy. */
+const INDEX_NOT_CHECKED_MESSAGE = 'C-A ne vérifie pas les bornes de ce tableau : ni sa dimension, ni la valeur '
+  + 'de cet indice ne sont connues ici. En C17, lire ou écrire hors des bornes a un comportement indéfini, et rien '
+  + 'ne le signale à l’exécution. Aucun dépassement n’est ici détecté ni exclu.';
+
 const STRUCT_MESSAGES = {
+  INDEX_NOT_CHECKED: INDEX_NOT_CHECKED_MESSAGE,
   STRUCT_TAG_NEEDS_KEYWORD: 'En C17, ce nom est une étiquette : le type s’écrit « struct » suivi de l’étiquette, pas '
     + 'l’étiquette seule. Les champs sont ajoutés un par un ; aucun n’est créé ici.',
   STRUCT_LAYOUT: 'Les champs sont rangés dans l’ordre de leur déclaration, mais l’implémentation peut insérer du '
@@ -431,7 +439,12 @@ function explainInstructionCore(result: TranslationResult): PedagogicalInformati
   if (result.instruction.kind === 'MEMBER_ASSIGN_INT' || result.instruction.kind === 'MEMBER_ASSIGN_CHAR'
     || result.instruction.kind === 'MEMBER_ASSIGN_EXPRESSION' || result.instruction.kind === 'MEMBER_PRINT') {
     const anchor = result.instruction.parameters.target.memberRange;
+    // Lot 32: the field of an element carries the bound lesson of lot 15, and
+    // it comes first because the index is read before the field.
+    const element = result.instruction.parameters.target.element;
     return [
+      ...(element === undefined ? [] : [{ code: 'INDEX_NOT_CHECKED' as const, severity: 'information' as const,
+        range: { ...element.bracketRange }, message: STRUCT_MESSAGES.INDEX_NOT_CHECKED }]),
       { code: 'MEMBER_ACCESS_FORM', severity: 'information', range: { ...anchor }, message: STRUCT_MESSAGES.MEMBER_ACCESS_FORM },
       { code: 'MEMBER_NOT_CHECKED', severity: 'information', range: { ...anchor }, message: STRUCT_MESSAGES.MEMBER_NOT_CHECKED },
     ];
@@ -519,9 +532,7 @@ function explainInstructionCore(result: TranslationResult): PedagogicalInformati
   const bracket = firstIndexRange(result.instruction.parameters);
   if (bracket) {
     entries.push({ code: 'INDEX_NOT_CHECKED', severity: 'information', range: { ...bracket },
-      message: 'C-A ne vérifie pas les bornes de ce tableau : ni sa dimension, ni la valeur de cet indice ne sont '
-        + 'connues ici. En C17, lire ou écrire hors des bornes a un comportement indéfini, et rien ne le signale à '
-        + 'l’exécution. Aucun dépassement n’est ici détecté ni exclu.' });
+      message: INDEX_NOT_CHECKED_MESSAGE });
   }
   if (result.instruction.kind === 'ARRAY_PRINT_CHAR') {
     entries.push({ code: 'ELEMENT_CHARACTER_FORMAT', severity: 'information',

@@ -1,0 +1,50 @@
+name: C produit inattendu
+description: Une phrase a été acceptée, mais le C produit surprend ou ne compile pas.
+title: "[code] "
+labels: ["moteur"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Rappel avant d'ouvrir : **C-A ne vérifie ni les symboles, ni les
+        types, ni les bornes, ni les inclusions**. Un C accepté par C-A et
+        refusé par le compilateur n'est pas forcément un défaut — c'est
+        souvent la limite documentée dans `docs/LIMITES_CONNUES.md`.
+
+        Reste un défaut : un C **mal formé**, une parenthèse fausse, une
+        insertion au mauvais endroit, une phrase dont le sens ne correspond
+        pas au code.
+  - type: textarea
+    id: phrase
+    attributes:
+      label: La phrase, copiée exactement
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: produit
+    attributes:
+      label: Le C produit, copié tel quel
+      render: c
+    validations:
+      required: true
+  - type: textarea
+    id: attendu
+    attributes:
+      label: Le C que vous attendiez, et pourquoi
+      render: c
+    validations:
+      required: true
+  - type: textarea
+    id: rejeu
+    attributes:
+      label: Sortie de `node scripts/rejouer.mjs --dans-main "<votre phrase>"`
+      description: Si vous avez le dépôt. Sinon, laisser vide.
+      render: text
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      placeholder: "C-A 0.4.0, VS Code 1.138.0, gcc 16.2.0"
+    validations:
+      required: true

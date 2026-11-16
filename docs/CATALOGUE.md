@@ -411,6 +411,22 @@ une phrase, vérification d'unicité ou de couverture, et `goto`.
 | `Affiche le champ x de p.` | `printf("%d", p.x);` | idem |
 | `Affiche le champ x pointé par q.` | `printf("%d", q->x);` | idem |
 
+Depuis le **lot 32**, l'objet peut être un **élément** d'un tableau de
+structures. Aucune enveloppe nouvelle : une troisième forme d'objet pour les
+quatre mêmes formulations, et l'indice obéit au profil d'indice du lot 15.
+
+| Phrase française | Code C produit | Information |
+|---|---|---|
+| `Affecte la valeur 5 au champ total de l’élément "0" de promo.` | `promo[0].total = 5;` | INDEX_NOT_CHECKED, MEMBER_ACCESS_FORM, MEMBER_NOT_CHECKED |
+| `Affecte le caractère 'A' au champ initiale de l’élément "i" de promo.` | `promo[i].initiale = 'A';` | idem |
+| `Affecte au champ total de l’élément "i + 1" de promo le résultat numérique de "t".` | `promo[(i + 1)].total = t;` | idem |
+| `Affiche le champ total de l’élément "meilleur" de promo.` | `printf("%d", promo[meilleur].total);` | idem |
+
+La **flèche n'est pas offerte** sur un élément : `promo[i]->x` exigerait un
+tableau de pointeurs, qu'aucune formulation ne déclare. Et aucune
+formulation n'affiche un champ en `%c` : un champ de type `char` s'affiche
+avec `%d`, comme un entier.
+
 La définition est un **bloc** et son accolade fermante porte le
 point-virgule. Un champ ne se place **que** dans une structure
 (`FIELD_OUTSIDE_STRUCT` sinon) ; `struct`, `union` et `enum` écrits à la

@@ -1,7 +1,8 @@
 import type { Diagnostic, SourceRange } from './translate.ts';
 import { parseCharacterLiteral } from './characterLiteral.ts';
-import { parseNumericExpression } from './numericExpression.ts';
-import type { NumericExpression, NumericType } from './numericExpression.ts';
+import { parseNumericExpression, renderNumericExpression } from './numericExpression.ts';
+import type { IndexedElement, NumericExpression, NumericType } from './numericExpression.ts';
+import { parseElementDesignation } from './elementDesignation.ts';
 
 /** A field type is either one of the five scalar types already taught, or
  * another structure named by its tag. No bit-field, no anonymous member. */
@@ -10,8 +11,15 @@ export type FieldType = { kind: 'scalar'; type: NumericType } | { kind: 'struct'
  * decision D3 of the domain 5 settled, and the star stays on the declarator. */
 export type Field = { type: FieldType; pointer: boolean };
 /** `objet.champ` or `objet->champ` as the target of an envelope. `arrow` is
- * what the sentence said; no form is ever rewritten into the other. */
-export type MemberTarget = { object: string; objectRange: SourceRange; member: string; memberRange: SourceRange; arrow: boolean };
+ * what the sentence said; no form is ever rewritten into the other.
+ *
+ * Lot 32: `element` is present when the object is an element of an array of
+ * structures, `promo[i].total`. `object` then holds the array name, so a
+ * diagnostic keeps pointing at what the sentence wrote. The arrow form is
+ * deliberately NOT offered on an element: `promo[i]->x` would require an
+ * array of pointers, which no formulation declares. */
+export type MemberTarget = { object: string; objectRange: SourceRange; member: string; memberRange: SourceRange;
+  arrow: boolean; element?: IndexedElement };
 
 export type StructInstruction =
   | { kind: 'STRUCT_DECL'; parameters: { tag: string; tagRange: SourceRange } }
@@ -71,10 +79,22 @@ export function analyzeStructInstruction(source: string, tokens: Token[], end: n
     fail('UNEXPECTED_TEXT', 'Ce texte supplémentaire n’est pas accepté.', { start: extra.range.start, end });
     return false;
   }
-  /** `champ {nom} de {objet}` or `champ {nom} pointé par {objet}`. */
+  /** `champ {nom} de {objet}`, `champ {nom} pointé par {objet}`, or, since lot
+   * 32, `champ {nom} de l’élément "{indice}" de {tableau}`. */
   function target(i: number): { target: MemberTarget; next: number } | undefined {
     const member = identifier(i, 'Il manque le nom du champ.');
     if (!member) return undefined;
+    if (word(i + 1) === 'de' && same('l’élément', tokens[i + 2]?.text ?? '')) {
+      // The designation is read from the raw source: an index may contain
+      // spaces, which tokenization would split. The next token index is then
+      // the first one that starts after the designation.
+      const read = parseElementDesignation(source, tokens[i + 2]!.range.end, end, validateName);
+      if (read.status === 'rejected') { diagnostic ??= read.diagnostic; return undefined; }
+      const after = tokens.findIndex(token => token.range.start >= read.end);
+      return { target: { object: read.element.array.name, objectRange: { ...read.element.array.range },
+        member: member.text, memberRange: { ...member.range }, arrow: false, element: read.element },
+      next: after === -1 ? tokens.length : after };
+    }
     if (word(i + 1) === 'de') {
       const object = identifier(i + 2, 'Il manque le nom de la structure.');
       if (!object) return undefined;
@@ -272,5 +292,6 @@ export function analyzeStructInstruction(source: string, tokens: Token[], end: n
 
 /** The C spelling of a member target, written as the sentence asked. */
 export function renderMemberTarget(target: MemberTarget): string {
-  return target.object + (target.arrow ? '->' : '.') + target.member;
+  const object = target.element ? renderNumericExpression(target.element) : target.object;
+  return object + (target.arrow ? '->' : '.') + target.member;
 }

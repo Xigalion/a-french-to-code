@@ -1,0 +1,28 @@
+Exercice de cloture — compilation et execution
+=============================================
+gcc     : gcc.exe (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r3) 16.2.0
+options : -std=c17 -Wall -Wextra -pedantic
+date    : 2026-11-16
+
+--- compilation ---
+code   : 0
+stderr : (vide)
+
+--- execution ---
+code   : 0
+sortie : "12.56\npassable\n48 36 29 \n66\n7\n3\n8\n"
+attendu: "12.56\npassable\n48 36 29 \n66\n7\n3\n" + sizeof
+verdict: CONFORME au calcul fait a la main
+sizeof(struct Etudiant) : 8 octets (implementation-defined)
+
+--- fichier ecrit ---
+resultat.txt : "48 36 29 "
+attendu      : "48 36 29 "
+
+--- chemin d’erreur : notes.txt absent ---
+code   : 3221226505
+stderr : "Assertion failed: f != 0, file notes.c, line 72"
+verdict: conforme — l’assertion a arrete le programme
+
+fichiers du dossier de travail : notes.c, notes.exe, resultat.txt
+anomalies : 0

@@ -1,0 +1,12 @@
+Refus annonces par les enonces
+==============================
+refusee                      ex1 — mot-clé comme nom | Déclare un entier nommé int. -> C_KEYWORD_IDENTIFIER
+refusee                      ex2 — profil entier et conversion | Affecte à moyenne le résultat de "(double) 7 / 2". -> C_KEYWORD_IDENTIFIER
+refusee                      ex2 — opérande manquant | Affecte à resultat le résultat de "2 +". -> MISSING_OPERAND
+refusee                      ex3 — affectation en condition | Crée un bloc si "age => 18". -> ASSIGNMENT_IN_CONDITION
+refusee                      ex4 — boucle pour abrégée | Crée une boucle pour i de "0" tant que "i < 5". -> UNKNOWN_FORMULATION
+refusee                      ex6 — dimension nulle | Déclare un tableau de type int nommé t de dimension 0. -> INVALID_ARRAY_DIMENSION
+refusee                      ex6 — indice sans guillemets | Affecte la valeur 12 à l’élément 0 de notes. -> MISSING_EXPRESSION_DELIMITER
+refusee                      ex7 — déréférencement d’une valeur | Affiche la valeur pointée par 5. -> INVALID_IDENTIFIER
+refusee                      parcours — hors catalogue | Crée un entier age = 20. -> UNKNOWN_FORMULATION
+refusee                      parcours — entier en lettres | Crée un entier nommé age de valeur vingt. -> INVALID_INTEGER

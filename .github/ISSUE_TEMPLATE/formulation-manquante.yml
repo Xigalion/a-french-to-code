@@ -1,0 +1,54 @@
+name: Formulation manquante
+description: Un programme que le catalogue ne permet pas d'écrire.
+title: "[catalogue] "
+labels: ["périmètre"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Le catalogue est **volontairement fini**. Certaines absences sont des
+        choix (listes d'initialisation entre accolades, tableaux à plusieurs
+        dimensions, `goto`, l'IA) et resteront des absences.
+
+        Ce formulaire sert à montrer un **programme réel** qu'on ne peut pas
+        écrire. Le projet avance par lacunes démontrées : un programme vaut
+        mieux qu'une idée.
+  - type: textarea
+    id: programme
+    attributes:
+      label: Le C que vous voulez obtenir
+      render: c
+    validations:
+      required: true
+  - type: textarea
+    id: essais
+    attributes:
+      label: Les phrases essayées, et leurs refus
+      description: Une par ligne, avec le code du diagnostic obtenu.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: contournement
+    attributes:
+      label: Avez-vous trouvé un contournement avec le catalogue existant ?
+      description: Beaucoup de capacités sont composables en deux ou trois phrases. Si c'est le cas, dites-le : cela change le classement du ticket.
+    validations:
+      required: true
+  - type: dropdown
+    id: domaine
+    attributes:
+      label: Domaine concerné
+      options:
+        - 1 — fondations et premiers programmes
+        - 2 — expressions et calculs
+        - 3 — décisions et aiguillages
+        - 4 — boucles
+        - 5 — fonctions, tableaux, chaînes, pointeurs
+        - 6 — mémoire
+        - 7 — modularité
+        - 8 — structures de données
+        - 9 — fichiers, fiabilité
+        - je ne sais pas
+    validations:
+      required: true

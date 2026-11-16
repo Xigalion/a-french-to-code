@@ -1,6 +1,7 @@
 # Corrigés des neuf exercices — journal de production
 
-Produit par `test-utilisateur/generer.mjs`. **Aucune retouche manuelle.**
+Produit par `scripts/ecrirePhrases.mjs` : `translate` puis `planPlacement`,
+puis application de l’unique édition du plan. **Aucune retouche manuelle.**
 
 ## ex1.c — Exercice 1 — afficher une valeur
 
@@ -186,17 +187,3 @@ Produit par `test-utilisateur/generer.mjs`. **Aucune retouche manuelle.**
 
 *ex9.c : 6 instructions, 0 gestes d’éditeur, 2 informations, 1 avertissements, 0 refus.*
 
-## Refus annoncés par les énoncés
-
-| Cas | Verdict | Code |
-|---|---|---|
-| ex1 — mot-clé comme nom — `Déclare un entier nommé int.` | refusée | `C_KEYWORD_IDENTIFIER` |
-| ex2 — profil entier et conversion — `Affecte à moyenne le résultat de "(double) 7 / 2".` | refusée | `C_KEYWORD_IDENTIFIER` |
-| ex2 — opérande manquant — `Affecte à resultat le résultat de "2 +".` | refusée | `MISSING_OPERAND` |
-| ex3 — affectation en condition — `Crée un bloc si "age => 18".` | refusée | `ASSIGNMENT_IN_CONDITION` |
-| ex4 — boucle pour abrégée — `Crée une boucle pour i de "0" tant que "i < 5".` | refusée | `UNKNOWN_FORMULATION` |
-| ex6 — dimension nulle — `Déclare un tableau de type int nommé t de dimension 0.` | refusée | `INVALID_ARRAY_DIMENSION` |
-| ex6 — indice sans guillemets — `Affecte la valeur 12 à l’élément 0 de notes.` | refusée | `MISSING_EXPRESSION_DELIMITER` |
-| ex7 — déréférencement d’une valeur — `Affiche la valeur pointée par 5.` | refusée | `INVALID_IDENTIFIER` |
-| parcours — hors catalogue — `Crée un entier age = 20.` | refusée | `UNKNOWN_FORMULATION` |
-| parcours — entier en lettres — `Crée un entier nommé age de valeur vingt.` | refusée | `INVALID_INTEGER` |

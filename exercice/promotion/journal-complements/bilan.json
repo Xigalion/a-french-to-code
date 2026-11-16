@@ -1,0 +1,38 @@
+[
+  {
+    "name": "pointeurs.c",
+    "inseres": 39,
+    "informations": 48,
+    "avertissements": 0,
+    "gestes": 0,
+    "refus": 0,
+    "executer": true
+  },
+  {
+    "name": "caracteres.c",
+    "inseres": 51,
+    "informations": 52,
+    "avertissements": 0,
+    "gestes": 5,
+    "refus": 0,
+    "executer": true
+  },
+  {
+    "name": "calcul.h",
+    "inseres": 4,
+    "informations": 4,
+    "avertissements": 0,
+    "gestes": 0,
+    "refus": 0,
+    "executer": true
+  },
+  {
+    "name": "module.c",
+    "inseres": 14,
+    "informations": 8,
+    "avertissements": 0,
+    "gestes": 1,
+    "refus": 0,
+    "executer": true
+  }
+]

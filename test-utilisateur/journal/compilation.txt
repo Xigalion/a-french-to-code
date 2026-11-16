@@ -47,11 +47,11 @@ sortie      : "3"
 --- ex9.c ---
 compilation : code 0
 stderr :
-<DOSSIER-PERSONNEL>/Downloads/A/test-utilisateur/corriges/ex9.c: In function 'main':
-<DOSSIER-PERSONNEL>/Downloads/A/test-utilisateur/corriges/ex9.c:9:20: warning: division by zero [-Wdiv-by-zero]
+ex9.c: In function 'main':
+ex9.c:9:20: warning: division by zero [-Wdiv-by-zero]
     9 |     resultat = (10 / 0);
       |                    ^
 execution   : VOLONTAIREMENT NON EXECUTE (comportement indefini)
 
-fichiers ecrits par les programmes : sortie.txt
+fichiers ecrits par les programmes : ex1.c, ex2.c, ex3.c, ex4.c, ex5.c, ex6.c, ex7.c, ex8.c, ex9.c, sortie.txt
 anomalies (compilation ou execution non nulle) : 0

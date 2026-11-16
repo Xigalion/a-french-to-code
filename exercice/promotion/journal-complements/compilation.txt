@@ -1,0 +1,39 @@
+Tests complementaires — compilation et execution
+===============================================
+gcc     : gcc.exe (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r3) 16.2.0
+options : -std=c17 -Wall -Wextra -pedantic
+date    : 2026-11-16
+
+--- pointeurs.c ---
+compilation : code 0
+stderr      : (vide)
+execution   : code 0
+sortie      : "7\n3\n8\n100\n2147\n11\n1.50\n"
+attendu     : "7\n3\n8\n100\n2147\n11\n1.50\n"
+verdict     : CONFORME au calcul fait a la main
+
+--- caracteres.c ---
+compilation : code 0
+stderr      : (vide)
+execution   : code 0
+sortie      : "ok\n5\nA\n5\nZ\n0?\nbonjour\n"
+attendu     : "ok\n5\nA\n5\nZ\n0?\nbonjour\n"
+verdict     : CONFORME au calcul fait a la main
+
+--- calcul.h ---
+en-tete : pas une unite de traduction, compile par le module qui l’inclut
+
+--- module.c ---
+compilation : code 0
+stderr      : (vide)
+execution   : code 0
+sortie      : "42\n1\n"
+attendu     : "42\n1\n"
+verdict     : CONFORME au calcul fait a la main
+
+--- garde d’en-tete sous double inclusion ---
+compilation : code 0
+stderr      : ""
+
+fichiers du dossier de travail : calcul.h, caracteres.c, caracteres.exe, double.c, double.exe, module.c, module.exe, mot.txt, pointeurs.c, pointeurs.exe
+anomalies : 0

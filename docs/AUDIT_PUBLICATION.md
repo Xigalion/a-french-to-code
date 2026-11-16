@@ -1,0 +1,177 @@
+# Audit du dépôt avant ouverture publique
+
+**Pour qui :** le fondateur, pour décider si le dépôt peut être rendu public,
+et sous quelle licence.
+
+> **Le dépôt n'a pas été rendu public, et ne le sera pas sans ton accord
+> explicite.** Cet audit prépare la décision ; il ne la prend pas.
+>
+> Date : 16 novembre 2026. Dernier commit audité : voir §8.
+
+---
+
+## 1. Où en est le dépôt aujourd'hui
+
+| | |
+|---|---|
+| dépôt distant | `origin` existe déjà et pointe vers un dépôt GitHub personnel |
+| visibilité actuelle | **non publique** — une requête anonyme sur l'API GitHub répond 404 |
+| contenu poussé | **un seul commit**, « Initial commit » |
+| commits locaux **non poussés** | **36** |
+| fichiers suivis | 231 |
+| taille de l'historique | ~6,4 Mo |
+
+Publier revient donc à **deux** gestes distincts : pousser 36 commits, puis
+changer la visibilité. Les deux t'appartiennent.
+
+## 2. Secrets et données personnelles
+
+| Recherche | Résultat |
+|---|---|
+| clés, jetons, mots de passe (`api_key`, `secret`, `token`, `password`, `BEGIN … PRIVATE KEY`) | **aucune occurrence** hors noms de diagnostics (`INVALID_EXPRESSION_TOKEN`) |
+| adresses de courriel dans les fichiers | **aucune** |
+| fichiers `.env`, identifiants, configuration de service | **aucun** |
+| chemins absolus contenant un **nom d'utilisateur** | **7 occurrences, dans 3 fichiers — corrigées** |
+| nom d'utilisateur dans `CLAUDE.md` | **corrigé** (chemin du `CLAUDE.md` parent) |
+
+### 2.1 Les chemins personnels : cause, correction, prévention
+
+Les journaux de compilation publient ce que GCC a cité, et GCC cite le chemin
+qu'on lui donne. Comme les scripts lui passaient des chemins **absolus**, les
+journaux contenaient `C:\Users\<nom>\…`.
+
+- **Correction de la cause** : les trois scripts de compilation lancent
+  désormais GCC **depuis** le dossier de travail, avec des chemins
+  **relatifs**. Vérifié : le message d'assertion du programme de clôture dit
+  maintenant `file notes.c` et non un chemin absolu.
+- **Correction de l'existant** : `node scripts/anonymiser.mjs` liste, puis
+  (`--ecrire`) remplace le dossier personnel par `<DOSSIER-PERSONNEL>` dans
+  tous les fichiers suivis. Les journaux restent des preuves ; seul le nom
+  disparaît.
+- **Prévention** : relancer `node scripts/anonymiser.mjs` avant toute
+  publication. Il sort 0 fichier quand le dépôt est propre.
+
+### 2.2 Ce qu'un audit de fichiers ne peut pas corriger
+
+**L'adresse de courriel personnelle du fondateur figure dans l'auteur des
+37 commits.** Rendre le dépôt public la rend publique, et aucun nettoyage de
+fichiers n'y change rien.
+
+Trois options, et c'est une décision, pas un défaut :
+
+1. **accepter** — c'est le cas de la majorité des dépôts personnels ;
+2. **réécrire l'historique avant le premier envoi** (`git filter-repo`), avec
+   une adresse de redirection GitHub (`…@users.noreply.github.com`). Possible
+   **sans douleur** ici, puisque 36 commits sur 37 ne sont pas poussés ;
+3. **repartir d'un dépôt neuf** avec un seul commit initial — on perd
+   l'historique des lots, qui est une partie de la valeur du projet.
+
+Ma recommandation : **l'option 2**, maintenant. Elle est gratuite avant le
+premier envoi et coûteuse après.
+
+## 3. Fichiers temporaires, journaux et binaires
+
+| Élément | État |
+|---|---|
+| `node_modules/`, `.cache/`, `dist/` | **ignorés** |
+| exécutables et objets des recettes GCC (`exercice/**/*.exe`, `*.o`) | **ignorés** |
+| dossiers de travail de compilation (`test-utilisateur/journal/build/`, `exercice/promotion/journal*/build/`) | **ignorés** |
+| `debug.log` à la racine | **ignoré** ; c'est une trace de plantage de VS Code (`crashpad`), 130 octets. Suppressible sans conséquence |
+| journaux de validation suivis (`exercice/**/journal/`, `test-utilisateur/journal/`) | **gardés volontairement** : ce sont les preuves des campagnes |
+| fichiers binaires suivis | **aucun** |
+| fichier suivi non textuel | **aucun**, depuis la correction de `CLAUDE.md` |
+
+### 3.1 Un défaut trouvé par l'audit : `CLAUDE.md` était binaire pour git
+
+Le fichier contenait **deux octets nuls** : `'\0'` y avait été écrit comme un
+véritable octet nul au lieu des deux caractères. Git le traitait donc comme un
+**fichier binaire** — aucun diff lisible, `git grep` muet sur son contenu.
+Corrigé ; le fichier est redevenu du texte, et son sens est inchangé.
+
+## 4. Documentation publique
+
+| Attendu | Fichier | État |
+|---|---|---|
+| page d'accueil | `README.md` | **écrit** — ce que c'est, ce que ce n'est pas, état réel, installation, usage, carte du dépôt, résumé en anglais |
+| ce que l'outil accepte | `docs/CATALOGUE.md` | existait, généré depuis le moteur |
+| ce qu'il ne fait pas | `docs/LIMITES_CONNUES.md` | **écrit** — 9 sections, dont les trois profils d'expression et les contournements |
+| installation et retour arrière | `docs/TEST_INSTALLATION.md` | existait (phase de test) |
+| guide de contribution | `CONTRIBUTING.md` | **écrit** — 9 règles non négociables, ce qui est refusé d'avance, la méthode par lots |
+| modèles de tickets | `.github/ISSUE_TEMPLATE/` | **écrits** — 3 formulaires + liens, tickets vides désactivés |
+| licence | — | **à décider**, §6 |
+
+### 4.1 À corriger au moment de publier
+
+`.github/ISSUE_TEMPLATE/config.yml` contient deux liens avec
+`OWNER/REPO` en place du dépôt réel. **Remplacer** par le chemin définitif,
+sinon les deux liens d'aide seront morts. C'est volontairement laissé en
+évidence plutôt que deviné.
+
+## 5. Ce que publier expose, en clair
+
+| Exposé | Conséquence |
+|---|---|
+| l'adresse de courriel des commits | §2.2 |
+| les journaux de validation | ils citent des versions de GCC, de VS Code et des dates. Aucun contenu personnel après nettoyage |
+| le `CLAUDE.md` de travail | il décrit la méthode, les décisions et les dettes du projet, y compris ses faiblesses. C'est un choix de transparence : à relire une fois dans cette optique |
+| les scores de campagnes | **81,7 %**, **83,7 %**, **93,9 %** — avec, à chaque fois, ce qu'ils ne prouvent pas. Publiés tels quels, ils sont honnêtes ; publiés seuls, ils seraient flatteurs |
+
+Rien dans le dépôt ne décrit un tiers, un établissement ou un étudiant réel.
+
+## 6. Licence — décision à prendre
+
+Le dépôt **n'a pas de licence**. En l'absence de licence, le droit d'auteur
+par défaut s'applique : personne n'a le droit de réutiliser, modifier ni
+redistribuer le code, même publié. Un dépôt public sans licence est donc
+lisible mais inutilisable — ce qui est parfois exactement l'intention.
+
+| Option | Ce qu'elle permet | Ce qu'elle coûte |
+|---|---|---|
+| **aucune licence** | lecture seule ; aucune réutilisation autorisée | aucune contribution externe possible en pratique ; incohérent avec un `CONTRIBUTING.md` |
+| **MIT** | tout, y compris commercial, avec mention de la paternité | un tiers peut reprendre C-A dans un produit fermé, sans rien rendre |
+| **Apache-2.0** | comme MIT, plus une **clause de brevet** explicite et une obligation de signaler les modifications | texte plus long ; même liberté de reprise commerciale |
+| **GPL-3.0** | réutilisation libre, mais toute œuvre dérivée **doit rester libre** | incompatible avec une reprise dans un produit fermé — y compris, plus tard, par toi |
+| **sources visibles, droits réservés** (licence propre) | lecture, étude, retours ; pas de reprise | rédaction à faire ; non reconnue par les outils ; décourage les contributions |
+
+**Ma recommandation : Apache-2.0**, pour trois raisons tenant au projet :
+
+1. le projet **appelle des retours d'usage** et ouvre des formulaires de
+   tickets : une licence reconnue lève l'ambiguïté pour ceux qui essaient ;
+2. la clause de brevet protège un projet qui décrira des méthodes
+   pédagogiques, là où MIT reste muette ;
+3. elle laisse ouverte la famille **AD** et toute version commerciale
+   ultérieure, ce que GPL-3.0 fermerait.
+
+**Si l'intention est de montrer sans partager**, alors *aucune licence* est
+le choix cohérent — et il faut alors retirer `CONTRIBUTING.md`, ou y écrire
+que les contributions ne sont pas acceptées.
+
+**Rien n'a été ajouté** : aucun fichier `LICENSE` n'est écrit, et le `README`
+renvoie ici. Dis le choix, et je l'ajoute avec l'en-tête correspondant.
+
+## 7. Décisions qui restent, et qui ne m'appartiennent pas
+
+1. **publier ou non**, et quand ;
+2. la **licence** (§6) ;
+3. **réécrire ou non** l'auteur des commits avant le premier envoi (§2.2) ;
+4. publier le **`CLAUDE.md` de travail** tel quel, avec ses dettes et ses
+   points ouverts, ou en extraire une version publique ;
+5. le **nom public** du dépôt : `A`, `C-A`, ou autre — le dépôt distant
+   s'appelle aujourd'hui `A`, ce qui est introuvable par recherche.
+
+## 8. État de la vérification
+
+Au moment de cet audit :
+
+- `npm run check` : **3 834 tests, 0 échec** ;
+- suite hôte VS Code : **99 / 99**, huit passages verts consécutifs ;
+- `node scripts/anonymiser.mjs` : **0 fichier** à réécrire ;
+- aucun fichier suivi non textuel ;
+- `.gitignore` couvre les paquets, les caches, les binaires et les dossiers
+  de travail de compilation.
+
+**Ce que cet audit ne garantit pas.** Il a cherché des motifs connus de
+secrets dans les fichiers **suivis à cette date**. Il ne prouve pas qu'aucun
+secret n'a jamais existé dans l'historique : si un tel doute apparaît, la
+réponse est la même que pour l'adresse de courriel — réécrire l'historique
+**avant** le premier envoi, pendant que c'est encore gratuit.
