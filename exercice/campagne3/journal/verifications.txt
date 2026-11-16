@@ -1,0 +1,59 @@
+Campagne 3 — vérifications
+==========================
+
+--- 1. Les 19 compétences visées sont-elles EMPLOYÉES par les programmes ?
+
+  EMPLOYÉE  1. Initialisation à la déclaration    INIT_INT
+  EMPLOYÉE  2. Expression entière et priorités    ASSIGN_EXPRESSION
+  EMPLOYÉE  3. Format hexadécimal                 PRINT_FORMATTED
+  EMPLOYÉE  4. Branche sinon si                   ELSE_IF
+  EMPLOYÉE  5. Branche sinon                      ELSE
+  EMPLOYÉE  6. Boucle à test final                DO_WHILE
+  EMPLOYÉE  7. Boucle pour                        FOR
+  EMPLOYÉE  8. Sortie de boucle                   BREAK
+  EMPLOYÉE  9. Itération suivante                 CONTINUE
+  EMPLOYÉE 10. Étiquette caractère                CASE_CHAR
+  EMPLOYÉE 11. Type caractère                     DECL_CHAR
+  EMPLOYÉE 12. Littéral caractère                 INIT_CHAR
+  EMPLOYÉE 13. Affichage caractère                PRINT_CHAR
+  EMPLOYÉE 14. Affichage d’élément                ARRAY_PRINT
+  EMPLOYÉE 15. Déréférencement en écriture        ASSIGN_POINTED_INT
+  EMPLOYÉE 16. Variable de type structure         STRUCT_VAR
+  EMPLOYÉE 17. Réallocation                       REALLOCATE
+  EMPLOYÉE 18. Lecture d’entier                   FILE_READ_INT
+  EMPLOYÉE 19. Fin de fichier                     FILE_AT_END
+  EMPLOYÉE 20. Définition de fonction interne     FUNC_DEF
+  EMPLOYÉE 21. Lecture de chaîne bornée           FILE_READ_STRING
+  EMPLOYÉE 22. Affectation de caractère à un champ MEMBER_ASSIGN_CHAR
+
+--- 2. Sorties observées, et ce qu’elles démontrent
+
+  classement.c : compilation 0, exécution 0, 7 sorties conformes
+      1a   : 20 + 3 * 2 = 26 en hexadécimal — la priorité du produit est respectée
+      moyen: 26 > 100 faux, 26 > 20 vrai — la branche sinon si est prise
+      3    : la boucle à test final incrémente i jusqu’à 3
+      023  : la boucle pour saute j = 1 par continue et s’arrête à j = 4 par break
+      B    : l’aiguillage prend le cas du caractère A, pas le cas par défaut
+      7    : l’élément 0 du tableau
+      5    : écrit par déréférencement, lu par le nom
+  inventaire.c : compilation 0, exécution 0, 3 sorties conformes
+      3  : champ x d’une variable de type structure
+      67 : le champ initiale vaut 'C', affiché avec « %d » — un caractère EST un entier
+      9  : élément 2 du bloc réalloué, donc la réallocation a conservé le bloc
+  journal.c : compilation 0, exécution 0, 2 sorties conformes
+      42  : entier écrit puis relu depuis le fichier
+      fin : la fin de fichier est atteinte après la lecture
+  texte.c : compilation 0, exécution 0, 2 sorties conformes
+      bonjour : lu par fgets avec une borne écrite dans la phrase
+      16      : retourné par une fonction à liaison interne, donc appelée
+
+--- 3. Refus attendus : les limites restent des limites
+
+  REFUSÉ  UNEXPECTED_TEXT          tableau à deux dimensions
+  REFUSÉ  UNEXPECTED_TEXT          liste d’initialisation
+  REFUSÉ  UNKNOWN_FORMULATION      lecture de chaîne sans borne
+  REFUSÉ  UNKNOWN_FORMULATION      commande de limite
+  ACCEPTÉ SANS AVERTISSEMENT       soustraction de pointeurs
+          n = (p - q);
+
+TOUTES LES VÉRIFICATIONS PASSENT.

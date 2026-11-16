@@ -546,7 +546,14 @@ exports.run = async function run() {
           const initial = prefix + unit + eol + suffix;
           const { document, editor, file } = await fixture(initial, prefix.length + unit.length);
           editor.options = { insertSpaces: unit !== '\t', tabSize: 2, indentSize: 'tabSize' };
-          await delay(100);
+          // Instabilité trouvée à la campagne 2 : ce site était le SEUL à
+          // attendre les réglages par un délai fixe, là où tous ses voisins
+          // attendent la condition réelle. Si l’éditeur n’avait pas appliqué
+          // tabSize en 100 ms, la session capturait la mauvaise signature
+          // d’indentation et le document attendu ne correspondait plus. Ce
+          // n'est pas une nouvelle tentative : c'est l'attente de l'état.
+          await waitFor(() => editor.options.tabSize === 2 && editor.options.indentSize === 2
+            && editor.options.insertSpaces === (unit !== '\t'), 'réglages d’indentation résolus');
           let previous = initial;
           for (const source of ['Crée un bloc si "age >= 18".', 'Déclare un entier nommé x.',
             'Affecte la valeur 1 à x.', 'Crée un bloc si "x == 1".', 'Affiche la valeur de x.']) {

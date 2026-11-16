@@ -1,4 +1,5 @@
 import type { Diagnostic, SourceRange } from './translate.ts';
+import { parseCharacterLiteral } from './characterLiteral.ts';
 import { parseNumericExpression } from './numericExpression.ts';
 import type { NumericExpression, NumericType } from './numericExpression.ts';
 
@@ -129,6 +130,23 @@ export function analyzeStructInstruction(source: string, tokens: Token[], end: n
     return parsed.expression;
   }
 
+  /** `Affecte le caractère {littéral} au champ {cible}.` Rend true si la
+   * phrase a été prise en charge, que ce soit par une instruction ou par un
+   * diagnostic ; false pour la décliner intacte aux branches historiques. */
+  function analyzeMemberCharacter(): boolean {
+    const scanned = parseCharacterLiteral(source, tokens[2]!.range.end, end);
+    if (scanned.status !== 'parsed') return false;
+    // Le premier jeton qui commence après le littéral : « au ».
+    const at = tokens.findIndex(token => token.range.start >= scanned.end);
+    if (at === -1 || !same('au', tokens[at]!.text) || !same('champ', tokens[at + 1]?.text ?? '')) return false;
+    const read = target(at + 2);
+    if (read && finish(read.next)) {
+      instruction = { kind: 'MEMBER_ASSIGN_CHAR', parameters: { target: read.target,
+        literal: scanned.literal.text, literalRange: { ...scanned.literal.range } } };
+    }
+    return true;
+  }
+
   let instruction: StructInstruction | undefined;
   if (word(0) === 'déclare' && word(1) === 'une' && word(2) === 'structure') {
     if (!expect(3, 'nommée', 'MISSING_STRUCT_TAG', 'Il manque le nom de la structure.')) return { status: 'rejected', diagnostic: diagnostic! };
@@ -208,6 +226,15 @@ export function analyzeStructInstruction(source: string, tokens: Token[], end: n
         instruction = { kind: 'MEMBER_ASSIGN_INT', parameters: { target: read.target, value: value.text } };
       }
     }
+  } else if (word(0) === 'affecte' && word(1) === 'le' && word(2) === 'caractère'
+    && tokens.length > 3 && analyzeMemberCharacter()) {
+    // Lot 30. Ce genre existait dans le type et dans le rendu depuis le lot
+    // 20, mais aucun analyseur ne le construisait : aucune phrase n'y menait.
+    // L'audit du lot 30 l'a trouvé, et cette branche le rend atteignable.
+    //
+    // Le littéral est lu dans la source BRUTE, et non dans les jetons, parce
+    // que « ' ' » contient une espace : la tokenisation le couperait en deux.
+    // L'index de jeton est ensuite retrouvé par comparaison d'offsets.
   } else if (word(0) === 'affecte' && word(1) === 'au' && word(2) === 'champ') {
     const read = target(3);
     if (read) {

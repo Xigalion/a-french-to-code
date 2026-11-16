@@ -1,0 +1,408 @@
+{
+  "vscode": "1.138.0",
+  "passed": 99,
+  "failed": 0,
+  "cases": [
+    {
+      "name": "InputBox : Échap annule, aucun changement",
+      "status": "passed"
+    },
+    {
+      "name": "première Entrée : diff complet en lecture seule, sans insertion",
+      "status": "passed"
+    },
+    {
+      "name": "MAIN : confirmation native, retour au curseur, annulation et rétablissement",
+      "status": "passed"
+    },
+    {
+      "name": "trois sessions successives, sans accumulation de lignes blanches",
+      "status": "passed"
+    },
+    {
+      "name": "brouillon non enregistré utilisé et jamais sauvegardé par C-A",
+      "status": "passed"
+    },
+    {
+      "name": "navigation dans le diff ne redirige pas l’insertion",
+      "status": "passed"
+    },
+    {
+      "name": "modification du document après aperçu : Insérer disparaît",
+      "status": "passed"
+    },
+    {
+      "name": "déplacement du curseur invalide le plan même sur la même ligne",
+      "status": "passed"
+    },
+    {
+      "name": "réglages d’indentation modifiés : aperçu périmé",
+      "status": "passed"
+    },
+    {
+      "name": "fermeture du document cible : aucun autre éditeur modifié",
+      "status": "passed"
+    },
+    {
+      "name": "confirmations natives répétées : une seule insertion",
+      "status": "passed"
+    },
+    {
+      "name": "diagnostic de traduction : français, UTF-16, aucune édition",
+      "status": "passed"
+    },
+    {
+      "name": "diagnostic de placement séparé, sans correction du fichier",
+      "status": "passed"
+    },
+    {
+      "name": "réglage deux espaces transmis à MAIN",
+      "status": "passed"
+    },
+    {
+      "name": "texte existant \"\\n\" et UTF-16 : insertion et curseur exacts",
+      "status": "passed"
+    },
+    {
+      "name": "texte existant \"\\r\\n\" et UTF-16 : insertion et curseur exacts",
+      "status": "passed"
+    },
+    {
+      "name": "changement de métadonnée LF/CRLF dans un fichier vide : plan périmé",
+      "status": "passed"
+    },
+    {
+      "name": "un autre fichier actif ne devient jamais la cible",
+      "status": "passed"
+    },
+    {
+      "name": "Modifier la phrase réouvre le brouillon et impose un nouvel aperçu",
+      "status": "passed"
+    },
+    {
+      "name": "indentSize distinct de tabSize respecté sans reformatter le texte",
+      "status": "passed"
+    },
+    {
+      "name": "lot 4 : inclusion, main, entier et affichages sans retour implicite",
+      "status": "passed"
+    },
+    {
+      "name": "lot 5 refus sans insertion : Affiche age.",
+      "status": "passed"
+    },
+    {
+      "name": "lot 5 refus sans insertion : Affiche age en.",
+      "status": "passed"
+    },
+    {
+      "name": "lot 5 refus sans insertion : Affiche en décimal.",
+      "status": "passed"
+    },
+    {
+      "name": "lot 5 refus sans insertion : Affiche age en binaire.",
+      "status": "passed"
+    },
+    {
+      "name": "lot 5 refus sans insertion : Affiche 😀 en octal.",
+      "status": "passed"
+    },
+    {
+      "name": "lot 5 formats explicites : aperçu, confirmation et curseur successif",
+      "status": "passed"
+    },
+    {
+      "name": "lot 6 refus sans insertion : MISSING_OPERAND a +",
+      "status": "passed"
+    },
+    {
+      "name": "lot 6 refus sans insertion : MISSING_EXPRESSION ",
+      "status": "passed"
+    },
+    {
+      "name": "lot 6 refus sans insertion : MISSING_CLOSING_PARENTHESIS (a + b",
+      "status": "passed"
+    },
+    {
+      "name": "lot 6 refus sans insertion : INVALID_EXPRESSION_TOKEN a + 😀",
+      "status": "passed"
+    },
+    {
+      "name": "lot 6 refus sans insertion : UNSUPPORTED_EXPRESSION_OPERATOR a == b",
+      "status": "passed"
+    },
+    {
+      "name": "lot 6 refus sans insertion : EXPRESSION_TOO_COMPLEX ((((((((((((((((((((((((",
+      "status": "passed"
+    },
+    {
+      "name": "lot 6 refus sans insertion : EXPRESSION_TOO_COMPLEX a+a+a+a+a+a+a+a+a+a+a+a+",
+      "status": "passed"
+    },
+    {
+      "name": "lot 6 négations, calculs et confirmation : source, aperçu et curseur exacts",
+      "status": "passed"
+    },
+    {
+      "name": "lot 7 refus sans insertion : MISSING_NUMERIC_TYPE",
+      "status": "passed"
+    },
+    {
+      "name": "lot 7 refus sans insertion : UNSUPPORTED_NUMERIC_TYPE",
+      "status": "passed"
+    },
+    {
+      "name": "lot 7 refus sans insertion : MISSING_OPERAND",
+      "status": "passed"
+    },
+    {
+      "name": "lot 7 refus sans insertion : INCOMPLETE_NUMERIC_LITERAL",
+      "status": "passed"
+    },
+    {
+      "name": "lot 7 refus sans insertion : MISSING_DISPLAY_PRECISION",
+      "status": "passed"
+    },
+    {
+      "name": "lot 7 refus sans insertion : INVALID_DISPLAY_PRECISION",
+      "status": "passed"
+    },
+    {
+      "name": "lot 7 refus sans insertion : INVALID_EXPRESSION_TOKEN",
+      "status": "passed"
+    },
+    {
+      "name": "lot 7 refus sans insertion : EXPRESSION_TOO_COMPLEX",
+      "status": "passed"
+    },
+    {
+      "name": "lot 7 types, divisions, casts et formats : parcours inchangé",
+      "status": "passed"
+    },
+    {
+      "name": "lot 8 nonblocking warnings and unchanged insertion: 7 / 0",
+      "status": "passed"
+    },
+    {
+      "name": "lot 8 nonblocking warnings and unchanged insertion: 1.0 / 0.0",
+      "status": "passed"
+    },
+    {
+      "name": "lot 8 nonblocking warnings and unchanged insertion: a / 0",
+      "status": "passed"
+    },
+    {
+      "name": "lot 8 nonblocking warnings and unchanged insertion: 7 % 0.0",
+      "status": "passed"
+    },
+    {
+      "name": "lot 8 nonblocking warnings and unchanged insertion: 7 / 0 + 5.0 % 2",
+      "status": "passed"
+    },
+    {
+      "name": "lot 8 edit/cancel drops warned preview; incomplete new phrase cannot insert",
+      "status": "passed"
+    },
+    {
+      "name": "lot 8 stale preview clears active warnings and insertion choices",
+      "status": "passed"
+    },
+    {
+      "name": "lot 8 deliberate exclusions have no warning or log",
+      "status": "passed"
+    },
+    {
+      "name": "lot 9 : IF imbriqués et insertions successives [\"\\n\",\"  \"]",
+      "status": "passed"
+    },
+    {
+      "name": "lot 9 : IF imbriqués et insertions successives [\"\\n\",\"\\t\"]",
+      "status": "passed"
+    },
+    {
+      "name": "lot 9 : IF imbriqués et insertions successives [\"\\r\\n\",\"  \"]",
+      "status": "passed"
+    },
+    {
+      "name": "lot 9 : IF imbriqués et insertions successives [\"\\r\\n\",\"\\t\"]",
+      "status": "passed"
+    },
+    {
+      "name": "lot 9 : IF complet sans main implicite et annulation",
+      "status": "passed"
+    },
+    {
+      "name": "lot 9 : IF périmé ne s’applique pas",
+      "status": "passed"
+    },
+    {
+      "name": "lot 9 : avis historiques dans les conditions, sans blocage",
+      "status": "passed"
+    },
+    {
+      "name": "lot 9 : affectation refusée, aucune insertion ou correction",
+      "status": "passed"
+    },
+    {
+      "name": "lot 10 : précédence et informations passives sans Warning",
+      "status": "passed"
+    },
+    {
+      "name": "lot 10 : chaîne progressive, cible et annulations \"\\n\"",
+      "status": "passed"
+    },
+    {
+      "name": "lot 10 : chaîne progressive, cible et annulations \"\\r\\n\"",
+      "status": "passed"
+    },
+    {
+      "name": "lot 10 : rattachement imbriqué explicite",
+      "status": "passed"
+    },
+    {
+      "name": "lot 10 : branche isolée et branche existante refusées",
+      "status": "passed"
+    },
+    {
+      "name": "lot 10 : branche périmée sans redirection de cible",
+      "status": "passed"
+    },
+    {
+      "name": "lot 10 : court-circuit ne supprime pas les avis calcul",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11A : boucle, curseur intérieur, annuler puis rétablir \"\\n\"",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11A : boucle, curseur intérieur, annuler puis rétablir \"\\r\\n\"",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11A : WHILE_PRETEST journalisé en information, sans Warning",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11A : avis de calcul conservé dans la condition de boucle",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11A refus sans insertion : MISSING_CONDITION Crée une boucle tant que",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11A refus sans insertion : ASSIGNMENT_IN_CONDITION Crée une boucle tant que \"i = 3\"",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11A refus sans insertion : UNKNOWN_FORMULATION Crée une boucle jusqu’à \"i == 3\"",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11A refus sans insertion : UNKNOWN_FORMULATION Crée une boucle avec test finale",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11D : un transfert hors boucle est refusé au placement, pas à la traduction",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11A : boucles imbriquées puis branche refusée après la boucle",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11B : do/while, fermeture avec condition et annulation \"\\n\"",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11B : do/while, fermeture avec condition et annulation \"\\r\\n\"",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11B : DO_WHILE_POSTTEST journalisé, sans Warning",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11B : aucune branche sinon ne se rattache à une fermeture do/while",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11C : for à trois clauses explicites \"\\n\"",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11C : for à trois clauses explicites \"\\r\\n\"",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11C : FOR_CLAUSE_ORDER journalisé, sans Warning",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11C : avis dans la clause de mise à jour, sans insertion forcée",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11C refus sans insertion : INCOMPLETE_INSTRUCTION",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11C refus sans insertion : UNKNOWN_FORMULATION",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11C refus sans insertion : MISSING_CONDITION",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11C refus sans insertion : UNSUPPORTED_EXPRESSION_OPERATOR",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11D : break dans une boucle, cible affichée et annulation",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11D : continue traverse un switch, break y est refusé",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11D : un break intérieur ne sort pas de la boucle extérieure",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11D : transfert hors boucle et corps sans accolades refusés",
+      "status": "passed"
+    },
+    {
+      "name": "lot 11D : structure englobante modifiée après aperçu : plan périmé",
+      "status": "passed"
+    },
+    {
+      "name": "lot 12 : fonction, paramètres, retour et appel",
+      "status": "passed"
+    },
+    {
+      "name": "lot 12 : contrat de retour refusé sans insertion",
+      "status": "passed"
+    },
+    {
+      "name": "lot 12 : appel avec arguments, avis conservé et cible affichée",
+      "status": "passed"
+    },
+    {
+      "name": "lot 12 : définition de fonction imbriquée refusée, MAIN inchangé",
+      "status": "passed"
+    },
+    {
+      "name": "changer indentSize seul invalide le plan",
+      "status": "passed"
+    }
+  ],
+  "manualRemaining": [
+    "Touches physiques Ctrl+K puis A / Cmd+K puis A",
+    "Composition IME et disposition de clavier",
+    "Vérification visuelle du focus et du diff"
+  ]
+}

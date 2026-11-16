@@ -236,13 +236,38 @@ const contractRefusals = [
   ['while (a) {\n', 'Retourne la valeur 0.', 'NO_ENCLOSING_FUNCTION'],
   ['char* f(void) {\n', 'Retourne la valeur 0.', 'UNSUPPORTED_RETURN_TYPE'],
   ['long f(void) {\n', 'Retourne la valeur 0.', 'UNSUPPORTED_RETURN_TYPE'],
-  ['static int f(void) {\n', 'Retourne la valeur 0.', 'UNSUPPORTED_RETURN_TYPE'],
   ['f(void) {\n', 'Retourne la valeur 0.', 'UNSUPPORTED_RETURN_TYPE'],
   ['int main(void) {\n    int x =\n', 'Retourne la valeur 0.', 'NOT_A_STATEMENT_POSITION'],
   ['int main(void) {\n    struct P { int x;\n', 'Retourne la valeur 0.', 'UNSUPPORTED_ENCLOSING_CONTEXT'],
   ['/* ouvert\nint main(void) {\n', 'Retourne la valeur 0.', 'TARGET_IN_COMMENT'],
   ['#define X 1\nint main(void) {\n', 'Retourne la valeur 0.', 'UNSUPPORTED_DIRECTIVE'],
 ];
+test('lot 31 : « static » n’est pas un type de retour, et n’empêche plus un retour', () => {
+  // Ce document figurait dans la table des REFUS ci-dessus : « static int »
+  // était lu comme un type de retour entier, donc non pris en charge, et un
+  // retour y était refusé. Le lot 31 a livré « Crée une fonction interne … »,
+  // ce qui rendait la fonction écrivable par C-A sans pouvoir y mettre un
+  // return : la capacité était à moitié livrée. Les spécificateurs de classe
+  // de stockage sont désormais écartés du type.
+  const result = planPlacement(input('static int f(void) {\n', 'Retourne la valeur 0.'));
+  assert.equal(result.status, 'planned', JSON.stringify(result));
+  assert.equal(result.plan.functionContext.returnType, 'int');
+  // Et le contrat de retour s'applique comme pour toute autre fonction.
+  const voidStatic = planPlacement(input('static void g(void) {\n', 'Retourne la valeur 0.'));
+  assert.equal(voidStatic.status, 'rejected');
+  assert.equal(voidStatic.diagnostics[0].code, 'RETURN_IN_VOID_FUNCTION');
+  assert.equal(planPlacement(input('static void g(void) {\n', 'Retourne.')).status, 'planned');
+  // Un type réellement non pris en charge reste refusé, static ou non.
+  for (const text of ['long f(void) {\n', 'static long f(void) {\n', 'static f(void) {\n']) {
+    const refus = planPlacement(input(text, 'Retourne la valeur 0.'));
+    assert.equal(refus.status, 'rejected', text);
+    assert.equal(refus.diagnostics[0].code, 'UNSUPPORTED_RETURN_TYPE', text);
+  }
+  // Le message garde ce que l'auteur a écrit, spécificateur compris.
+  const message = planPlacement(input('static long f(void) {\n', 'Retourne la valeur 0.')).diagnostics[0].message;
+  assert.match(message, /« static long »/u);
+});
+
 for (const [text, source, code] of contractRefusals) {
   test(`contrat de retour refusé ${code} ${JSON.stringify(text.slice(0, 26))}`, () => {
     placementRefused(input(text, source), code);

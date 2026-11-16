@@ -406,6 +406,8 @@ une phrase, vérification d'unicité ou de couverture, et `goto`.
 | `Affecte la valeur 5 au champ x de p.` | `p.x = 5;` | MEMBER_ACCESS_FORM, MEMBER_NOT_CHECKED |
 | `Affecte la valeur 5 au champ x pointé par q.` | `q->x = 5;` | idem |
 | `Affecte au champ x de p le résultat numérique de "a + 1".` | `p.x = (a + 1);` | idem |
+| `Affecte le caractère 'A' au champ initiale de e.` | `e.initiale = 'A';` | idem |
+| `Affecte le caractère 'A' au champ initiale pointé par p.` | `p->initiale = 'A';` | idem |
 | `Affiche le champ x de p.` | `printf("%d", p.x);` | idem |
 | `Affiche le champ x pointé par q.` | `printf("%d", q->x);` | idem |
 
@@ -479,6 +481,7 @@ vérification de durée de vie, de cohérence ou de fuite.
 | `Écris le texte "bonjour" dans le fichier f.` | `fprintf(f, "%s", "bonjour");` | — |
 | `Écris la valeur de x dans le fichier f.` | `fprintf(f, "%d", x);` | — |
 | `Lis un entier depuis le fichier f dans x.` | `fscanf(f, "%d", &x);` | SCANF_NEEDS_ADDRESS |
+| `Lis une chaîne de dimension 32 depuis le fichier f dans s.` | `fgets(s, 32, f);` | FGETS_KEEPS_NEWLINE, FGETS_BOUND_NOT_CHECKED |
 | `Crée un bloc si la fin du fichier f est atteinte.` | `if (feof(f)) { ⏎ ⏎ }` | EOF_AFTER_READ |
 
 Six modes : `lecture`, `écriture`, `ajout`, chacun suivi ou non de
@@ -505,6 +508,7 @@ chose qu'un entier, et toute vérification de flux, de chemin ou d'ordre.
 | `Ferme la protection d'en-tête.` | `#endif` | — |
 | `Déclare le prototype d'une fonction nommée somme qui retourne un int et prend un int nommé a.` | `int somme(int a);` | PROTOTYPE_DECLARES_ONLY |
 | `Déclare le prototype d'une fonction interne nommée aide qui retourne un int.` | `static int aide(void);` | + INTERNAL_LINKAGE |
+| `Crée une fonction interne nommée aide qui retourne un int.` | `static int aide(void) { ⏎ ⏎ }` | + INTERNAL_LINKAGE |
 | `Déclare la variable externe de type int nommée compteur.` | `extern int compteur;` | EXTERNAL_LINKAGE |
 | `Déclare la variable interne de type double nommée total.` | `static double total;` | INTERNAL_LINKAGE |
 

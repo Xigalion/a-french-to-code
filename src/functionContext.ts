@@ -38,6 +38,16 @@ type Issue = { code: FunctionCode; reason: 'unsafe-location' | 'unsupported-cons
 export type FunctionResolution = { status: 'resolved'; context: FunctionContext } | { status: 'rejected'; diagnostic: Issue };
 
 const SUPPORTED: readonly string[] = ['void', 'int', 'unsigned int', 'float', 'double'];
+/** Storage-class specifiers are NOT part of a return type: `static int f(void)`
+ * returns an `int`. The shared scan reports the specifiers exactly as the
+ * author wrote them, which is its job; this is where they are set aside.
+ *
+ * Lot 31 exposed the omission. Delivering `Crée une fonction interne …` made
+ * `static int aide(void) {` writable by C-A, and a `Retourne la valeur 16.`
+ * inside it was then refused with UNSUPPORTED_RETURN_TYPE — the feature was
+ * half delivered. Hand-written `static` functions had the same problem before
+ * the lot, silently. */
+const STORAGE_CLASSES: readonly string[] = ['static', 'extern', 'inline'];
 
 /** The function a target line belongs to, with the return type **as the author
  * declared it**. This reads one header syntactically; it is not a type checker
@@ -60,12 +70,14 @@ export function resolveFunctionContext(text: string, lineStart: number): Functio
         message: 'Une structure englobante de cette ligne n’est pas reconnue.', range: frame.braceRange } };
     }
     if (frame.kind !== 'function') continue;
-    const declared = frame.returnType ?? '';
+    const written = frame.returnType ?? '';
+    // The message keeps what the author wrote; the check uses the type alone.
+    const declared = written.split(' ').filter(word => !STORAGE_CLASSES.includes(word)).join(' ');
     if (!SUPPORTED.includes(declared)) {
       return { status: 'rejected', diagnostic: { code: 'UNSUPPORTED_RETURN_TYPE', reason: 'unsupported-construct',
         message: declared === ''
           ? 'Le type de retour de cette fonction n’est pas écrit : il ne peut pas être établi.'
-          : `Le type de retour « ${declared} » de cette fonction n’est pas pris en charge.`,
+          : `Le type de retour « ${written} » de cette fonction n’est pas pris en charge.`,
         range: { ...frame.keywordRange } } };
     }
     return { status: 'resolved', context: { returnType: declared as ReturnType,

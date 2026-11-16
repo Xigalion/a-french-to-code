@@ -27,7 +27,8 @@ export type PedagogicalInformation = {
     | 'ASSERT_DISABLED_BY_NDEBUG' | 'ASSERT_NOT_ERROR_HANDLING'
     | 'CONST_IS_NOT_A_MACRO'
     | 'LIMITS_ARE_IMPLEMENTATION_DEFINED' | 'LIMIT_MACROS_NOT_KNOWN'
-    | 'OUTPUT_HAS_NO_SEPARATOR';
+    | 'OUTPUT_HAS_NO_SEPARATOR' | 'POINTER_ARITHMETIC_ABSENT'
+    | 'FGETS_KEEPS_NEWLINE' | 'FGETS_BOUND_NOT_CHECKED';
   severity: 'information';
   range: SourceRange;
   message: string;
@@ -92,6 +93,16 @@ const POINTER_MESSAGES = {
     + '« *p » désigne l’objet rangé à cette adresse. Modifier l’un n’est pas modifier l’autre.',
   DEREFERENCE_MEANING: 'Le déréférencement désigne l’objet dont ce pointeur contient l’adresse, en lecture comme '
     + 'en écriture : écrire dans « *p » écrit dans cet objet, pas dans le pointeur.',
+  /** Lot 30. L'exercice intégrateur avait montré que `p = p + 1` est accepté
+   * et rendu sans un mot. C-A ne PEUT pas faire mieux dans une expression
+   * quelconque : il est sans état d'une instruction à l'autre, et rien ne lui
+   * dit qu'un nom désigne un pointeur. L'information est donc posée là où il
+   * le sait — la déclaration — et elle dit exactement ce qui n'est pas
+   * vérifié, au lieu de simuler une vérification. */
+  POINTER_ARITHMETIC_ABSENT: 'C-A n’offre qu’une seule forme d’arithmétique de pointeur : « *(nom + décalage '
+    + 'entier) ». Écrit ailleurs, « p + 1 » est accepté comme un calcul ordinaire : C-A ne sait pas que ce nom '
+    + 'désigne un pointeur, n’analyse aucune mémoire et ne signale rien. Ni « p - q », ni « ++ », ni « -- » '
+    + 'n’existent.',
   UNINITIALIZED_POINTER: 'Aucune adresse n’est écrite ici : la valeur de ce pointeur est indéterminée tant qu’il '
     + 'n’en reçoit pas une. Le déréférencer avant cela a, en C17, un comportement indéfini.',
   ADDRESS_NOT_CHECKED: 'C-A ne vérifie ni que ce pointeur a reçu une adresse, ni qu’elle est encore valide, ni '
@@ -102,11 +113,15 @@ const POINTER_MESSAGES = {
   POINTER_ARITHMETIC_LIMITS: 'L’addition se compte en éléments, pas en octets. Elle n’est définie qu’à l’intérieur '
     + 'du tableau et jusqu’à une position au-delà du dernier élément : cette position peut être formée, mais elle '
     + 'ne doit pas être déréférencée.',
+  // Lot 30 : la clause « C-A ne vérifie ni les bornes, ni la validité de
+  // l'adresse formée » figurait ici ET dans OFFSET_TYPE_NOT_CHECKED, dont
+  // c'est le sujet. Dite une seule fois désormais. Aucune leçon perdue : ce
+  // message garde l'énoncé C17, l'autre garde ce que C-A ne vérifie pas.
   OUT_OF_BOUNDS_UNDEFINED: 'Lire ou écrire hors des limites a, en C17, un comportement indéfini, et rien ne le '
-    + 'signale à l’exécution. C-A ne vérifie ni les bornes, ni la validité de l’adresse formée.',
+    + 'signale à l’exécution.',
   OFFSET_TYPE_NOT_CHECKED: 'Cette forme est syntaxiquement celle d’un décalage, et rien de plus : C-A ne vérifie ni '
-    + 'que ce nom désigne un tableau ou un pointeur, ni que le décalage est bien un entier. Une forme acceptée ici '
-    + 'ne garantit pas que le C produit soit correct.',
+    + 'que ce nom désigne un tableau ou un pointeur, ni que le décalage est bien un entier, ni les bornes, ni la '
+    + 'validité de l’adresse formée. Une forme acceptée ici ne garantit pas que le C produit soit correct.',
 } as const;
 
 /** The first character constant written inside an expression. Walked the same
@@ -186,6 +201,15 @@ const FILE_MESSAGES = {
     + 'pas les fins de ligne.',
   FILE_MUST_BE_CLOSED: 'Un flux ouvert doit être fermé. Avant fclose, des données écrites peuvent n’être encore que '
     + 'dans le tampon : sans fermeture, elles peuvent ne jamais atteindre le fichier. C-A ne suit aucun flux.',
+  /** Lot 31. Deux surprises de `fgets` qu'un étudiant découvre autrement en
+   * perdant une heure : le retour à la ligne conservé, et la borne que C-A
+   * ne peut pas vérifier parce qu'il ne connaît pas la dimension du tableau. */
+  FGETS_KEEPS_NEWLINE: 'fgets conserve le retour à la ligne s’il tient dans la place demandée, et écrit toujours '
+    + 'le caractère nul. La chaîne lue peut donc se terminer par « \\n » : ce n’est pas une erreur, c’est le '
+    + 'contrat de fgets. Il renvoie NULL en fin de fichier ou en cas d’erreur, et C-A n’ajoute aucun test.',
+  FGETS_BOUND_NOT_CHECKED: 'La borne écrite ici est le nombre total d’octets, caractère nul compris : fgets lit au '
+    + 'plus un caractère de moins. C-A ne connaît pas la dimension du tableau de destination et ne vérifie donc '
+    + 'pas que cette borne lui corresponde — une borne trop grande déborde, et rien ne le signale.',
   SCANF_NEEDS_ADDRESS: 'fscanf écrit dans la variable, il lui faut donc son adresse : c’est le rôle du « & ». La '
     + 'valeur renvoyée dit combien de conversions ont réussi, et C-A ne la teste pas.',
   EOF_AFTER_READ: 'feof ne regarde pas devant : il devient vrai seulement après une lecture qui a échoué parce que '
@@ -350,6 +374,13 @@ function explainInstructionCore(result: TranslationResult): PedagogicalInformati
     return [{ code: 'FILE_MUST_BE_CLOSED', severity: 'information',
       range: { ...result.instruction.parameters.nameRange }, message: FILE_MESSAGES.FILE_MUST_BE_CLOSED }];
   }
+  if (result.instruction.kind === 'FILE_READ_STRING') {
+    const read = result.instruction.parameters;
+    return [{ code: 'FGETS_KEEPS_NEWLINE', severity: 'information',
+      range: { ...read.targetRange }, message: FILE_MESSAGES.FGETS_KEEPS_NEWLINE },
+      { code: 'FGETS_BOUND_NOT_CHECKED', severity: 'information',
+        range: { ...read.dimensionRange }, message: FILE_MESSAGES.FGETS_BOUND_NOT_CHECKED }];
+  }
   if (result.instruction.kind === 'FILE_READ_INT') {
     return [{ code: 'SCANF_NEEDS_ADDRESS', severity: 'information',
       range: { ...result.instruction.parameters.targetRange }, message: FILE_MESSAGES.SCANF_NEEDS_ADDRESS }];
@@ -465,13 +496,17 @@ function explainInstructionCore(result: TranslationResult): PedagogicalInformati
     const anchor = (result.instruction.parameters as { nameRange: SourceRange }).nameRange;
     const object: PedagogicalInformation = { code: 'POINTER_VS_OBJECT', severity: 'information',
       range: { ...anchor }, message: POINTER_MESSAGES.POINTER_VS_OBJECT };
+    // Lot 30 : l'absence d'arithmétique de pointeur est dite à la déclaration,
+    // le seul endroit où C-A sait qu'il s'agit d'un pointeur.
+    const arithmetic: PedagogicalInformation = { code: 'POINTER_ARITHMETIC_ABSENT', severity: 'information',
+      range: { ...anchor }, message: POINTER_MESSAGES.POINTER_ARITHMETIC_ABSENT };
     if (kind === 'DECL_POINTER') {
       return [{ code: 'UNINITIALIZED_POINTER', severity: 'information', range: { ...anchor },
-        message: POINTER_MESSAGES.UNINITIALIZED_POINTER }, object];
+        message: POINTER_MESSAGES.UNINITIALIZED_POINTER }, object, arithmetic];
     }
     const target = (result.instruction.parameters as { targetRange: SourceRange }).targetRange;
     return [{ code: 'ADDRESS_OF', severity: 'information', range: { ...target },
-      message: POINTER_MESSAGES.ADDRESS_OF }, object];
+      message: POINTER_MESSAGES.ADDRESS_OF }, object, arithmetic];
   }
   if (kind === 'PRINT_POINTED' || kind === 'ASSIGN_POINTED_INT' || kind === 'ASSIGN_POINTED_EXPRESSION') {
     const anchor = (result.instruction.parameters as { nameRange: SourceRange }).nameRange;
@@ -544,10 +579,16 @@ function explainStructure(result: TranslationResult): PedagogicalInformation[] {
       range: { ...instruction.parameters.nameRange },
       message: 'Le corps est créé vide : aucun return n’y est ajouté. Les variables qui y seront déclarées '
         + 'n’existeront que pendant une exécution de cette fonction. Aucune portée n’est vérifiée.' };
-    if (!instruction.parameters.params.length) return [scope];
+    // Lot 31 : une définition interne porte la même information que son
+    // prototype depuis le lot 23. L'asymétrie aurait été incohérente.
+    const linkage: PedagogicalInformation[] = instruction.parameters.internal
+      ? [{ code: 'INTERNAL_LINKAGE', severity: 'information', range: { ...instruction.parameters.nameRange },
+        message: MODULE_MESSAGES.INTERNAL_LINKAGE }]
+      : [];
+    if (!instruction.parameters.params.length) return [scope, ...linkage];
     return [scope, { code: 'PARAMETERS_BY_VALUE', severity: 'information', range: { ...instruction.parameters.nameRange },
       message: 'En C, un paramètre reçoit une copie de la valeur passée à l’appel : le modifier dans le corps '
-        + 'ne modifie pas la variable de l’appelant. Aucun type d’argument n’est vérifié.' }];
+        + 'ne modifie pas la variable de l’appelant. Aucun type d’argument n’est vérifié.' }, ...linkage];
   }
   // The three sides of the same fact: the constant, the variable that stores
   // it, and the format that reads it back. None of them computes a value.

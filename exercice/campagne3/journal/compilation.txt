@@ -1,0 +1,45 @@
+Campagne 3 — compilation et execution des programmes complementaires
+====================================================================
+
+Compilateur : gcc.exe (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r3) 16.2.0
+Options     : -std=c17 -Wall -Wextra -pedantic
+Date        : 16 novembre 2026
+Code BRUT de C-A, aucune retouche : les sources compilees sont
+exactement celles de campagne3/ca.
+
+--- classement.c
+   => code de sortie du compilateur : 0
+   --- execution
+1a
+moyen
+3
+023
+B
+7
+5
+   => code de sortie du programme : 0
+
+--- inventaire.c
+   => code de sortie du compilateur : 0
+   --- execution
+3
+67
+9
+   => code de sortie du programme : 0
+
+--- journal.c
+   => code de sortie du compilateur : 0
+   --- execution
+42
+fin
+   => code de sortie du programme : 0
+
+--- texte.c
+   => code de sortie du compilateur : 0
+   --- execution
+bonjour
+16
+   => code de sortie du programme : 0
+
+--- fichiers produits
+42bonjour

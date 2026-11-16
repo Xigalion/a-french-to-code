@@ -310,9 +310,13 @@ test('aucun accès membre, pointeur de fonction ou allocation', () => {
 // ---------------------------------------------------------------------------
 
 const INFORMATION = [
-  ['Déclare un pointeur de type int nommé p.', ['UNINITIALIZED_POINTER', 'POINTER_VS_OBJECT'], 'p'],
-  ['Crée un pointeur de type int nommé p avec l’adresse de x.', ['ADDRESS_OF', 'POINTER_VS_OBJECT'], 'x'],
-  ['Affecte l’adresse de x à p.', ['ADDRESS_OF', 'POINTER_VS_OBJECT'], 'x'],
+  // Lot 30 : POINTER_ARITHMETIC_ABSENT est émise à la DÉCLARATION d'un
+  // pointeur, seul endroit où C-A sait qu'il s'agit d'un pointeur. Elle dit
+  // que « p + 1 » ailleurs est accepté sans rien vérifier — elle ne simule
+  // aucune vérification mémoire.
+  ['Déclare un pointeur de type int nommé p.', ['UNINITIALIZED_POINTER', 'POINTER_VS_OBJECT', 'POINTER_ARITHMETIC_ABSENT'], 'p'],
+  ['Crée un pointeur de type int nommé p avec l’adresse de x.', ['ADDRESS_OF', 'POINTER_VS_OBJECT', 'POINTER_ARITHMETIC_ABSENT'], 'x'],
+  ['Affecte l’adresse de x à p.', ['ADDRESS_OF', 'POINTER_VS_OBJECT', 'POINTER_ARITHMETIC_ABSENT'], 'x'],
   // Lot 29 : cet affichage n'écrit pas de séparateur, d'où la troisième.
   ['Affiche la valeur pointée par p.', ['DEREFERENCE_MEANING', 'ADDRESS_NOT_CHECKED', 'OUTPUT_HAS_NO_SEPARATOR'], 'p'],
   ['Affecte la valeur 5 à la valeur pointée par p.', ['DEREFERENCE_MEANING', 'ADDRESS_NOT_CHECKED'], 'p'],

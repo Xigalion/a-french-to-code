@@ -216,8 +216,26 @@ test('OUT_OF_BOUNDS_UNDEFINED n’annonce aucune vérification', () => {
   const entries = explainInstruction(translated(numeric('*(t + i)')));
   const bounds = entries.find(entry => entry.code === 'OUT_OF_BOUNDS_UNDEFINED');
   assert.match(bounds.message, /comportement indéfini/u);
-  assert.match(bounds.message, /ne vérifie ni les bornes, ni la validité de l’adresse/u);
   assert.ok(!/détecté|détection/iu.test(bounds.message), bounds.message);
+});
+
+test('lot 30 : « ce que C-A ne vérifie pas » n’est dit qu’une fois dans le bloc', () => {
+  // Avant le lot 30, OUT_OF_BOUNDS_UNDEFINED et OFFSET_TYPE_NOT_CHECKED
+  // portaient tous deux la clause « C-A ne vérifie ni les bornes, ni la
+  // validité de l'adresse formée ». Elle est désormais dite une seule fois,
+  // par le message dont c'est le sujet. Aucune leçon n'est perdue : l'énoncé
+  // C17 reste dans l'un, ce que C-A ne vérifie pas est groupé dans l'autre.
+  const entries = explainInstruction(translated(numeric('*(t + i)')));
+  const porteuses = entries.filter(entry => /ni les bornes, ni la validité de l’adresse formée/u.test(entry.message));
+  assert.equal(porteuses.length, 1, entries.map(e => e.code).join(', '));
+  assert.equal(porteuses[0].code, 'OFFSET_TYPE_NOT_CHECKED');
+  assert.match(porteuses[0].message, /ni que ce nom désigne un tableau ou un pointeur/u);
+  assert.match(porteuses[0].message, /ni la validité de l’adresse formée/u);
+  // Le bloc du lot 18 compte toujours ses quatre messages distincts.
+  const bloc = entries.filter(entry => ['ARRAY_POINTER_EQUIVALENCE', 'POINTER_ARITHMETIC_LIMITS',
+    'OUT_OF_BOUNDS_UNDEFINED', 'OFFSET_TYPE_NOT_CHECKED'].includes(entry.code));
+  assert.equal(bloc.length, 4);
+  assert.equal(new Set(bloc.map(entry => entry.message)).size, 4);
 });
 
 test('ADDRESS_NOT_CHECKED cède la place, mais reste sur un *p ordinaire', () => {

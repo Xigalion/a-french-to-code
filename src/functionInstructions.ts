@@ -13,7 +13,11 @@ export const MAX_ARGUMENTS = 16;
  * words of the sentence, as every other information entry does.
  */
 export type FunctionInstruction =
-  | { kind: 'FUNC_DEF'; parameters: { returnType: ReturnType; name: string; nameRange: SourceRange; params: Parameter[] } }
+  /** Lot 31 : `internal` rejoint la définition, comme le prototype l'avait au
+   * lot 23. La sortie structurée de FUNC_DEF change donc pour TOUTES les
+   * définitions — c'est la dette de harnais documentée au lot 24 : comparer
+   * les fragments et les éditions de placement, pas le JSON entier. */
+  | { kind: 'FUNC_DEF'; parameters: { returnType: ReturnType; name: string; nameRange: SourceRange; params: Parameter[]; internal: boolean } }
   /** Lot 23: the same signature as a definition, declared without a body. The
    * tail is parsed by the very same rules, so the two cannot drift apart. */
   | { kind: 'FUNC_PROTOTYPE'; parameters: { returnType: ReturnType; name: string; nameRange: SourceRange; params: Parameter[]; internal: boolean } }
@@ -35,6 +39,11 @@ export function analyzeFunctionInstruction(source: string, tokens: Token[], end:
   // keyboard layout decides which one is typed.
   const word = (index: number): string | undefined => tokens[index]?.text.toLowerCase().replace(/'/gu, '’');
   const definition = word(0) === 'crée' && word(1) === 'une' && word(2) === 'fonction';
+  // Lot 31. Le lot 23 avait livré le PROTOTYPE interne sans la définition :
+  // on pouvait déclarer une fonction à liaison interne sans pouvoir l'écrire,
+  // donc la liaison interne était inutilisable. Même queue de phrase, même
+  // code, un mot de plus.
+  const internalDefinition = definition && word(3) === 'interne';
   // `Déclare le prototype d’une fonction nommée …` and its internal variant.
   const prototype = word(0) === 'déclare' && word(1) === 'le' && word(2) === 'prototype'
     && word(3) === 'd’une' && word(4) === 'fonction';
@@ -204,8 +213,8 @@ export function analyzeFunctionInstruction(source: string, tokens: Token[], end:
       // The two intents share every word after the function name, so the tail
       // below is literally the same code for both.
       const kind = prototype ? 'FUNC_PROTOTYPE' : 'FUNC_DEF';
-      const internal = internalPrototype;
-      i = prototype ? (internal ? 6 : 5) : 3;
+      const internal = prototype ? internalPrototype : internalDefinition;
+      i = prototype ? (internal ? 6 : 5) : (internal ? 4 : 3);
       if (!expect('nommée', 'INCOMPLETE_INSTRUCTION', 'Il manque le nom de la fonction.')) return undefined;
       const nameToken = tokens[i];
       if (!nameToken) return fail('INCOMPLETE_INSTRUCTION', 'Il manque le nom de la fonction.');
@@ -219,9 +228,10 @@ export function analyzeFunctionInstruction(source: string, tokens: Token[], end:
         if (!expect('retourne') || !expect('rien')) return undefined;
         const voidParams = parameterList();
         if (!voidParams || !finish()) return undefined;
-        return kind === 'FUNC_PROTOTYPE'
-          ? { kind, parameters: { returnType: 'void', name: nameToken.text, nameRange: { ...nameToken.range }, params: voidParams, internal } }
-          : { kind, parameters: { returnType: 'void', name: nameToken.text, nameRange: { ...nameToken.range }, params: voidParams } };
+        // Lot 31 : prototype et définition portent les mêmes paramètres,
+        // `internal` compris. Le ternaire qui les distinguait a disparu.
+        return { kind, parameters: { returnType: 'void', name: nameToken.text,
+          nameRange: { ...nameToken.range }, params: voidParams, internal } };
       }
       if (!expect('retourne', 'INCOMPLETE_INSTRUCTION', 'Il manque la description du retour de la fonction.')) return undefined;
       if (!expect('un', 'MISSING_NUMERIC_TYPE', 'Il manque le type de retour.')) return undefined;
@@ -229,9 +239,8 @@ export function analyzeFunctionInstruction(source: string, tokens: Token[], end:
       if (!type) return undefined;
       const params = parameterList();
       if (!params || !finish()) return undefined;
-      return kind === 'FUNC_PROTOTYPE'
-        ? { kind, parameters: { returnType: type, name: nameToken.text, nameRange: { ...nameToken.range }, params, internal } }
-        : { kind, parameters: { returnType: type, name: nameToken.text, nameRange: { ...nameToken.range }, params } };
+      return { kind, parameters: { returnType: type, name: nameToken.text,
+        nameRange: { ...nameToken.range }, params, internal } };
     }
     i = 1;
     const keywordRange = { ...tokens[0]!.range };

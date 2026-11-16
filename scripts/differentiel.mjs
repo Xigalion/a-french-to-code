@@ -226,6 +226,20 @@ function* sentences() {
   // Lot 29 : la formulation du retour à la ligne, et les approximations
   // voisines qui doivent rester refusées, dont « Passe à la ligne. » qui
   // frôle « Passe à l'itération suivante… ».
+  // Lot 31 : lecture de chaîne bornée et définition de fonction interne.
+  for (const dimension of ['32', '1', '0', '-1', '01', 'n', '']) {
+    yield `Lis une chaîne de dimension ${dimension} depuis le fichier f dans s.`;
+  }
+  yield* ['Lis une chaîne depuis le fichier f dans s.',
+    'Lis une chaîne de dimension 32 depuis le fichier f dans s et plus.',
+    'Lis une chaîne de taille 32 depuis le fichier f dans s.',
+    'Crée une fonction interne nommée aide qui retourne un int.',
+    'Crée une fonction interne nommée aide qui ne retourne rien.',
+    'Crée une fonction interne nommée somme qui retourne un int et prend un int nommé a.',
+    'Crée une fonction interne qui retourne un int.',
+    'Crée une fonction interne nommée qui retourne un int.',
+    'Crée une fonction interne nommée 1aide qui retourne un int.',
+    'Déclare le prototype d’une fonction interne nommée aide qui retourne un int.'];
   yield* ['Affiche un retour à la ligne.', 'Affiche un retour à la ligne',
     '  Affiche un retour à la ligne.  ', 'AFFICHE UN RETOUR À LA LIGNE.',
     'Passe à la ligne.', 'Affiche un retour.', 'Affiche un saut de ligne.',
@@ -364,6 +378,11 @@ function* sentences() {
   for (const target of ['x de p', 'x pointé par q', 'x pointée par q', 'x de 1p', '1x de p', 'x', 'x de', 'x dans p']) {
     yield `Affecte la valeur 5 au champ ${target}.`;
     yield `Affiche le champ ${target}.`;
+    // Lot 30 : l'affectation d'un caractère à un champ, genre déclaré depuis
+    // le lot 20 que rien n'atteignait avant ce lot.
+    for (const literal of ["'A'", "' '", "'\\n'", "'\\0'", "'AB'", "''", "'", 'A']) {
+      yield `Affecte le caractère ${literal} au champ ${target}.`;
+    }
     yield `Affecte au champ ${target} le résultat numérique de "a + 1".`;
   }
   yield* ['Déclare une structure Point.', 'Ajoute un champ int nommé x.',

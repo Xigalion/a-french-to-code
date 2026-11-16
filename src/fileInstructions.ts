@@ -15,6 +15,12 @@ export type FileInstruction =
   | { kind: 'FILE_WRITE_TEXT'; parameters: { name: string; nameRange: SourceRange; text: string; textRange: SourceRange } }
   | { kind: 'FILE_WRITE_INT'; parameters: { name: string; nameRange: SourceRange; value: string; valueRange: SourceRange } }
   | { kind: 'FILE_READ_INT'; parameters: { name: string; nameRange: SourceRange; target: string; targetRange: SourceRange } }
+  /** Lot 31. La borne est ÉCRITE dans la phrase, jamais déduite : C-A ne
+   * connaît pas la dimension du tableau de destination et n'a aucun moyen de
+   * la retrouver. `fgets` est préféré à `fscanf("%s")`, qui n'a pas de borne
+   * du tout. */
+  | { kind: 'FILE_READ_STRING'; parameters: { name: string; nameRange: SourceRange; target: string; targetRange: SourceRange;
+      dimension: string; dimensionRange: SourceRange } }
   | { kind: 'FILE_AT_END'; parameters: { name: string; nameRange: SourceRange } };
 
 type Token = { text: string; range: SourceRange };
@@ -149,6 +155,29 @@ export function analyzeFileInstruction(source: string, tokens: Token[], end: num
       if (name) {
         instruction = { kind: 'FILE_WRITE_INT', parameters: { name: name.text, nameRange: { ...name.range },
           value: value.text, valueRange: { ...value.range } } };
+      }
+    }
+  } else if (word(0) === 'lis' && word(1) === 'une' && word(2) === 'chaîne') {
+    // Lot 31 : « de dimension {entier} », la même queue que les tableaux du
+    // lot 15 et les champs du lot 27, pour ne pas inventer un troisième mot.
+    if (expect(3, 'de', 'MISSING_ARRAY_DIMENSION', 'Il manque la dimension à lire.')
+      && expect(4, 'dimension', 'MISSING_ARRAY_DIMENSION', 'Il manque la dimension à lire.')) {
+      const size = tokens[5];
+      if (!size) fail('MISSING_ARRAY_DIMENSION', 'Il manque la dimension à lire.', { start: end, end });
+      else if (!/^[1-9][0-9]*$/u.test(size.text)) fail('INVALID_ARRAY_DIMENSION',
+        'Une dimension entière strictement positive, écrite en chiffres, est attendue.', size.range);
+      else if (expect(6, 'depuis', 'INCOMPLETE_INSTRUCTION', 'Instruction incomplète : « depuis » attendu.')
+        && expect(7, 'le', 'INCOMPLETE_INSTRUCTION', 'Instruction incomplète : « le » attendu.')
+        && expect(8, 'fichier', 'INCOMPLETE_INSTRUCTION', 'Instruction incomplète : « fichier » attendu.')) {
+        const name = identifier(9, 'Il manque le nom du fichier.');
+        if (name && expect(10, 'dans', 'INCOMPLETE_INSTRUCTION', 'Instruction incomplète : « dans » attendu.')) {
+          const target = identifier(11, 'Il manque le nom du tableau à remplir.');
+          if (target && finish(12)) {
+            instruction = { kind: 'FILE_READ_STRING', parameters: { name: name.text, nameRange: { ...name.range },
+              target: target.text, targetRange: { ...target.range },
+              dimension: size.text, dimensionRange: { ...size.range } } };
+          }
+        }
       }
     }
   } else if (word(0) === 'lis' && word(1) === 'un' && word(2) === 'entier') {

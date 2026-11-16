@@ -39,26 +39,36 @@ test('lot 26 : les trois ensembles sont disjoints', () => {
   assert.equal(new Set(all).size, all.length, 'un genre est classé deux fois');
   // Lot 28 a ajouté INCLUDE_LIMITS aux déclarations : 24 -> 25.
   assert.equal(DECLARATION_KINDS.length, 25);
-  // Lot 29 a ajouté PRINT_NEWLINE aux instructions : 42 -> 43.
-  assert.equal(STATEMENT_KINDS.length, 43);
+  // Lot 29 a ajouté PRINT_NEWLINE, le lot 31 FILE_READ_STRING : 42 -> 44.
+  assert.equal(STATEMENT_KINDS.length, 44);
   assert.equal(CONTEXT_VERIFIED_KINDS.length, 15);
-  assert.equal(all.length, 83);
+  assert.equal(all.length, 84);
 });
 
-test('lot 26 : MEMBER_ASSIGN_CHAR est déclaré mais inatteignable', () => {
-  // Trouvé en classant les 81 genres. Ce genre existe dans le type
-  // `StructInstruction` et translate.ts sait le rendre, mais AUCUN analyseur
-  // ne le construit : aucune phrase française ne mène à lui. Il est donc
-  // classé pour que la partition soit complète, et ce test est là pour que
-  // personne ne le présente comme disponible. Voir LOT26_BILAN.md §5.
+test('lot 30 : MEMBER_ASSIGN_CHAR est désormais atteignable', () => {
+  // Le lot 26 avait trouvé ce genre DÉCLARÉ dans le type et rendu par
+  // translate.ts, mais construit par AUCUN analyseur : aucune phrase n'y
+  // menait. Le test d'alors interdisait de le présenter comme disponible.
+  // Le lot 30 le rend atteignable ; le test devient son contraire, et
+  // l'historique de ce fichier garde la trace des deux états.
   assert.ok(STATEMENT_KINDS.includes('MEMBER_ASSIGN_CHAR'));
-  assert.equal(byKind.has('MEMBER_ASSIGN_CHAR'), false);
   for (const source of [
     'Affecte le caractère \'A\' au champ initiale de e.',
     'Affecte le caractère \'A\' au champ initiale pointé par p.',
   ]) {
-    assert.equal(translate(source).status, 'rejected', source);
+    const result = translate(source);
+    assert.equal(result.status, 'translated', source);
+    assert.equal(result.instruction.kind, 'MEMBER_ASSIGN_CHAR', source);
   }
+});
+
+test('lot 30 : AUCUN genre déclaré n’est inatteignable', () => {
+  // La garde générale, qui remplace le test nommé du lot 26 : tout genre
+  // classé doit être atteint par au moins une ligne du catalogue. Un lot
+  // futur qui déclare un genre sans l'exposer fera échouer ce test.
+  const classified = [...DECLARATION_KINDS, ...STATEMENT_KINDS, ...CONTEXT_VERIFIED_KINDS];
+  const inatteignables = classified.filter(kind => !byKind.has(kind));
+  assert.deepEqual(inatteignables, [], 'genres déclarés que le catalogue n’atteint pas');
 });
 
 test('lot 26 : tout genre du catalogue est classé exactement une fois', () => {

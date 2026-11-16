@@ -1,0 +1,9 @@
+Stabilite de la suite hote VS Code — trois passages consecutifs
+===============================================================
+Apres la correction de la course sur editor.options (lot 30).
+Date : 16 novembre 2026
+
+passage 1 : vscode 1.138.0 | 99 reussis, 0 echecs
+passage 2 : vscode 1.138.0 | 99 reussis, 0 echecs
+passage 3 : vscode 1.138.0 | 99 reussis, 0 echecs
+

@@ -266,9 +266,11 @@ function render(text: string, instruction: Instruction): TranslationResult {
     case 'FUNC_DEF': {
       // « (void) » is written when there is no parameter: an empty list would
       // mean something else in C, and is never produced here.
-      const { returnType, name, params } = instruction.parameters;
+      const { returnType, name, params, internal } = instruction.parameters;
       const list = params.length ? params.map(parameter => `${parameter.type} ${parameter.name}`).join(', ') : 'void';
-      code = `${returnType} ${name}(${list}) {\n    \n}\n`;
+      // Lot 31: `static` belongs to the declaration specifiers, before the
+      // return type, exactly as the lot 23 prototype writes it.
+      code = `${internal ? 'static ' : ''}${returnType} ${name}(${list}) {\n    \n}\n`;
       break;
     }
     // Same signature, no body, and a semicolon: a declaration, not a
@@ -376,6 +378,11 @@ function render(text: string, instruction: Instruction): TranslationResult {
     // The address operator is written out: fscanf needs where to store, and
     // seeing `&` here is the lesson, not an implementation detail.
     case 'FILE_READ_INT': code = `fscanf(${instruction.parameters.name}, "%d", &${instruction.parameters.target});\n`; break;
+    case 'FILE_READ_STRING': {
+      const read = instruction.parameters;
+      code = `fgets(${read.target}, ${read.dimension}, ${read.name});\n`;
+      break;
+    }
     case 'FILE_AT_END': code = `if (feof(${instruction.parameters.name})) {\n    \n}\n`; break;
     // A local header is included with quotes, a library one with angles: the
     // two forms mean different search rules, and neither is rewritten.
