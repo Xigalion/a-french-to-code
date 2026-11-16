@@ -1,0 +1,138 @@
+Audit du barème — analyse critique indépendante
+===============================================
+
+sondes lues dans exercice/matrice.mjs : 91
+
+--- 1. DOUBLONS
+
+phrases identiques sur deux sondes : 0
+libellés identiques sur deux sondes : 0
+
+genres d’intention mesurés par PLUSIEURS sondes : 9
+   6 × NUMERIC_ASSIGN           Conversion explicite | Fiabilité : diviseur n | Indexation en expressi | Relation tableau/point | Accès en expression | Élément de tableau de 
+   4 × FUNC_DEF                 Définition de fonction | Fonction sans retour | Paramètres explicites | DÉFINITION STATIC
+   4 × STRUCT_FIELD             Champ scalaire | Champ structure | Champ pointeur | CHAMP TABLEAU
+   3 × IF                       Condition et bloc | Opérateurs logiques | Recherche par composit
+   2 × NUMERIC_PRINT            Format non signé | Format fixe avec préci
+   2 × WHILE                    Boucle à test initial | Caractère nul en condi
+   2 × ARRAY_DECL               Tableau à dimension ex | Tableau de structures
+   2 × MEMBER_PRINT             Accès par point | Accès par flèche
+   2 × LINKAGE_DECL             Liaison externe | Liaison interne
+
+   Ce n’est pas forcément un défaut : deux sondes peuvent viser deux
+   aspects d’un même genre. C’en est un si les deux PREUVES sont les
+   mêmes, car le genre pèse alors deux fois pour une seule vérification.
+
+--- 2. POIDS ET COEFFICIENTS
+
+   coefficient 3 : 11 sondes, 21.9 % du poids total
+   coefficient 2 : 38 sondes, 50.3 % du poids total
+   coefficient 1 : 42 sondes, 27.8 % du poids total
+   poids total : 151
+
+   Les coefficients sont attribués par EXPRESSION RÉGULIÈRE sur le
+   libellé de la sonde. C’est le point le plus fragile du barème : un
+   libellé reformulé change le coefficient sans que personne le décide.
+
+   les 11 sondes de coefficient 3 (fondamentales) :
+      Affectation
+      Affectation d’élément
+      Affichage d’un texte
+      Affichage d’une valeur
+      Boucle à test initial
+      Condition et bloc
+      Définition de fonction
+      Expression entière et priorités
+      Fonction principale
+      Instruction de base, variable entière
+      Retour de valeur
+
+   Les 30 % de la compilation décident du classement : sans P3, une
+   compétence plafonne à 70 %. Une sonde non compilée perd donc plus
+   que son coefficient ne lui rapporte.
+      p1 : 15 %
+      p2 : 20 %
+      p3 : 30 %
+      p4 : 20 %
+      p5 : 15 %
+
+--- 3. SONDES BLOQUÉES — mesurent-elles l’absence de la compétence ?
+
+   LECTURE DE CHAÎNE
+      phrase : « Lis une chaîne depuis le fichier f dans s. »
+      refus  : UNKNOWN_FORMULATION
+   INITIALISEUR ENTRE ACCOLADES
+      phrase : « Déclare un tableau de type int nommé t de dimension 3 avec les val »
+      refus  : UNEXPECTED_TEXT
+   MACRO DE LIMITE
+      phrase : « Affiche la limite maximale du type int. »
+      refus  : UNKNOWN_FORMULATION
+
+--- 4. REFUS ATTENDUS
+
+   1 sonde(s) dont le résultat attendu EST un refus :
+      Assertion : affectation refusée → ASSIGNMENT_IN_CONDITION
+
+   Une telle sonde compte dans le dénominateur et obtient P1, P2 et P5
+   sans jamais pouvoir obtenir P3 ni P4 — elle n’est jamais compilée,
+   puisqu’elle n’est jamais insérée. Elle plafonne donc à 50 %.
+
+--- 5. SENSIBILITÉ DU SCORE AUX HYPOTHÈSES
+
+   barème historique                         : 93.9 %
+   sans coefficients (toutes égales)         : 92.6 %
+   cinq preuves à poids égal                 : 92.7 %
+   sans P5 (pédagogie non comptée)           : 97.4 %
+   compilation et exécution à 80 %           : 97.4 %
+   traduction et placement à 80 %            : 97.4 %
+
+
+   POURQUOI trois pondérations très différentes donnent le même chiffre :
+   les preuves ne sont pas indépendantes. Mesuré :
+      p1 et p2 coïncident sur 91 des 91 compétences (100 %)
+      p2 et p3 coïncident sur 91 des 91 compétences (100 %)
+      p3 et p4 coïncident sur 91 des 91 compétences (100 %)
+      p1 et p3 coïncident sur 91 des 91 compétences (100 %)
+
+   profils de preuves observés (p1p2p3p4p5) :
+      11111 : 65 compétence(s)
+      11110 : 22 compétence(s)
+      00001 :  4 compétence(s)
+   3 profils distincts sur 32 possibles : le barème a donc
+   beaucoup moins de degrés de liberté que ses cinq poids ne le suggèrent.
+
+   amplitude sur ces six hypothèses : 92.6 % à 97.4 %, soit 4.7 points
+
+--- 6. DEUX DÉFAUTS DE MESURE, ET LEUR EFFET CHIFFRÉ
+
+   (a) Le barème annonce cinq preuves ; il en mesure DEUX.
+
+   P3 implique P1 et P2 par construction : une compétence n’obtient P3
+   que si son genre a été EXERCÉ, donc traduit et placé. Et P4 suit P3,
+   puisque c’est le même programme qui compile et qui s’exécute. Les
+   quatre premières preuves ne peuvent donc pas se séparer, et la mesure
+   le confirme : 100 % de coïncidence, 3 profils sur 32.
+
+   Conséquence : les 85 points répartis entre P1, P2, P3 et P4 se
+   comportent comme UN SEUL bloc de 85. Annoncer « la compilation pèse
+   30 % » suggère une précision que le barème n’a pas.
+
+   Formule équivalente : 82.7 % + 11.1 % = 93.9 %
+   — à comparer au score historique ci-dessus. Les deux coïncident.
+
+   (b) Une sonde dont le refus était ATTENDU est comptée comme un échec.
+
+   `matrice.mjs` pose p1 = !refus. Pour la sonde « Assertion :
+   affectation refusée », dont le résultat attendu EST un refus et qui
+   l’obtient, p1 à p4 valent donc false : elle marque 15 % alors qu’elle
+   a fait exactement ce qu’on lui demandait.
+
+   Score si un refus attendu obtenu comptait pour 1 : 94.4 %
+   soit 0.6 point(s) d’écart. Le défaut est conceptuel
+   plus que numérique, mais il fausse le décompte des états : cette
+   compétence est rangée à part, ni vérifiée ni bloquée.
+
+   RECOMMANDATION : garder le barème historique tel quel, pour que les
+   trois campagnes restent comparables, et publier À CÔTÉ les deux
+   nombres qu’il mesure réellement — la part du poids qui compile et
+   s’exécute, et la part qui porte une information pédagogique.

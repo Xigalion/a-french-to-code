@@ -1,0 +1,9 @@
+Stabilite de la suite hote VS Code — trois passages consecutifs
+===============================================================
+Apres les lots 30 et 31, moteur final de la campagne 3.
+Date : 16 novembre 2026
+
+passage 1 : vscode 1.138.0 | 99 reussis, 0 echecs
+passage 2 : vscode 1.138.0 | 99 reussis, 0 echecs
+passage 3 : vscode 1.138.0 | 99 reussis, 0 echecs
+

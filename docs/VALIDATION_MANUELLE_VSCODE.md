@@ -105,7 +105,7 @@ est vu, pas ce qui est attendu.
 
 ### Préparation
 
-    npm run check              # doit afficher 3 787 tests, 0 échec
+    npm run check              # doit afficher 3 820 tests, 0 échec
     npm run build:extension
 
 Ouvrir le dossier `A` dans VS Code, puis `F5` → une seconde fenêtre

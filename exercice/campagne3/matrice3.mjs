@@ -285,6 +285,13 @@ out.push('mesure les **vraies lacunes** du modèle 1.');
 console.log('si exerce     :', pct(numSiExerce, den), '%');
 console.log('si debloque   :', pct(numSiDebloque, den), '%');
 writeFileSync(root + 'journal/matrice.md', out.join('\n') + '\n', 'utf8');
+// L'état des cinq preuves par compétence, pour que l'audit du barème
+// puisse rejouer d'autres pondérations SANS recalculer le score
+// historique, qui reste celui de matrice.md.
+writeFileSync(root + 'journal/etats.json', JSON.stringify(rows.map((r) => ({
+  domaine: r.domaine, label: r.label, etat: r.etat,
+  p1: r.p1, p2: r.p2, p3: r.p3, p4: r.p4, p5: r.p5, bloquee: r.bloquee,
+})), null, 1) + '\n', 'utf8');
 console.log('competences   :', rows.length);
 console.log('verifiees     :', rows.filter((r) => r.etat === 'vérifiée').length);
 console.log('partielles    :', rows.filter((r) => r.etat === 'partiellement vérifiée').length);
