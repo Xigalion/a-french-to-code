@@ -13,7 +13,7 @@
 | `npm run typecheck` | **0 erreur** |
 | `npm test` | **3 726 tests, 0 échec** (3 581 avant le lot, dont 145 nouveaux) |
 | `npm run test:vscode` | voir §6 |
-| `differentiel.mjs ca1a230` | **1 334 392 comparaisons**, 1 036 divergences |
+| `differentiel.mjs a5712f5` | **1 334 392 comparaisons**, 1 036 divergences |
 | divergences au stade **traduction** | **0** |
 | divergences au stade **placement** | 1 036, **toutes** auditées |
 | refus apparus **à l'intérieur d'une fonction** | **0** |

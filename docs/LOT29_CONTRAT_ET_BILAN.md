@@ -15,7 +15,7 @@
 |---|---|
 | `npm run typecheck` | **0 erreur** |
 | `npm test` | **3 785 tests, 0 échec** (25 nouveaux) |
-| `differentiel.mjs 2e334b9` | **1 334 722 comparaisons** |
+| `differentiel.mjs 82a2c33` | **1 334 722 comparaisons** |
 | extensions approuvées | **145**, toutes des phrases d'affichage |
 | régressions | **0** |
 | `--no-loss` | **0 capacité perdue** |

@@ -69,6 +69,15 @@ Trois options, et c'est une décision, pas un défaut :
 Ma recommandation : **l'option 2**, maintenant. Elle est gratuite avant le
 premier envoi et coûteuse après.
 
+**DÉCISION DU FONDATEUR, 16 novembre 2026 : option 2, faite.** Les 38 commits
+portent désormais l'adresse de redirection GitHub du compte ; l'arbre est
+**identique** avant et après, et les **26 citations** d'anciens identifiants
+dans 16 documents ont été mises à jour. Table de correspondance, sauvegarde
+et conséquence pour l'envoi : `docs/HISTORIQUE_REECRITURE.md`.
+
+**Le premier envoi exigera `git push --force-with-lease origin main`** : le
+dépôt distant contient encore l'ancien « Initial commit ».
+
 ## 3. Fichiers temporaires, journaux et binaires
 
 | Élément | État |
@@ -133,7 +142,14 @@ lisible mais inutilisable — ce qui est parfois exactement l'intention.
 | **GPL-3.0** | réutilisation libre, mais toute œuvre dérivée **doit rester libre** | incompatible avec une reprise dans un produit fermé — y compris, plus tard, par toi |
 | **sources visibles, droits réservés** (licence propre) | lecture, étude, retours ; pas de reprise | rédaction à faire ; non reconnue par les outils ; décourage les contributions |
 
-**Ma recommandation : Apache-2.0**, pour trois raisons tenant au projet :
+**DÉCISION DU FONDATEUR, 16 novembre 2026 : Apache-2.0.** `LICENSE` (texte
+canonique, 11 358 octets) et `NOTICE` sont en place, et `README.md` comme
+`CONTRIBUTING.md` le disent. Les contributions sont réputées soumises à la
+même licence. Aucun en-tête par fichier n'a été ajouté : la licence ne
+l'exige pas, et 40 fichiers d'en-têtes seraient du bruit. À reconsidérer si
+du code est extrait du dépôt.
+
+La recommandation qui précédait cette décision, conservée telle quelle :
 
 1. le projet **appelle des retours d'usage** et ouvre des formulaires de
    tickets : une licence reconnue lève l'ambiguïté pour ceux qui essaient ;
@@ -151,13 +167,17 @@ renvoie ici. Dis le choix, et je l'ajoute avec l'en-tête correspondant.
 
 ## 7. Décisions qui restent, et qui ne m'appartiennent pas
 
-1. **publier ou non**, et quand ;
-2. la **licence** (§6) ;
-3. **réécrire ou non** l'auteur des commits avant le premier envoi (§2.2) ;
-4. publier le **`CLAUDE.md` de travail** tel quel, avec ses dettes et ses
+**Tranchées le 16 novembre 2026 :** la licence (**Apache-2.0**, §6) et la
+réécriture de l'auteur des commits (**faite**, §2.2).
+
+Restent ouvertes :
+
+1. **publier ou non**, et quand — rien ne sera poussé sans ton accord ;
+2. publier le **`CLAUDE.md` de travail** tel quel, avec ses dettes et ses
    points ouverts, ou en extraire une version publique ;
-5. le **nom public** du dépôt : `A`, `C-A`, ou autre — le dépôt distant
-   s'appelle aujourd'hui `A`, ce qui est introuvable par recherche.
+3. le **nom public** du dépôt : `A`, `C-A`, ou autre — le dépôt distant
+   s'appelle aujourd'hui `A`, ce qui est introuvable par recherche ;
+4. les deux liens `OWNER/REPO` de `.github/ISSUE_TEMPLATE/config.yml` (§4.1).
 
 ## 8. État de la vérification
 

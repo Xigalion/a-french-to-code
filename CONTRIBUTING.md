@@ -117,9 +117,17 @@ Dans les trois cas : la **phrase exacte**, le **code du diagnostic**, la
 version de C-A et de VS Code. Une phrase recopiée « au propre » perd
 l'information qu'elle portait.
 
-## 8. Ce que le fondateur seul décide
+## 8. Licence des contributions
+
+Le projet est sous **Apache License 2.0** (`LICENSE`). En proposant une
+contribution, tu acceptes qu'elle soit distribuée sous cette même licence,
+avec la clause de brevet qu'elle comporte. Conserve les mentions de
+paternité existantes et signale tes modifications, comme la licence le
+demande.
+
+## 9. Ce que le fondateur seul décide
 
 La vision, les principes pédagogiques, le périmètre des versions, les
-**paliers de liberté**, la licence, et les arbitrages d'architecture. Une
+**paliers de liberté** et les arbitrages d'architecture. Une
 proposition qui touche à l'un de ces points se discute **avant** d'être
 écrite : c'est une question, pas une pull request.

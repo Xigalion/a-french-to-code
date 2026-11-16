@@ -131,10 +131,13 @@ dans le dépôt avec son journal de compilation et sa sortie attendue, calculée
 
 ## Licence
 
-**À décider par le fondateur du projet** — aucun fichier `LICENSE` n'est
-encore présent. Sans licence explicite, le code reste sous droit d'auteur par
-défaut : aucune réutilisation n'est autorisée. Voir
-[`docs/AUDIT_PUBLICATION.md`](docs/AUDIT_PUBLICATION.md) §6.
+**Apache License 2.0** — voir [`LICENSE`](LICENSE) et [`NOTICE`](NOTICE).
+
+Réutilisation, modification et distribution libres, y compris commerciales,
+à condition de conserver la mention de paternité, d'indiquer les
+modifications apportées et de joindre la licence. Elle comporte une **clause
+de brevet** explicite. Toute contribution proposée est réputée soumise à
+cette même licence.
 
 ---
 
