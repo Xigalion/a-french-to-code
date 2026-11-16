@@ -1,0 +1,11 @@
+Suite hote VS Code — passages sur le moteur empaquete en 0.4.0
+=============================================================
+Date : 16 novembre 2026. Memes conditions que la campagne 3.
+
+passage 7 : vscode 1.138.0 | 99 reussis, 0 echecs
+passage 8 : vscode 1.138.0 | 99 reussis, 0 echecs
+
+Numerotation continue de exercice/campagne3/journal/hote-stabilite*.txt :
+six passages verts y sont deja consignes. Huit passages ne demontrent pas la
+stabilite ; ils montrent que la version empaquetee est bien celle qui a ete
+testee.

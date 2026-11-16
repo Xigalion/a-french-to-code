@@ -6,3 +6,7 @@ extension/out/
 # Binaires produits par la recette GCC de l'exercice
 exercice/**/*.exe
 exercice/**/*.o
+
+# Paquet .vsix et dossier de travail de la compilation du test utilisateur
+dist/
+test-utilisateur/journal/build/

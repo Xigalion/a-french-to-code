@@ -1,0 +1,57 @@
+Compilation et execution des neuf corriges
+==========================================
+gcc     : gcc.exe (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r3) 16.2.0
+options : -std=c17 -Wall -Wextra -pedantic
+date    : 2026-11-16
+
+--- ex1.c ---
+compilation : code 0
+execution   : code 0
+sortie      : "20\r\n"
+
+--- ex2.c ---
+compilation : code 0
+execution   : code 0
+sortie      : "143.50"
+
+--- ex3.c ---
+compilation : code 0
+execution   : code 0
+sortie      : "majeur"
+
+--- ex4.c ---
+compilation : code 0
+execution   : code 0
+sortie      : "013401"
+
+--- ex5.c ---
+compilation : code 0
+execution   : code 0
+sortie      : "5"
+
+--- ex6.c ---
+compilation : code 0
+execution   : code 0
+sortie      : "1536helloh"
+
+--- ex7.c ---
+compilation : code 0
+execution   : code 0
+sortie      : "56"
+
+--- ex8.c ---
+compilation : code 0
+execution   : code 0
+sortie      : "3"
+
+--- ex9.c ---
+compilation : code 0
+stderr :
+<DOSSIER-PERSONNEL>/Downloads/A/test-utilisateur/corriges/ex9.c: In function 'main':
+<DOSSIER-PERSONNEL>/Downloads/A/test-utilisateur/corriges/ex9.c:9:20: warning: division by zero [-Wdiv-by-zero]
+    9 |     resultat = (10 / 0);
+      |                    ^
+execution   : VOLONTAIREMENT NON EXECUTE (comportement indefini)
+
+fichiers ecrits par les programmes : sortie.txt
+anomalies (compilation ou execution non nulle) : 0

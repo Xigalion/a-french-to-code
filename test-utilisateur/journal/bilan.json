@@ -1,0 +1,83 @@
+[
+  {
+    "name": "ex1.c",
+    "inseres": 6,
+    "informations": 2,
+    "avertissements": 0,
+    "gestes": 0,
+    "refus": 0,
+    "executer": true
+  },
+  {
+    "name": "ex2.c",
+    "inseres": 9,
+    "informations": 3,
+    "avertissements": 0,
+    "gestes": 0,
+    "refus": 0,
+    "executer": true
+  },
+  {
+    "name": "ex3.c",
+    "inseres": 10,
+    "informations": 4,
+    "avertissements": 0,
+    "gestes": 3,
+    "refus": 0,
+    "executer": true
+  },
+  {
+    "name": "ex4.c",
+    "inseres": 14,
+    "informations": 5,
+    "avertissements": 0,
+    "gestes": 3,
+    "refus": 0,
+    "executer": true
+  },
+  {
+    "name": "ex5.c",
+    "inseres": 8,
+    "informations": 6,
+    "avertissements": 0,
+    "gestes": 1,
+    "refus": 0,
+    "executer": true
+  },
+  {
+    "name": "ex6.c",
+    "inseres": 16,
+    "informations": 17,
+    "avertissements": 0,
+    "gestes": 1,
+    "refus": 0,
+    "executer": true
+  },
+  {
+    "name": "ex7.c",
+    "inseres": 9,
+    "informations": 12,
+    "avertissements": 0,
+    "gestes": 0,
+    "refus": 0,
+    "executer": true
+  },
+  {
+    "name": "ex8.c",
+    "inseres": 14,
+    "informations": 12,
+    "avertissements": 0,
+    "gestes": 1,
+    "refus": 0,
+    "executer": true
+  },
+  {
+    "name": "ex9.c",
+    "inseres": 6,
+    "informations": 2,
+    "avertissements": 1,
+    "gestes": 0,
+    "refus": 0,
+    "executer": false
+  }
+]
