@@ -3,11 +3,18 @@
 **Pour qui :** la personne qui va publier le dépôt. Les commandes sont
 écrites pour être copiées ; **aucune n'a été exécutée**.
 
-> **Rien n'est publié à ce jour.** Aucun envoi, aucun changement de
-> visibilité, aucune création de dépôt n'a été effectué, et aucun ne le sera
-> sans confirmation explicite de la destination.
+> **État au 17 novembre 2026, après confirmation du fondateur.**
 >
-> État au 17 novembre 2026. Version à publier : **0.4.0**.
+> | Étape | État |
+> |---|---|
+> | envoi de l'historique réécrit (`--force-with-lease`) | **fait** — `main` à jour sur le distant |
+> | envoi des **seize** étiquettes publiques | **fait** — aucune sauvegarde `avant-*` poussée |
+> | vérification du contenu distant, dépôt encore **privé** | **faite** — §5 |
+> | renommage du dépôt en `c-a-french-to-c` | **à faire** — interface GitHub |
+> | passage en **public** | **à faire** — interface GitHub, geste du fondateur |
+> | release `v0.4.0` avec le `.vsix` | **à faire** — interface GitHub, fichiers prêts |
+>
+> Le dépôt est donc **à jour et toujours privé**. Version publiée : **0.4.0**.
 
 ---
 

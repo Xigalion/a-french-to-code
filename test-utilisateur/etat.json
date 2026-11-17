@@ -53,19 +53,18 @@
     }
   },
   "publication": {
-    "etat": "préparée, NON faite — aucun envoi, aucun changement de visibilité",
+    "etat": "historique et 16 étiquettes ENVOYÉS le 17 novembre 2026 ; dépôt encore PRIVÉ",
     "licence": "Apache-2.0",
-    "nomPublicPropose": "c-a-french-to-c (à confirmer)",
+    "nomPublicPropose": "c-a-french-to-c (confirmé)",
     "controlesPasses": 18,
     "controlesTotal": 18,
     "etiquettes": 16,
     "versionPublique": "v0.4.0",
     "procedure": "docs/PUBLICATION.md",
     "resteAuFondateur": [
-      "confirmer la destination",
       "renommer le dépôt distant",
-      "pousser main et les étiquettes",
-      "rendre public"
+      "passer en public",
+      "créer la release v0.4.0 avec le .vsix"
     ],
     "documentPublic": "docs/ETAT_DU_PROJET.md ; les instructions de travail internes restent hors du dépôt"
   }
