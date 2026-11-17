@@ -83,7 +83,7 @@ entre-temps.
 
     git push origin --tags
 
-Dix-sept étiquettes, dont **`v0.4.0`** qui marque la version publiée. Les
+Seize étiquettes, dont **`v0.4.0`** qui marque la version publiée. Les
 documents citent ces étiquettes et non des identifiants : sans elles, les
 bilans de lots perdent leurs références (`docs/REPERES_GIT.md`).
 

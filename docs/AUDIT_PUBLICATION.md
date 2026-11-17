@@ -214,7 +214,7 @@ sont neutralisés au lieu d'être laissés en place.
 Vingt-deux citations d'identifiants de commit ont été converties en **noms
 d'étiquettes** (`lot-16`, `campagne-3`, `ref-avant-lot-13`…). Raison de fond :
 un identifiant ne survit pas à une réécriture, et ce dépôt vient d'en subir
-deux. Dix-sept étiquettes sont posées, dont `v0.4.0`, et un contrôle vérifie
+deux. Seize étiquettes sont posées, dont `v0.4.0`, et un contrôle vérifie
 que **chaque étiquette citée par un document existe**
 (`docs/REPERES_GIT.md`).
 
