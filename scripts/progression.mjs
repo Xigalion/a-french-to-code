@@ -66,9 +66,11 @@ if (etat.publication) {
   console.log('   ' + barre(pub.controlesPasses, pub.controlesTotal) + '  '
     + pub.controlesPasses + '/' + pub.controlesTotal + ' contrôles d’avant publication');
   console.log('   licence ' + pub.licence + ' | version ' + pub.versionPublique
-    + ' | ' + pub.etiquettes + ' étiquettes | nom proposé ' + pub.nomPublicPropose);
-  console.log('   reste au fondateur : ' + pub.resteAuFondateur.join(', '));
-  console.log('   procédure et retour arrière : ' + pub.procedure);
+    + ' | ' + pub.etiquettes + ' étiquettes | nom public ' + pub.nomPublicPropose);
+  if (pub.url) console.log('   ' + pub.url);
+  for (const item of pub.resteCoteGitHub ?? []) console.log('   reste côté GitHub : ' + item);
+  console.log('   procédure et retour arrière : ' + pub.procedure
+    + (pub.suivi ? ' | suivi : ' + pub.suivi : ''));
   console.log('');
 }
 

@@ -32,7 +32,10 @@ body:
     id: contournement
     attributes:
       label: Avez-vous trouvé un contournement avec le catalogue existant ?
-      description: Beaucoup de capacités sont composables en deux ou trois phrases. Si c'est le cas, dites-le : cela change le classement du ticket.
+      # Guillemets obligatoires : un « : » suivi d'une espace dans une valeur
+      # non citée fait lire une sous-clé à YAML, et GitHub ignore alors le
+      # modèle EN SILENCE — le formulaire n'apparaît simplement pas.
+      description: "Beaucoup de capacités sont composables en deux ou trois phrases. Si c'est le cas, dites-le : cela change le classement du ticket."
     validations:
       required: true
   - type: dropdown

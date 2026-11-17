@@ -53,19 +53,22 @@
     }
   },
   "publication": {
-    "etat": "historique et 16 étiquettes ENVOYÉS le 17 novembre 2026 ; dépôt encore PRIVÉ",
+    "etat": "PUBLIÉ le 17 novembre 2026 — dépôt public, 16 étiquettes, licence Apache-2.0",
     "licence": "Apache-2.0",
-    "nomPublicPropose": "c-a-french-to-c (confirmé)",
+    "nomPublicPropose": "c-a-french-to-c (définitif)",
     "controlesPasses": 18,
     "controlesTotal": 18,
     "etiquettes": 16,
     "versionPublique": "v0.4.0",
     "procedure": "docs/PUBLICATION.md",
-    "resteAuFondateur": [
-      "renommer le dépôt distant",
-      "passer en public",
-      "créer la release v0.4.0 avec le .vsix"
+    "documentPublic": "docs/ETAT_DU_PROJET.md ; les instructions de travail internes restent hors du dépôt",
+    "url": "https://github.com/Xigalion/c-a-french-to-c",
+    "resteCoteGitHub": [
+      "publier la release v0.4.0 (aucune release visible anonymement)",
+      "créer les 4 étiquettes de classement des tickets",
+      "ajouter les sujets du dépôt",
+      "désactiver l'onglet Projects"
     ],
-    "documentPublic": "docs/ETAT_DU_PROJET.md ; les instructions de travail internes restent hors du dépôt"
+    "suivi": "docs/SUIVI_PUBLIC.md ; node scripts/suivi-public.mjs"
   }
 }

@@ -122,13 +122,31 @@ philosophie).
 Les documents citent des **étiquettes** git, jamais des identifiants de
 commit : [`docs/REPERES_GIT.md`](docs/REPERES_GIT.md) dit pourquoi.
 
+## Signaler, contribuer, suivre
+
+Trois formulaires de tickets : **refus incompris**, **C produit inattendu**,
+**formulation manquante** — avec, dans les trois cas, la **phrase exacte** et
+le **code du diagnostic**. Avant d'ouvrir : `docs/CATALOGUE.md` dit ce qui est
+accepté, `docs/LIMITES_CONNUES.md` ce qui ne le sera pas.
+
+Pour contribuer : [`CONTRIBUTING.md`](CONTRIBUTING.md). Une contribution part
+d'une **lacune démontrée** — un programme qu'on ne peut pas écrire — pas
+d'une idée.
+
+Côté mainteneur, le suivi tient en une commande et un classement décidé
+d'avance : [`docs/SUIVI_PUBLIC.md`](docs/SUIVI_PUBLIC.md).
+
+    node scripts/suivi-public.mjs
+
 ## Vérifier soi-même
 
 ```sh
 npm run check                        # typecheck + tests Node
 npm run test:vscode                  # suite hôte dans une instance isolée
 node scripts/dictee-vscode.mjs cloture   # rejoue un exercice dans l'IHM réelle
-node scripts/progression.mjs             # les deux indicateurs d'avancement
+node scripts/progression.mjs             # les indicateurs d'avancement
+node scripts/pre-publication.mjs         # 18 contrôles avant toute publication
+node scripts/suivi-public.mjs            # tickets et contributions en attente
 ```
 
 Les preuves ne sont pas des affirmations : chaque programme de validation est

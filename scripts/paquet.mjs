@@ -23,6 +23,27 @@ if (!existsSync(compile)) {
   process.exit(1);
 }
 
+// Un `out/` jamais nettoyé garde les modules renommés depuis : le paquet
+// embarquait ainsi `conditionInformation.js`, renommé au lot 12, que le même
+// paquet rebâti depuis un clone propre ne contient pas. Un artefact publié
+// doit être reproductible, donc le paquet refuse un out/ périmé.
+const perimes = [];
+for (const [sortie, sources] of [[join(source, 'out', 'src'), join(racine, 'src')],
+  [join(source, 'out', 'extension', 'src'), join(source, 'src')]]) {
+  if (!existsSync(sortie)) continue;
+  for (const nom of readdirSync(sortie)) {
+    if (!nom.endsWith('.js')) continue;
+    if (!existsSync(join(sources, nom.replace(/\.js$/u, '.ts')))) perimes.push(join(sortie, nom));
+  }
+}
+if (perimes.length > 0) {
+  console.error('ERREUR : ' + perimes.length + ' fichier(s) compilé(s) sans source correspondante :');
+  for (const chemin of perimes) console.error('  ' + chemin);
+  console.error('Supprime « extension/out » puis relance « npm run build:extension » :');
+  console.error('le paquet doit être exactement celui qu’un clone propre produit.');
+  process.exit(1);
+}
+
 const manifeste = JSON.parse(readFileSync(join(source, 'package.json'), 'utf8'));
 const { name, version, publisher, displayName, description, engines } = manifeste;
 

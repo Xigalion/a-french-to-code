@@ -10,11 +10,13 @@
 > | envoi de l'historique réécrit (`--force-with-lease`) | **fait** — `main` à jour sur le distant |
 > | envoi des **seize** étiquettes publiques | **fait** — aucune sauvegarde `avant-*` poussée |
 > | vérification du contenu distant, dépôt encore **privé** | **faite** — §5 |
-> | renommage du dépôt en `c-a-french-to-c` | **à faire** — interface GitHub |
-> | passage en **public** | **à faire** — interface GitHub, geste du fondateur |
-> | release `v0.4.0` avec le `.vsix` | **à faire** — interface GitHub, fichiers prêts |
+> | renommage du dépôt en `c-a-french-to-c` | **fait** |
+> | passage en **public** | **fait** |
+> | vérification anonyme du dépôt public | **faite** — §5 |
+> | release `v0.4.0` avec le `.vsix` | **à terminer** — aucune release visible anonymement (§4.3) |
 >
-> Le dépôt est donc **à jour et toujours privé**. Version publiée : **0.4.0**.
+> **Le dépôt est public : https://github.com/Xigalion/c-a-french-to-c**
+> Version publiée : **0.4.0**. Suivi des tickets : `docs/SUIVI_PUBLIC.md`.
 
 ---
 
@@ -120,7 +122,30 @@ Pour vérifier, avant d'envoyer, quelles étiquettes appartiennent à `main` :
       while read t h; do git merge-base --is-ancestor "$h" main &&
         echo "publiable  $t" || echo "SAUVEGARDE $t"; done
 
-### 4.3 Rendre public
+### 4.3 Release — vérifier qu'elle est bien **publiée**, et pas en brouillon
+
+Un brouillon de release n'est **pas visible** d'un visiteur : l'API publique
+répond `404` sur `/releases/latest`, la page de l'étiquette n'affiche que les
+archives automatiques, et le `.vsix` n'est **pas** téléchargeable. C'est l'état
+constaté le 17 novembre 2026 après la création annoncée.
+
+Le gérer : **Releases** → ouvrir le brouillon → **Publish release**. S'il n'y a
+pas de brouillon, créer la release depuis l'étiquette existante :
+
+    https://github.com/Xigalion/c-a-french-to-c/releases/new?tag=v0.4.0
+
+— coller `dist/notes-de-release-v0.4.0.md`, joindre `dist/c-a-0.4.0.vsix`.
+
+**Attention au paquet joint.** Le `.vsix` doit être celui qu'un clone propre
+produit : un `extension/out` jamais nettoyé y ajoutait un module renommé
+depuis. `node scripts/paquet.mjs` **refuse** désormais un `out/` périmé. Le
+paquet de référence fait **102 866 octets** et **37 entrées**.
+
+Vérifier, une fois la release publiée :
+
+    curl -sI -L https://github.com/Xigalion/c-a-french-to-c/releases/download/v0.4.0/c-a-0.4.0.vsix | head -1
+
+### 4.4 Rendre public
 
 Interface GitHub : **Settings → General → Danger Zone → Change visibility →
 Make public**, puis confirmer.
@@ -128,7 +153,7 @@ Make public**, puis confirmer.
 **C'est le geste irréversible de la série.** Tout ce qui est public peut être
 copié, forké, mis en cache et indexé dans les minutes qui suivent.
 
-### 4.4 Finitions, après vérification du contenu distant
+### 4.5 Finitions, après vérification du contenu distant
 
     # une fois le contenu distant VÉRIFIÉ, et pas avant :
     git tag -d avant-reecriture-auteur avant-nettoyage-historique \n      avant-retrait-claude avant-publication-distant
@@ -138,7 +163,7 @@ copié, forké, mis en cache et indexé dans les minutes qui suivent.
 Ces trois lignes effacent la **seule copie locale** de l'ancien historique.
 Elles ne sont pas urgentes : rien de local n'est publié.
 
-### 4.5 Ce qui n'est pas automatique, et reste à faire à la main
+### 4.6 Ce qui n'est pas automatique, et reste à faire à la main
 
 - **la description et les sujets** du dépôt GitHub : une phrase et quelques
   mots-clés, sinon le dépôt est introuvable. Suggestion : *« Traduire du
@@ -152,18 +177,34 @@ Elles ne sont pas urgentes : rien de local n'est publié.
 - **ne pas** publier l'extension sur la place de marché VS Code : c'est un
   prototype de test supervisé, et `README.md` le dit.
 
-## 5. Vérifier après publication
+## 5. Vérifier après publication — fait le 17 novembre 2026
 
-    git ls-remote --heads --tags origin | head -20
-    git log --oneline origin/main -3
+Tout ce qui suit a été exécuté **sans identifiants**, donc tel qu'un visiteur
+le voit.
 
-Puis, dans un navigateur, sur le dépôt public :
+| Vérification | Résultat |
+|---|---|
+| API publique du dépôt | `public`, licence **Apache-2.0**, branche par défaut `main` |
+| clone **anonyme** | 49 commits, 281 fichiers, 16 étiquettes |
+| étiquettes de sauvegarde `avant-*` côté GitHub | **aucune** |
+| branches distantes | **1** (`main`) |
+| `CLAUDE.md` côté public | **absent de l'arbre et de l'historique** |
+| 12 documents publics en accès brut | **200** chacun |
+| pages `/issues`, `/issues/new/choose`, `/tree/main/docs` | **200** |
+| les 4 modèles de tickets | présents, et **structurellement valides** |
+| release et `.vsix` | **absents** — voir §4.3 |
 
-- le `README` s'affiche, et ses liens relatifs fonctionnent ;
-- les trois modèles de tickets apparaissent à l'ouverture d'un ticket, et les
-  tickets vides sont désactivés ;
-- la licence détectée par GitHub est bien **Apache-2.0** ;
-- aucun fichier inattendu à la racine.
+**Les instructions d'installation du `README` ont été rejouées depuis le clone
+anonyme** : `npm install` (2 paquets), `npm run check` (**3 834 tests, 0
+échec**), `npm run build:extension`, `node scripts/paquet.mjs`. Le paquet
+obtenu est **identique à l'octet près** à celui installé et vérifié
+localement — mêmes 37 entrées, même empreinte du contenu.
+
+Pour refaire ces contrôles plus tard :
+
+    node scripts/suivi-public.mjs            # état du dépôt, tickets, ce qui reste
+    curl -s https://api.github.com/repos/Xigalion/c-a-french-to-c | grep '"visibility"'
+    git -c credential.helper= clone https://github.com/Xigalion/c-a-french-to-c.git /tmp/verif
 
 ## 6. Retour arrière
 

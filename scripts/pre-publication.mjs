@@ -167,6 +167,44 @@ controle('licence Apache-2.0 complète et cohérente', () => {
     .filter(chemin => !readFileSync(chemin, 'utf8').includes('Apache'));
   return annonces.length === 0 ? true : 'licence non annoncée dans : ' + annonces.join(', ');
 });
+// GitHub ignore EN SILENCE un modèle de ticket mal formé : le formulaire
+// n'apparaît pas, et rien ne le signale. Un modèle de ce dépôt l'a été —
+// une valeur non citée contenant « : » que YAML lisait comme une sous-clé.
+// Ce n'est pas un analyseur YAML (le projet n'a aucune dépendance) : c'est
+// un contrôle des trois fautes qui cassent réellement ces fichiers.
+controle('modèles de tickets structurellement sains', () => {
+  const TYPES = ['markdown', 'textarea', 'input', 'dropdown', 'checkboxes'];
+  const fautes = [];
+  for (const [chemin, brut] of fichiersTexte) {
+    if (!chemin.startsWith('.github/ISSUE_TEMPLATE') || !chemin.endsWith('.yml')) continue;
+    const lignes = brut.toString('utf8').split('\n');
+    const formulaire = !chemin.endsWith('config.yml');
+    lignes.forEach((ligne, index) => {
+      const valeur = /^\s*(label|description|about|name|title|placeholder|value):\s+(.*)$/u.exec(ligne);
+      if (valeur && !/^["'|>]/u.test(valeur[2]) && /:\s/u.test(valeur[2])) {
+        fautes.push(chemin + ':' + (index + 1) + ' valeur non citée contenant « : »');
+      }
+      const type = /^\s*-?\s*type:\s*(\S+)\s*$/u.exec(ligne);
+      if (formulaire && type && !TYPES.includes(type[1].replace(/["']/gu, ''))) {
+        fautes.push(chemin + ':' + (index + 1) + ' type inconnu « ' + type[1] + ' »');
+      }
+    });
+    const texte = lignes.join('\n');
+    if (formulaire) {
+      for (const cle of ['name:', 'description:', 'body:']) {
+        if (!texte.includes('\n' + cle) && !texte.startsWith(cle)) fautes.push(chemin + ' : clé ' + cle + ' absente');
+      }
+      const champs = (texte.match(/^ *- type:/gmu) ?? []).length;
+      const identifiants = (texte.match(/^ *id:/gmu) ?? []).length;
+      const marqueurs = (texte.match(/^ *- type: markdown$/gmu) ?? []).length;
+      if (identifiants < champs - marqueurs) {
+        fautes.push(chemin + ' : ' + (champs - marqueurs - identifiants) + ' champ(s) sans « id »');
+      }
+    }
+  }
+  return fautes.length === 0 ? true : fautes.join(' | ');
+});
+
 controle('aucun gabarit OWNER/REPO laissé dans les modèles de tickets', () => {
   const touches = fichiersTexte.filter(([chemin, contenu]) => chemin.startsWith('.github')
     && contenu.toString('utf8').includes('OWNER/REPO'));
