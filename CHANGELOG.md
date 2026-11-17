@@ -8,8 +8,18 @@ des 32 lots est dans `docs/LOT*.md`.
 
 ## 0.5.0 — 17 novembre 2026 — deux langages cibles
 
-**Toujours un prototype pédagogique.** Pas un produit, et les deux
-nouveautés sont désactivées par défaut.
+**Toujours un prototype pédagogique.** Pas un produit.
+
+### Le projet se décline
+
+Le projet s'appelle **A**. Il se décline par langage cible : **C-A** vers
+C17, **Python-A** vers Python. Le nom affiché de l'extension devient
+« **A — Français vers Code** », et sa description nomme les deux déclinaisons.
+
+**L'identifiant technique ne change pas** : `projet-a-local.c-a`. C'est la clé
+par laquelle VS Code reconnaît une installation ; la changer en installerait
+une seconde à côté de l'ancienne, les deux déclarant la même commande. Une
+mise à jour depuis la 0.4.0 se fait donc normalement, sans rien désinstaller.
 
 ### Ce que cette version ajoute
 
@@ -53,12 +63,27 @@ conserve **votre** phrase, pas celle que C-A a lue.
 - **aucun essai hors Windows**, et **aucun essai par un utilisateur** : les
   neuf programmes Python sont écrits par un script qui dicte des phrases.
 
-### Comment activer
+### Les deux réglages, et comment revenir en arrière
 
-| Réglage | Par défaut | Ce qu'il ouvre |
+| Réglage | Par défaut | À `false` |
 |---|---|---|
-| `c-a.python` | désactivé | la commande C-A dans un fichier `.py` |
-| `c-a.souplesse` | désactivé | le français souple ; **passera à activé après validation finale**, le mode strict restant accessible |
+| `c-a.python` | **actif** | n'ouvre que les fichiers `.c` |
+| `c-a.souplesse` | **actif** | restaure le **mode strict** : seules les phrases exactes du catalogue sont acceptées |
+
+Les deux sont actifs depuis la validation finale. Le mode strict reste
+accessible, et la commande « A : Basculer entre français strict et français
+souple » le fait en un geste.
+
+### Vérifier le paquet
+
+Le `.vsix` est **reproductible au bit** : deux constructions du même commit,
+depuis deux clones différents, donnent le même fichier et donc le même
+hachage. Les horodatages des entrées de l'archive sont normalisés pour cela.
+
+```
+sha256  a2e830e1a2358aaac70fe8f211e707def575726df977f8e965173fbbf3912aed
+taille  163 508 octets, 51 entrées
+```
 
 ---
 

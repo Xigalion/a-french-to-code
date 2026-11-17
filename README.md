@@ -1,8 +1,8 @@
-# C-A — du français contrôlé vers du C17 et du Python
+# A — du français contrôlé vers du code
 
-**C-A traduit une phrase française en une instruction, montre un aperçu, et
-n'insère rien sans confirmation.** Deux langages cibles : **C17** et
-**Python**.
+**A traduit une phrase française en une instruction, montre un aperçu, et
+n'insère rien sans confirmation.** Deux déclinaisons : **C-A** vers **C17**,
+**Python-A** vers **Python**.
 
 ```
 Crée un entier nommé age de valeur 20.
@@ -41,8 +41,14 @@ l'on modifie et que l'on compile.
 
 **A** est un projet de programmation assistée : traduire une intention
 exprimée en **langue naturelle contrôlée** vers du code d'un langage
-**réel et existant**. **C-A** en est la première incarnation — **français →
-C17 et Python**, intégrée à **VS Code**, moteur en TypeScript.
+**réel et existant**. Il se décline par langage cible : **C-A** vers C17,
+**Python-A** vers Python. Une seule extension **VS Code** les porte toutes
+les deux, moteur en TypeScript.
+
+L'extension garde l'identifiant technique `projet-a-local.c-a` : c'est la clé
+par laquelle VS Code reconnaît une installation, et la changer en
+installerait une seconde à côté de l'ancienne. Le nom affiché, lui, est
+« A — Français vers Code ».
 
 Python n'est pas un portage du C : il a son **propre catalogue pédagogique**,
 adapté à ses notions — listes, dictionnaires, ensembles, `with`, `match`,

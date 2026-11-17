@@ -1,7 +1,7 @@
 {
   "name": "c-a",
-  "displayName": "C-A — Français contrôlé vers C17 et Python",
-  "description": "Prototype pédagogique : traduction, aperçu et insertion explicite d’instructions depuis des phrases françaises contrôlées, vers C17 et Python.",
+  "displayName": "A — Français vers Code",
+  "description": "Prototype pédagogique : traduction, aperçu et insertion explicite d’instructions depuis des phrases françaises contrôlées. Deux déclinaisons : C-A vers C17, Python-A vers Python.",
   "version": "0.5.0",
   "publisher": "projet-a-local",
   "private": true,

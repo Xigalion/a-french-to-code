@@ -413,3 +413,18 @@ test('v0.5.0 : les deux modes sont actifs par defaut, et chacun reste desactivab
   assert.match(bascule.title, /strict/iu);
   assert.match(bascule.title, /souple/iu);
 });
+
+test('v0.5.0 : l’identifiant technique de l’extension est INCHANGE', () => {
+  // Decision du fondateur du 17 novembre 2026 : « Conserve imperativement
+  // l'identifiant technique actuel afin de preserver les installations
+  // existantes. » L'identifiant est publisher.name, et VS Code s'en sert comme
+  // cle primaire : le changer installerait une seconde extension a cote de
+  // l'ancienne, les deux declarant la meme commande et le meme raccourci.
+  const manifest = JSON.parse(readFileSync(new URL('../extension/package.json', import.meta.url), 'utf8'));
+  assert.equal(manifest.publisher, 'projet-a-local');
+  assert.equal(manifest.name, 'c-a');
+  // Le nom AFFICHE, lui, porte le projet global et ses deux declinaisons.
+  assert.match(manifest.displayName, /^A — /u);
+  assert.match(manifest.description, /C-A/u);
+  assert.match(manifest.description, /Python-A/u);
+});
