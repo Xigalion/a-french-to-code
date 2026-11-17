@@ -27,6 +27,8 @@
     { "phrase": "Renvoyer la valeur 0.", "canonique": "Retourne la valeur 0.", "code": "return 0;" },
     { "phrase": "Retourner 0.", "canonique": "Retourne la valeur 0.", "code": "return 0;" },
     { "phrase": "Fermer le fichier f.", "canonique": "Ferme le fichier f.", "code": "fclose(f);" },
+    { "phrase": "Incrémenter compteur.", "canonique": "Affecte à compteur le résultat de \"compteur + 1\".", "code": "compteur = (compteur + 1);",
+      "note": "DECISION DU FONDATEUR du 17 novembre 2026 : « Incremente » et « Decremente » sont acceptees, « Augmente » reste incomplete. Ce n'est pas une erreur du corpus : c'est un changement de perimetre, et le mot porte le pas de 1 comme « doubler » porterait un facteur 2. La frontière n’a pas disparu : « Augmente compteur. » reste refusée, et un test l’exige." },
     { "phrase": "Libérer la mémoire de p.", "canonique": "Libère la mémoire pointée par p.", "code": "free(p);",
       "note": "Gain obtenu en CORRIGEANT un défaut de ma table : le gabarit écrivait « Libère la mémoire de p. », phrase qui n’existe pas — le catalogue dit « pointée par ». Le corpus de développement l’a trouvé." },
     { "phrase": "Créer un flottant nommé prix de valeur 1.5.", "canonique": "Crée une variable de type float nommée prix avec le résultat de \"1.5\".", "code": "float prix = 1.5;",
@@ -34,7 +36,6 @@
   ],
   "toujoursRefusees": [
     { "phrase": "Affiche age.", "raison": "AMBIGUITE_NON_RESOLUE : trois lectures, %d, %c et %s. La différence est une leçon, pas un détail." },
-    { "phrase": "Incrémenter compteur.", "raison": "Le pas n'est pas dans la phrase. Écrire « + 1 » serait deviner une information absente, et la règle 3 l'interdit." },
     { "phrase": "Déclarer un réel nommé moyenne.", "raison": "« réel » ne dit pas si c'est float ou double. Choisir serait décider à la place de l'étudiant." },
     { "phrase": "Afficher la valeur de age et de total.", "raison": "Deux instructions dans une phrase. C-A pose une instruction par ligne, et découper serait restructurer." },
     { "phrase": "Boucler sur i de 0 à 10.", "raison": "« de 0 à 10 » ne dit pas si 10 est inclus. En C17, la boucle du catalogue demande une condition écrite." },

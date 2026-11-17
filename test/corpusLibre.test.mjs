@@ -85,7 +85,7 @@ test('évolution : chaque gain enregistré vient bien du corpus historique', () 
   for (const gain of evolution.gains) {
     assert.ok(claires.has(gain.phrase), 'gain qui n’est pas une phrase claire du corpus : ' + gain.phrase);
   }
-  assert.equal(evolution.gains.length, 18);
+  assert.equal(evolution.gains.length, 19);
 });
 
 for (const gain of evolution.gains) {

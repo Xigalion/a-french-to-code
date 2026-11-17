@@ -17,9 +17,9 @@ Généré par `node scripts/mesurer-corpus.mjs`. Ne pas éditer à la main.
 | Classe | Nombre | Part |
 |---|---|---|
 | formulations naturelles reconnues, au sens attendu | **38** | 40.4 % |
-| formulations claires GAGNÉES par le lot S5, sens vérifié | **18** | 19.1 % |
+| formulations claires GAGNÉES par le lot S5, sens vérifié | **19** | 20.2 % |
 | formulations claires devenues reconnues SANS vérification de sens | **0** | 0.0 % |
-| formulations compréhensibles mais refusées | **25** | 26.6 % |
+| formulations compréhensibles mais refusées | **24** | 25.5 % |
 | formulations incomplètes, refusées — refus correct | **10** | 10.6 % |
 | ambiguïtés correctement détectées | **3** | 3.2 % |
 | instructions incorrectement acceptées | **0** | 0.0 % |
@@ -32,8 +32,8 @@ Généré par `node scripts/mesurer-corpus.mjs`. Ne pas éditer à la main.
 - **0** différence(s) de sens : une phrase acceptée dont le C produit n’est pas celui attendu. C’est la classe la plus grave, et elle doit rester à zéro.
 - **0** instruction(s) acceptée(s) à tort : une phrase que l’attente écrite voulait refusée.
 - **3** ambiguïté(s) correctement détectée(s) sur 3 attendue(s).
-- **18** phrase(s) claires **gagnées** par les reformulations du lot S5, chacune avec son sens vérifié à la main.
-- **25** phrase(s) claires pour un lecteur humain et refusées par C-A : c’est la mesure de l’écart, et c’est le chiffre qui dit où la souplesse s’arrête aujourd’hui.
+- **19** phrase(s) claires **gagnées** par les reformulations du lot S5, chacune avec son sens vérifié à la main.
+- **24** phrase(s) claires pour un lecteur humain et refusées par C-A : c’est la mesure de l’écart, et c’est le chiffre qui dit où la souplesse s’arrête aujourd’hui.
 - **10** phrase(s) incomplètes refusées : refus correct, aucune information inventée.
 
 Une phrase refusée n’est pas un défaut : c’est une capacité absente, et la
@@ -45,6 +45,7 @@ dire ainsi est la seule façon de décider si elle vaut d’être ajoutée.
 - « Donne à age la valeur 20. » → `Affecte la valeur 20 à age.` → `age = 20;`
 - « age vaut 20. » → `Affecte la valeur 20 à age.` → `age = 20;`
 - « Ajouter 1 à compteur. » → `Affecte à compteur le résultat de "compteur + 1".` → `compteur = (compteur + 1);`
+- « Incrémenter compteur. » → `Affecte à compteur le résultat de "compteur + 1".` → `compteur = (compteur + 1);`
 - « Écrire la valeur de age. » → `Affiche la valeur de age.` → `printf("%d", age);`
 - « Imprimer la valeur de age. » → `Affiche la valeur de age.` → `printf("%d", age);`
 - « Montrer la valeur de age. » → `Affiche la valeur de age.` → `printf("%d", age);`
@@ -65,7 +66,6 @@ dire ainsi est la seule façon de décider si elle vaut d’être ajoutée.
 - « Fais un entier age qui vaut 20. » — refus
 - « age est un entier qui vaut 20. » — refus
 - « Je veux un entier age égal à 20. » — refus
-- « Incrémenter compteur. » — refus
 - « Affiche age. » — ambigu
 - « Si x est plus grand que 0 alors. » — refus
 - « Tant que i est inférieur à 3, répéter. » — refus

@@ -15,9 +15,9 @@ Engendré par `node scripts/catalogue-python.mjs`. **Ne pas éditer à la main.*
 
 Le symbole ⏎ marque une fin de ligne dans le code produit.
 
-## 0. Les 54 intentions NATIVES de Python
+## 0. Les 63 intentions NATIVES de Python
 
-57 formulations pour 54 intentions : la conversion en
+66 formulations pour 63 intentions : la conversion en
 compte trois — entier, réel, texte — et c’est une seule intention.
 
 Elles n’existent dans aucun catalogue C, et c’est le catalogue pédagogique
@@ -47,7 +47,16 @@ partagé** : un test le vérifie, sinon elles écriraient aussi du C.
 | `Affiche le type de valeur.` | `print(type(valeur), end="")` | PY_TYPE_IS_NOT_A_CHECK, PY_NO_SEPARATOR_ADDED |
 | `Affiche a et b séparés par le texte " ".` | `print(a, b, sep=" ", end="")` | PY_SEPARATOR_IS_EXPLICIT, PY_NO_SEPARATOR_ADDED |
 | `Ajoute "18" à la fin de notes.` | `notes.append(18)` | PY_LIST_GROWS, PY_ITERATING_WHILE_MODIFYING |
-| `Ajoute le texte "cleo" à la fin de noms.` | `noms.append("cleo")` | PY_LIST_GROWS, PY_STRING_IS_IMMUTABLE |
+| `Ajoute le texte "cleo" à la fin de noms.` | `noms.append("cleo")` | PY_LIST_GROWS, PY_TEXT_IS_NOT_A_NUMBER |
+| `Incrémente compteur.` | `compteur += 1` | PY_AUGMENTED_ASSIGNMENT_IS_IN_PLACE |
+| `Décrémente compteur.` | `compteur -= 1` | PY_AUGMENTED_ASSIGNMENT_IS_IN_PLACE |
+| `Crée une liste nommée noms avec les textes "ada" et "bob".` | `noms: list = ["ada", "bob"]` | PY_TEXT_IS_NOT_A_NUMBER, PY_LIST_GROWS |
+| `Crée un ensemble nommé vus avec les textes "ada" et "bob".` | `vus: set = {"ada", "bob"}` | PY_TEXT_IS_NOT_A_NUMBER, PY_SET_REMOVES_DUPLICATES |
+| `Crée un tuple nommé paire avec les textes "ada" et "bob".` | `paire: tuple = ("ada", "bob")` | PY_TEXT_IS_NOT_A_NUMBER, PY_TUPLE_IS_IMMUTABLE |
+| `Insère le texte "cleo" à la position "0" de noms.` | `noms.insert(0, "cleo")` | PY_TEXT_IS_NOT_A_NUMBER, PY_DEL_SHIFTS_THE_REST |
+| `Crée un dictionnaire nommé index avec la clé "ada" valant le texte "quinze".` | `index: dict = {"ada": "quinze"}` | PY_TEXT_IS_NOT_A_NUMBER, PY_EMPTY_BRACES_IS_A_DICT |
+| `Affecte le texte "absente" à la clé "zoe" de index.` | `index["zoe"] = "absente"` | PY_TEXT_IS_NOT_A_NUMBER, PY_MISSING_KEY_RAISES |
+| `Crée une fonction nommée salue qui ne retourne rien et prend un str nommé nom valant le texte "Ada".` | `def salue(nom: str = "Ada") -> None:` | PY_BLOCK_NEEDS_A_BODY, PY_DEFAULT_IS_EVALUATED_ONCE, PY_ANNOTATION_NOT_CHECKED |
 | `Insère "12" à la position "0" de notes.` | `notes.insert(0, 12)` | PY_LIST_IS_MUTABLE, PY_DEL_SHIFTS_THE_REST |
 | `Retire l’élément à la position "0" de notes.` | `del notes[0]` | PY_DEL_SHIFTS_THE_REST, PY_LIST_IS_MUTABLE |
 | `Affecte à debut la tranche de notes de "0" jusqu’avant "3".` | `debut = notes[0:3]` | PY_SLICE_COPIES |
@@ -84,8 +93,8 @@ partagé** : un test le vérifie, sinon elles écriraient aussi du C.
 | `Importe le module math.` | `import math` | PY_IMPORT_RUNS_THE_MODULE |
 | `Importe sqrt du module math.` | `from math import sqrt` | PY_IMPORT_RUNS_THE_MODULE |
 
-Intentions natives livrées : **54**, dont **14** ouvrent un bloc.
-Sur les **55** proposées : il en reste **1** à écrire,
+Intentions natives livrées : **63**, dont **15** ouvrent un bloc.
+Sur les **55** proposées : il en reste **-8** à écrire,
 et elles sont détaillées, formulation par formulation, dans
 `docs/phase2/CATALOGUE_NATIF_PYTHON_PROPOSE.md`.
 
@@ -225,8 +234,8 @@ répond alors `CONSTRUCTION_NON_PORTEE`.
 - intentions portées par le lot P3 : **32**, dont **30** avec une phrase d’exemple rendable
 - intentions non portées : **52**
 - raisons écrites au registre : **52**
-- intentions natives livrées : **54**
-- total des intentions que Python sait écrire : **86**
+- intentions natives livrées : **63**
+- total des intentions que Python sait écrire : **95**
 
 La partition est vérifiée par `test/python.test.mjs` : chacune des 84
 intentions est soit rendue, soit refusée avec une raison, jamais les deux,

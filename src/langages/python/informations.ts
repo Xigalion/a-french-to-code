@@ -38,7 +38,10 @@ export type InformationPython = {
   | 'PY_FSTRING_IS_EVALUATED_NOW' | 'PY_IS_IS_IDENTITY' | 'PY_MATCH_DOES_NOT_FALL_THROUGH'
   | 'PY_WITH_CLOSES_FOR_YOU' | 'PY_EXCEPT_NEEDS_A_TYPE' | 'PY_RAISE_STOPS_THE_FUNCTION'
   | 'PY_IMPORT_RUNS_THE_MODULE' | 'PY_MEMBERSHIP_IS_LINEAR' | 'PY_TYPE_IS_NOT_A_CHECK'
-  | 'PY_SEPARATOR_IS_EXPLICIT' | 'PY_POWER_IS_EXACT_ON_INTEGERS';
+  | 'PY_SEPARATOR_IS_EXPLICIT' | 'PY_POWER_IS_EXACT_ON_INTEGERS'
+  // Fin du catalogue Python.
+  | 'PY_AUGMENTED_ASSIGNMENT_IS_IN_PLACE' | 'PY_TEXT_IS_NOT_A_NUMBER'
+  | 'PY_DEFAULT_IS_EVALUATED_ONCE';
   severity: 'information';
   range: SourceRange;
   message: string;
@@ -193,6 +196,18 @@ const TEXTES: Readonly<Record<InformationPython['code'], string>> = {
   PY_SEPARATOR_IS_EXPLICIT:
     'Le séparateur est celui que vous avez écrit. « print » en met une espace par défaut, et C-A ne '
     + 'laisse pas ce défaut s’appliquer : un séparateur non demandé est un ajout.',
+  PY_AUGMENTED_ASSIGNMENT_IS_IN_PLACE:
+    '« += » n’est pas « x = x + 1 ». Sur un nombre, les deux donnent le même résultat ; sur une liste, '
+    + '« += » modifie la liste SUR PLACE, donc tous les noms qui la désignent, là où « = » en crée une '
+    + 'nouvelle. C-A écrit la forme native de Python, et la différence est réelle.',
+  PY_TEXT_IS_NOT_A_NUMBER:
+    'Cette valeur est un TEXTE, pas un nombre : « "15" » ne se calcule pas, et « "15" + 1 » est une '
+    + 'erreur. Les guillemets délimitent une expression partout ailleurs dans le catalogue ; c’est le '
+    + 'mot « texte » qui dit qu’il s’agit d’une chaîne.',
+  PY_DEFAULT_IS_EVALUATED_ONCE:
+    'La valeur par défaut est évaluée UNE SEULE FOIS, à la définition de la fonction — pas à chaque '
+    + 'appel. Avec un texte, cela ne se voit pas ; avec une liste, la même liste serait partagée entre '
+    + 'tous les appels, et c’est l’un des pièges les plus coûteux de Python.',
   PY_POWER_IS_EXACT_ON_INTEGERS:
     'Sur deux entiers, « ** » donne un entier exact, aussi grand qu’il faut : 2 ** 100 s’écrit en '
     + 'entier, sans débordement. Avec un exposant négatif ou réel, le résultat est un nombre à virgule.',
@@ -213,7 +228,17 @@ const NATIVES: Readonly<Record<string, readonly InformationPython['code'][]>> = 
   PY_LISTE_VIDE: ['PY_LIST_GROWS', 'PY_ANNOTATION_NOT_CHECKED'],
   PY_LISTE_VALEURS: ['PY_LIST_IS_MUTABLE', 'PY_LIST_GROWS', 'PY_ANNOTATION_NOT_CHECKED'],
   PY_AJOUTER: ['PY_LIST_GROWS', 'PY_ITERATING_WHILE_MODIFYING'],
-  PY_AJOUTER_TEXTE: ['PY_LIST_GROWS', 'PY_STRING_IS_IMMUTABLE'],
+  PY_AJOUTER_TEXTE: ['PY_LIST_GROWS', 'PY_TEXT_IS_NOT_A_NUMBER'],
+  PY_INSERER_TEXTE: ['PY_TEXT_IS_NOT_A_NUMBER', 'PY_DEL_SHIFTS_THE_REST'],
+  PY_LISTE_TEXTES: ['PY_TEXT_IS_NOT_A_NUMBER', 'PY_LIST_GROWS'],
+  PY_ENSEMBLE_TEXTES: ['PY_TEXT_IS_NOT_A_NUMBER', 'PY_SET_REMOVES_DUPLICATES'],
+  PY_TUPLE_TEXTES: ['PY_TEXT_IS_NOT_A_NUMBER', 'PY_TUPLE_IS_IMMUTABLE'],
+  PY_DICT_PAIRES_TEXTE: ['PY_TEXT_IS_NOT_A_NUMBER', 'PY_EMPTY_BRACES_IS_A_DICT'],
+  PY_DICT_ECRIRE_TEXTE: ['PY_TEXT_IS_NOT_A_NUMBER', 'PY_MISSING_KEY_RAISES'],
+  PY_INCREMENTER: ['PY_AUGMENTED_ASSIGNMENT_IS_IN_PLACE'],
+  PY_DECREMENTER: ['PY_AUGMENTED_ASSIGNMENT_IS_IN_PLACE'],
+  PY_FONCTION_DEFAUT: ['PY_BLOCK_NEEDS_A_BODY', 'PY_DEFAULT_IS_EVALUATED_ONCE',
+    'PY_ANNOTATION_NOT_CHECKED'],
   PY_LONGUEUR: ['PY_LEN_IS_NOT_SIZEOF'],
   PY_POUR_INTERVALLE: ['PY_BLOCK_NEEDS_A_BODY', 'PY_RANGE_EXCLUDES_THE_END', 'PY_LOOP_VARIABLE_SURVIVES'],
   PY_POUR_CHAQUE: ['PY_BLOCK_NEEDS_A_BODY', 'PY_LOOP_VARIABLE_SURVIVES', 'PY_ITERATING_WHILE_MODIFYING'],

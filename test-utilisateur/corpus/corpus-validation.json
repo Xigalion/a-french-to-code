@@ -81,8 +81,10 @@
     { "phrase": "Affiche x.", "perimetre": true, "attendu": "ambigu", "raison": "%d, %c ou %s : trois lectures" },
     { "phrase": "Montre x.", "perimetre": true, "attendu": "ambigu", "raison": "%d ou %c : deux lectures" },
 
-    { "phrase": "Incrémenter x.", "perimetre": true, "attendu": "refuse", "raison": "le pas n'est pas écrit" },
-    { "phrase": "Décrémenter x.", "perimetre": true, "attendu": "refuse", "raison": "le pas n'est pas écrit" },
+    { "phrase": "Incrémenter x.", "perimetre": true, "attendu": "accepte", "code": "x = (x + 1);",
+      "correction": "DECISION DU FONDATEUR du 17 novembre 2026 : « Incremente » et « Decremente » sont acceptees, « Augmente » reste incomplete. Ce n'est pas une erreur du corpus : c'est un changement de perimetre, et le mot porte le pas de 1 comme « doubler » porterait un facteur 2." },
+    { "phrase": "Décrémenter x.", "perimetre": true, "attendu": "accepte", "code": "x = (x - 1);",
+      "correction": "DECISION DU FONDATEUR du 17 novembre 2026 : « Incremente » et « Decremente » sont acceptees, « Augmente » reste incomplete. Ce n'est pas une erreur du corpus : c'est un changement de perimetre, et le mot porte le pas de 1 comme « doubler » porterait un facteur 2." },
     { "phrase": "Déclarer un réel nommé taux.", "perimetre": true, "attendu": "refuse", "raison": "float ou double : la phrase ne le dit pas" },
     { "phrase": "Crée un entier nommé x.", "perimetre": true, "attendu": "refuse", "raison": "« crée » annonce une valeur, et aucune n'est écrite" },
     { "phrase": "Affiche.", "perimetre": true, "attendu": "refuse", "raison": "rien à afficher n'est désigné" },

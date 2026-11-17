@@ -28,6 +28,7 @@ export const EN_TETES_NATIFS: ReadonlySet<string> = new Set([
   'PY_POUR_INTERVALLE', 'PY_POUR_CHAQUE', 'PY_POUR_INDICE_ET_VALEUR', 'PY_DICT_PARCOURIR',
   'PY_LIRE_LIGNES', 'PY_SI_PRINCIPAL', 'PY_APPARTIENT', 'PY_EST_NONE',
   'PY_MATCH', 'PY_CAS', 'PY_CAS_DEFAUT', 'PY_AVEC_FICHIER', 'PY_ESSAYER', 'PY_SAUF',
+  'PY_FONCTION_DEFAUT',
 ]);
 
 /** Toutes les intentions natives livrées. Sert au registre et aux tests : une
@@ -40,8 +41,11 @@ export const NATIVES_PYTHON: ReadonlySet<string> = new Set([
   'PY_DIV_ENTIERE', 'PY_DIV_REELLE', 'PY_MODULO', 'PY_PUISSANCE', 'PY_LONGUEUR',
   'PY_CONVERSION', 'PY_INPUT', 'PY_TYPE_DE', 'PY_PRINT_PLUSIEURS',
   // séquences
-  'PY_AJOUTER', 'PY_AJOUTER_TEXTE', 'PY_INSERER', 'PY_RETIRER', 'PY_TRANCHE',
-  'PY_INDICE_NEGATIF', 'PY_DEPAQUETER',
+  'PY_AJOUTER', 'PY_AJOUTER_TEXTE', 'PY_INSERER', 'PY_INSERER_TEXTE', 'PY_RETIRER',
+  'PY_TRANCHE', 'PY_INDICE_NEGATIF', 'PY_DEPAQUETER',
+  'PY_LISTE_TEXTES', 'PY_ENSEMBLE_TEXTES', 'PY_TUPLE_TEXTES',
+  'PY_DICT_PAIRES_TEXTE', 'PY_DICT_ECRIRE_TEXTE',
+  'PY_INCREMENTER', 'PY_DECREMENTER', 'PY_FONCTION_DEFAUT',
   // dictionnaires et ensembles
   'PY_DICT_VIDE', 'PY_DICT_PAIRES', 'PY_DICT_LIRE', 'PY_DICT_ECRIRE', 'PY_DICT_PARCOURIR',
   'PY_ENSEMBLE',
@@ -159,6 +163,41 @@ export function rendrePythonNatif(instruction: InstructionPython): RenduNatif {
     // seconde phrase, et l'exercice du lot P5 l'a trouvee en echouant.
     case 'PY_AJOUTER_TEXTE':
       return rendu(`${instruction.parameters.name}.append(${renderStringLiteral(instruction.parameters.texte)})\n`);
+    case 'PY_INSERER_TEXTE': {
+      const { name, position, texte } = instruction.parameters;
+      return expr(position, p => rendu(`${name}.insert(${p}, ${renderStringLiteral(texte)})\n`));
+    }
+    case 'PY_LISTE_TEXTES':
+      return rendu(`${instruction.parameters.name}: list = [`
+        + instruction.parameters.textes.map(renderStringLiteral).join(', ') + ']\n');
+    case 'PY_ENSEMBLE_TEXTES':
+      return rendu(`${instruction.parameters.name}: set = {`
+        + instruction.parameters.textes.map(renderStringLiteral).join(', ') + '}\n');
+    case 'PY_TUPLE_TEXTES':
+      return rendu(`${instruction.parameters.name}: tuple = (`
+        + instruction.parameters.textes.map(renderStringLiteral).join(', ') + ')\n');
+    case 'PY_DICT_PAIRES_TEXTE': {
+      const { name, cle, texte } = instruction.parameters;
+      return rendu(`${name}: dict = {${renderStringLiteral(cle)}: ${renderStringLiteral(texte)}}\n`);
+    }
+    case 'PY_DICT_ECRIRE_TEXTE': {
+      const { name, cle, texte } = instruction.parameters;
+      return rendu(`${name}[${renderStringLiteral(cle)}] = ${renderStringLiteral(texte)}\n`);
+    }
+    // L'affectation augmentee est la forme NATIVE de Python, et elle n'est pas
+    // equivalente a « x = x + 1 » : sur un objet mutable, « += » modifie
+    // l'objet SUR PLACE, donc tous les noms qui le designent. L'information
+    // passive le dit, parce que la difference ne se voit pas dans le texte.
+    case 'PY_INCREMENTER':
+      return rendu(`${instruction.parameters.name} += 1\n`);
+    case 'PY_DECREMENTER':
+      return rendu(`${instruction.parameters.name} -= 1\n`);
+    // La valeur par defaut est ECRITE dans la phrase : c'est le seul endroit du
+    // projet ou le mot « defaut » apparait, et il ne contredit pas la regle 3.
+    case 'PY_FONCTION_DEFAUT': {
+      const { name, parametre, type, texte } = instruction.parameters;
+      return rendu(`def ${name}(${parametre}: ${type} = ${renderStringLiteral(texte)}) -> None:\n`);
+    }
     case 'PY_INSERER': {
       const { name, position, valeur } = instruction.parameters;
       return expr(position, p => expr(valeur, v => rendu(`${name}.insert(${p}, ${v})\n`)));

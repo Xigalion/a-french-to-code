@@ -42,6 +42,11 @@ const CAPTURES: Readonly<Record<string, string>> = {
   CONV: '(entier|r[ée]el|texte)',
   /** Une énumération d'expressions : `"1", "2" et "3"`, ou `"1"` seule. */
   EXPRS: '("[^"]*"(?:[ \\t]*,?[ \\t]*(?:et[ \\t]+)?"[^"]*")*)',
+  /** Une énumération de textes. Même forme que `EXPRS` : c'est le mot
+   * « textes » de la phrase qui les distingue, pas leur écriture. */
+  TEXTES: '("[^"]*"(?:[ \\t]*,?[ \\t]*(?:et[ \\t]+)?"[^"]*")*)',
+  /** Un type Python annoté : les quatre que le catalogue écrit. */
+  TYPE: '(int|float|str|bool)',
   /** N'importe quel mot. Réservé aux formes PROCHES : il sert à reconnaître
    * une phrase presque juste pour en dire ce qui cloche, jamais à accepter. */
   MOT: '([^\\s.]+)',
@@ -63,6 +68,9 @@ const AMORCES: readonly string[] = [
   'crée', 'créé', 'ajoute', 'insère', 'retire', 'affecte', 'affiche', 'lis',
   'importe', 'joins', 'découpe', 'nettoie', 'lève', 'vérifie', 'appelle',
   'retourne', 'ouvre', 'essaie', 'parcours',
+  // Fin du catalogue : l'affectation augmentee, et les deux formes proches
+  // qui refusent faute de pas ecrit.
+  'incrémente', 'incrémenter', 'décrémente', 'décrémenter', 'augmente', 'diminue',
 ];
 
 export const MOTIFS: readonly Motif[] = [
@@ -110,10 +118,34 @@ export const MOTIFS: readonly Motif[] = [
     demonstration: 'Affiche a et b séparés par le texte " ".' },
 
   // ======================= séquences ====================================
-  // La forme TEXTE est placee avant la forme expression : « le texte » la
-  // designe sans ambiguite, et sans elle le texte serait lu comme un nom.
+  // Les formes TEXTE sont placees avant leurs soeurs en expression : « le
+  // texte » / « les textes » les designe sans ambiguite, et sans ce mot le
+  // contenu serait lu comme une expression — « "15" » vaudrait l'entier 15.
   { forme: 'Ajoute le texte {TEXTE} à la fin de {NOM}', kind: 'PY_AJOUTER_TEXTE',
     demonstration: 'Ajoute le texte "cleo" à la fin de noms.' },
+  { forme: 'Insère le texte {TEXTE} à la position {EXPR} de {NOM}', kind: 'PY_INSERER_TEXTE',
+    demonstration: 'Insère le texte "cleo" à la position "0" de noms.' },
+  { forme: 'Crée une liste nommée {NOM} avec les textes {TEXTES}', kind: 'PY_LISTE_TEXTES',
+    demonstration: 'Crée une liste nommée noms avec les textes "ada" et "bob".' },
+  { forme: 'Crée un ensemble nommé {NOM} avec les textes {TEXTES}', kind: 'PY_ENSEMBLE_TEXTES',
+    demonstration: 'Crée un ensemble nommé vus avec les textes "ada" et "bob".' },
+  { forme: 'Crée un tuple nommé {NOM} avec les textes {TEXTES}', kind: 'PY_TUPLE_TEXTES',
+    demonstration: 'Crée un tuple nommé paire avec les textes "ada" et "bob".' },
+  { forme: 'Crée un dictionnaire nommé {NOM} avec la clé {TEXTE} valant le texte {TEXTE}',
+    kind: 'PY_DICT_PAIRES_TEXTE',
+    demonstration: 'Crée un dictionnaire nommé index avec la clé "ada" valant le texte "quinze".' },
+  { forme: 'Affecte le texte {TEXTE} à la clé {TEXTE} de {NOM}', kind: 'PY_DICT_ECRIRE_TEXTE',
+    demonstration: 'Affecte le texte "absente" à la clé "zoe" de index.' },
+  // L'affectation augmentee : la forme NATIVE de Python, et elle modifie sur
+  // place un objet mutable. « Augmente compteur. » n'est PAS ici : le pas n'y
+  // est pas ecrit, et deviner « 1 » serait une complétion implicite.
+  { forme: 'Incrémente {NOM}', kind: 'PY_INCREMENTER',
+    demonstration: 'Incrémente compteur.' },
+  { forme: 'Décrémente {NOM}', kind: 'PY_DECREMENTER',
+    demonstration: 'Décrémente compteur.' },
+  { forme: 'Crée une fonction nommée {NOM} qui ne retourne rien et prend un {TYPE} nommé {NOM} valant le texte {TEXTE}',
+    kind: 'PY_FONCTION_DEFAUT',
+    demonstration: 'Crée une fonction nommée salue qui ne retourne rien et prend un str nommé nom valant le texte "Ada".' },
   { forme: 'Ajoute {EXPR} à la fin de {NOM}', kind: 'PY_AJOUTER',
     demonstration: 'Ajoute "18" à la fin de notes.' },
   { forme: 'Insère {EXPR} à la position {EXPR} de {NOM}', kind: 'PY_INSERER',
@@ -227,6 +259,15 @@ const PROCHES: readonly { forme: string; code: string; message: string }[] = [
   { forme: 'Crée une boucle pour {NOM} de {EXPR} à {EXPR}', code: 'MISSING_EXCLUSIVE_BOUND',
     message: 'La borne de « range » est exclue, et « à » ne dit pas si elle l’est : écrivez '
       + '« jusqu’avant ». La formulation est lourde exprès.' },
+  { forme: 'Augmente {NOM}', code: 'MISSING_STEP',
+    message: 'De combien ? Le pas n’est pas écrit dans la phrase, et C-A n’en invente aucun. '
+      + '« Incrémente » et « Décrémente » disent un pas de 1 ; pour un autre pas, écrivez le calcul.' },
+  { forme: 'Diminue {NOM}', code: 'MISSING_STEP',
+    message: 'De combien ? Le pas n’est pas écrit dans la phrase, et C-A n’en invente aucun. '
+      + '« Incrémente » et « Décrémente » disent un pas de 1 ; pour un autre pas, écrivez le calcul.' },
+  { forme: 'Crée un dictionnaire nommé {NOM} avec la clé {TEXTE} valant', code: 'MISSING_EXPRESSION',
+    message: 'Il manque la valeur de la clé : une expression entre guillemets, ou « le texte "…" » '
+      + 'pour une valeur textuelle.' },
   { forme: 'Ajoute un motif par défaut', code: 'UNSUPPORTED_DEFAULT_CASE',
     message: 'Le motif « _ » de Python n’est pas un défaut atteint après une traversée : il accepte '
       + 'tout. Écrivez « Ajoute le motif qui accepte tout. ».' },
@@ -283,6 +324,8 @@ type Lues = {
   readonly booleens: boolean[];
   readonly conversions: ('int' | 'float' | 'str')[];
   readonly enumerations: NumericExpression[][];
+  readonly enumerationsTexte: string[][];
+  readonly types: string[];
 };
 
 const CONVERSIONS: Readonly<Record<string, 'int' | 'float' | 'str'>> = {
@@ -293,7 +336,7 @@ const CONVERSIONS: Readonly<Record<string, 'int' | 'float' | 'str'>> = {
  * invalide — produit un diagnostic, jamais une valeur réparée. */
 function lire(phrase: string, trouve: RegExpExecArray, types: string[]): Lues | DiagnosticPy {
   const lues: Lues = { noms: [], expressions: [], textes: [], entiers: [], booleens: [],
-    conversions: [], enumerations: [] };
+    conversions: [], enumerations: [], enumerationsTexte: [], types: [] };
   const budget = { count: 0 };
   const refus = (code: string, message: string, debut: number, fin: number): DiagnosticPy =>
     ({ code, category: 'understanding', severity: 'error', message, range: { start: debut, end: fin } });
@@ -356,6 +399,21 @@ function lire(phrase: string, trouve: RegExpExecArray, types: string[]): Lues | 
         lues.enumerations.push(valeurs);
         break;
       }
+      case 'TYPE': lues.types.push(valeur); break;
+      case 'TEXTES': {
+        const textes: string[] = [];
+        for (const trouvee of valeur.matchAll(/"[^"]*"/gu)) {
+          const lu = parseStringLiteral(phrase, debut + trouvee.index,
+            debut + trouvee.index + trouvee[0].length);
+          if (lu.status === 'rejected') return { ...lu.diagnostic };
+          textes.push(lu.literal.value);
+        }
+        if (textes.length === 0) {
+          return refus('MISSING_TEXT', 'Il manque les textes, entre guillemets.', debut, fin);
+        }
+        lues.enumerationsTexte.push(textes);
+        break;
+      }
       default: throw new Error('Placeholder non traité : ' + type);
     }
   }
@@ -385,6 +443,11 @@ function construire(kind: GenrePython, c: Lues): InstructionPython {
     if (valeur === undefined) throw new Error('Invariant interne : énumération attendue.');
     return valeur;
   };
+  const enumTextes = (index: number): string[] => {
+    const valeur = c.enumerationsTexte[index];
+    if (valeur === undefined) throw new Error('Invariant interne : énumération de textes attendue.');
+    return valeur;
+  };
 
   switch (kind) {
     case 'PY_LISTE_VIDE': return { kind, parameters: { name: nom(0) } };
@@ -408,6 +471,18 @@ function construire(kind: GenrePython, c: Lues): InstructionPython {
       return { kind, parameters: { premier: nom(0), second: nom(1), separateur: texte(0) } };
     case 'PY_AJOUTER': return { kind, parameters: { name: nom(0), valeur: expr(0) } };
     case 'PY_AJOUTER_TEXTE': return { kind, parameters: { name: nom(0), texte: texte(0) } };
+    case 'PY_INSERER_TEXTE':
+      return { kind, parameters: { name: nom(0), position: expr(0), texte: texte(0) } };
+    case 'PY_LISTE_TEXTES': case 'PY_ENSEMBLE_TEXTES': case 'PY_TUPLE_TEXTES':
+      return { kind, parameters: { name: nom(0), textes: enumTextes(0) } };
+    case 'PY_DICT_PAIRES_TEXTE':
+      return { kind, parameters: { name: nom(0), cle: texte(0), texte: texte(1) } };
+    case 'PY_DICT_ECRIRE_TEXTE':
+      return { kind, parameters: { name: nom(0), cle: texte(1), texte: texte(0) } };
+    case 'PY_INCREMENTER': case 'PY_DECREMENTER': return { kind, parameters: { name: nom(0) } };
+    case 'PY_FONCTION_DEFAUT':
+      return { kind, parameters: { name: nom(0), parametre: nom(1), type: c.types[0] ?? 'str',
+        texte: texte(0) } };
     case 'PY_INSERER':
       return { kind, parameters: { name: nom(0), position: expr(1), valeur: expr(0) } };
     case 'PY_RETIRER': return { kind, parameters: { name: nom(0), position: expr(0) } };

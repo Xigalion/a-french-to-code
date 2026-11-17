@@ -12,16 +12,16 @@ Généré par `node scripts/mesurer-reformulations.mjs`. Ne pas éditer à la ma
 
 | Classe | Nombre |
 |---|---|
-| reconnues au sens exact attendu | **50** |
+| reconnues au sens exact attendu | **51** |
 | **différences de sens** | **0** |
 | claires et complètes, non reconnues | **0** |
 | ambiguïtés correctement détectées | **1** |
 | ambiguïtés non détectées (refus d’un autre genre) | **0** |
-| refus corrects | **10** |
+| refus corrects | **9** |
 | **acceptées à tort** | **0** |
 | total | 61 |
 
-**Taux de reconnaissance, phrases dans le périmètre : 50 / 50 = 100.0 %.**
+**Taux de reconnaissance, phrases dans le périmètre : 51 / 51 = 100.0 %.**
 
 Erreurs de sens : **0**. Acceptations à tort : **0**. Ces deux chiffres doivent rester à zéro ;
 un taux obtenu en les laissant monter ne vaudrait rien.
@@ -36,16 +36,16 @@ un taux obtenu en les laissant monter ne vaudrait rien.
 
 | Classe | Nombre |
 |---|---|
-| reconnues au sens exact attendu | **56** |
+| reconnues au sens exact attendu | **58** |
 | **différences de sens** | **0** |
 | claires et complètes, non reconnues | **3** |
 | ambiguïtés correctement détectées | **2** |
 | ambiguïtés non détectées (refus d’un autre genre) | **0** |
-| refus corrects | **16** |
+| refus corrects | **14** |
 | **acceptées à tort** | **0** |
 | total | 77 |
 
-**Taux de reconnaissance, phrases dans le périmètre : 56 / 59 = 94.9 %.**
+**Taux de reconnaissance, phrases dans le périmètre : 58 / 61 = 95.1 %.**
 
 Erreurs de sens : **0**. Acceptations à tort : **0**. Ces deux chiffres doivent rester à zéro ;
 un taux obtenu en les laissant monter ne vaudrait rien.

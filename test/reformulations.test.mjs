@@ -94,15 +94,32 @@ test('S5 : aucune reformulation n’introduit un type ni une valeur absents', ()
     assert.ok(!TYPES.test(entree.canonique),
       'reformulation qui invente un type : ' + entree.forme + ' → ' + entree.canonique);
   }
-  // Et aucune ne fabrique un nombre qui n'est pas une capture.
+  // Et aucune ne fabrique un nombre qui n'est pas une capture — sauf celles
+  // qui DÉCLARENT le mot qui le porte. L'exemption n'est pas accordée : le
+  // mot doit figurer dans la forme, et un littéral non déclaré échoue.
   for (const entree of REFORMULATIONS) {
     const litteraux = entree.canonique.replace(/\$[1-9]/gu, '').match(/\b\d+\b/gu) ?? [];
-    assert.deepEqual(litteraux, [], 'reformulation qui invente un nombre : ' + entree.forme);
+    if (litteraux.length === 0) continue;
+    assert.ok(entree.litteralPorteParLeMot !== undefined,
+      'reformulation qui invente un nombre : ' + entree.forme);
+    assert.ok(entree.forme.includes(entree.litteralPorteParLeMot),
+      'le mot déclaré ne figure pas dans la forme : ' + entree.forme);
+    // Un seul littéral, et il vaut 1 : « incrémenter » ne dit pas 2.
+    assert.deepEqual(litteraux, ['1'], 'littéral inattendu : ' + entree.forme);
   }
+  // Exactement quatre reformulations déclarent l'exemption, et ce sont les
+  // quatre que le fondateur a nommées.
+  const declarees = REFORMULATIONS.filter(entree => entree.litteralPorteParLeMot !== undefined);
+  assert.equal(declarees.length, 4);
+  assert.deepEqual([...new Set(declarees.map(entree => entree.litteralPorteParLeMot))].sort(),
+    ['Décrémente', 'Décrémenter', 'Incrémente', 'Incrémenter']);
 });
 
 test('S5 : les formulations dont l’information manque restent refusées', () => {
-  for (const phrase of ['Incrémente compteur.', 'Incrémenter compteur.', 'Décrémente compteur.',
+  // « Incrémente » et « Décrémente » ont QUITTÉ cette liste le 17 novembre
+  // 2026, par décision du fondateur : le mot porte le pas. « Augmente » et
+  // « Diminue » y entrent à leur place — ceux-là ne disent aucun pas.
+  for (const phrase of ['Augmente compteur.', 'Diminue compteur.',
     'Double total.', 'Déclarer un réel nommé moyenne.', 'Crée un entier nommé age.',
     'Affiche.', 'Crée une boucle.']) {
     const v = normaliser(phrase);
@@ -232,9 +249,13 @@ test('S5 : le corpus de validation reste gelé et annonce sa limite', () => {
   assert.ok(validation.methode.some(ligne => ligne.includes('PAS du français spontané')));
   assert.ok(validation.methode.some(ligne => ligne.includes('ENGAGEMENT')));
   // Une seule correction y est admise, et elle porte sa raison.
+  // Trois corrections, et chacune porte sa raison dans le fichier : une
+  // erreur de ma part sur « x vaut 5. », et deux changements de PÉRIMÈTRE
+  // décidés par le fondateur le 17 novembre 2026.
   const corrigees = validation.entrees.filter(entree => entree.correction !== undefined);
-  assert.equal(corrigees.length, 1);
+  assert.equal(corrigees.length, 3);
   assert.match(corrigees[0].correction, /inventerait/u);
+  for (const entree of corrigees.slice(1)) assert.match(entree.correction, /DECISION DU FONDATEUR/u);
 });
 
 test('S5 : les deux corpus ne partagent aucune phrase', () => {
@@ -242,4 +263,19 @@ test('S5 : les deux corpus ne partagent aucune phrase', () => {
   const dev = new Set(developpement.entrees.map(entree => entree.phrase));
   const communes = validation.entrees.filter(entree => dev.has(entree.phrase)).map(entree => entree.phrase);
   assert.deepEqual(communes, [], 'phrases communes aux deux corpus');
+});
+
+test('S5 : « Incrémente » et « Décrémente » sont acceptées, « Augmente » non', () => {
+  // Décision du fondateur du 17 novembre 2026. La frontière n'a pas disparu :
+  // elle s'est déplacée d'un cran, et elle est toujours là.
+  assert.equal(code('Incrémente compteur.'), 'compteur = (compteur + 1);');
+  assert.equal(code('Incrémenter compteur.'), 'compteur = (compteur + 1);');
+  assert.equal(code('Décrémente compteur.'), 'compteur = (compteur - 1);');
+  assert.equal(code('Décrémenter compteur.'), 'compteur = (compteur - 1);');
+  // Le pas n'est pas écrit : refus, et aucun 1 n'apparaît dans le message.
+  for (const phrase of ['Augmente compteur.', 'Diminue compteur.']) {
+    const v = normaliser(phrase);
+    assert.ok(!accepte(v), phrase);
+    assert.ok(!/ \+ 1| 1\b/u.test(v.message ?? ''), phrase + ' : ' + v.message);
+  }
 });

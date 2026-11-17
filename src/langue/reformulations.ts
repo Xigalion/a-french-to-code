@@ -63,6 +63,17 @@ export type Reformulation = {
   /** Une phrase qui la démontre. Un test exige qu'elle produise une lecture :
    * c'est la garde du lot 30 appliquée à la table. */
   readonly demonstration: string;
+  /** Le MOT de la phrase libre qui porte un littéral absent des captures.
+   *
+   * Par défaut, une reformulation n'a pas le droit d'introduire un nombre qui
+   * ne vient pas d'une capture : ce serait deviner. L'exception est le cas où
+   * **le mot lui-même dit la valeur** — « incrémenter » dit un pas de 1 comme
+   * « doubler » dirait un facteur 2. Elle est alors **déclarée ici**, le mot
+   * est nommé, et un test vérifie qu'il figure réellement dans la forme.
+   *
+   * Décision du fondateur du 17 novembre 2026, qui accepte « Incrémente » et
+   * « Décrémente » et laisse « Augmente » incomplet. */
+  readonly litteralPorteParLeMot?: string;
 };
 
 export const REFORMULATIONS: readonly Reformulation[] = [
@@ -128,6 +139,26 @@ export const REFORMULATIONS: readonly Reformulation[] = [
   { forme: 'Retire {ENTIER} de {NOM}', canonique: 'Affecte à $2 le résultat de "$2 - $1"',
     genre: 'composition', raison: 'la symétrique de « Ajoute », mêmes garanties',
     demonstration: 'Retire 1 de compteur.' },
+  // « Incrémente » et « Décrémente » DISENT un pas de 1 : le mot le porte.
+  // Acceptées par le fondateur le 17 novembre 2026 ; « Augmente compteur. »
+  // reste refusée, parce que celui-là ne dit aucun pas.
+  //
+  // En C17, la reformulation passe par l'affectation d'expression : le
+  // catalogue n'a ni « ++ » ni « += ». En Python, c'est une intention NATIVE
+  // qui écrit « += », la forme du langage — et les deux ne sont pas
+  // équivalentes sur un objet mutable.
+  { forme: 'Incrémente {NOM}', canonique: 'Affecte à $1 le résultat de "$1 + 1"',
+    genre: 'composition', raison: 'acceptée par le fondateur le 17 novembre 2026 : le mot porte le pas',
+    demonstration: 'Incrémente compteur.', litteralPorteParLeMot: 'Incrémente' },
+  { forme: 'Incrémenter {NOM}', canonique: 'Affecte à $1 le résultat de "$1 + 1"',
+    genre: 'composition', raison: 'la même, à l’infinitif',
+    demonstration: 'Incrémenter compteur.', litteralPorteParLeMot: 'Incrémenter' },
+  { forme: 'Décrémente {NOM}', canonique: 'Affecte à $1 le résultat de "$1 - 1"',
+    genre: 'composition', raison: 'la symétrique, acceptée en même temps',
+    demonstration: 'Décrémente compteur.', litteralPorteParLeMot: 'Décrémente' },
+  { forme: 'Décrémenter {NOM}', canonique: 'Affecte à $1 le résultat de "$1 - 1"',
+    genre: 'composition', raison: 'la même, à l’infinitif',
+    demonstration: 'Décrémenter compteur.', litteralPorteParLeMot: 'Décrémenter' },
   { forme: 'Retirer {ENTIER} de {NOM}', canonique: 'Affecte à $2 le résultat de "$2 - $1"',
     genre: 'composition', raison: 'la symétrique, à l’infinitif',
     demonstration: 'Retirer 1 de compteur.' },

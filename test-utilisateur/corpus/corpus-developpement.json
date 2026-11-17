@@ -32,7 +32,8 @@
     { "phrase": "Ajoute 5 à total.", "perimetre": true, "attendu": "accepte", "code": "total = (total + 5);" },
     { "phrase": "Retire 3 de total.", "perimetre": true, "attendu": "accepte", "code": "total = (total - 3);" },
     { "phrase": "Double total.", "perimetre": true, "attendu": "refuse", "raison": "le facteur 2 n'est pas écrit dans la phrase" },
-    { "phrase": "Incrémente compteur.", "perimetre": true, "attendu": "refuse", "raison": "le pas n'est pas écrit dans la phrase" },
+    { "phrase": "Incrémente compteur.", "perimetre": true, "attendu": "accepte", "code": "compteur = (compteur + 1);",
+      "correction": "DECISION DU FONDATEUR du 17 novembre 2026 : « Incremente » et « Decremente » sont acceptees, « Augmente » reste incomplete. Ce n'est pas une erreur du corpus : c'est un changement de perimetre, et le mot porte le pas de 1 comme « doubler » porterait un facteur 2." },
 
     { "phrase": "Montre total.", "perimetre": true, "attendu": "ambigu", "raison": "%d ou %c : deux lectures" },
     { "phrase": "Écris total à l'écran.", "perimetre": true, "attendu": "accepte", "code": "printf(\"%d\", total);" },

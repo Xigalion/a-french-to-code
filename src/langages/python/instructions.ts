@@ -47,6 +47,27 @@ export type InstructionPython =
    * la fin de noms. » lisait `cleo` comme un NOM, et le programme echouait a
    * l'execution. Une phrase separee, et le texte y est un texte. */
   | { kind: 'PY_AJOUTER_TEXTE'; parameters: { name: string; texte: string } }
+  /** Incrementation et decrementation. En Python, la forme NATIVE est
+   * l'affectation augmentee « += », qui modifie l'objet SUR PLACE quand il est
+   * mutable — ce que « x = x + 1 » ne fait pas. Les deux semantiques ne se
+   * confondent pas, et c'est pourquoi Python a sa propre intention la ou le C
+   * passe par une reformulation vers l'affectation d'expression. */
+  | { kind: 'PY_INCREMENTER'; parameters: { name: string } }
+  | { kind: 'PY_DECREMENTER'; parameters: { name: string } }
+  /** Les variantes TEXTUELLES. Les guillemets delimitent une EXPRESSION
+   * partout dans le catalogue : « "15" » vaut donc l'entier 15, et il n'y a
+   * aucun moyen de deviner qu'on voulait la chaine « "15" ». Le mot « texte »
+   * le dit, et c'est la seule facon de le dire sans ambiguite. */
+  | { kind: 'PY_LISTE_TEXTES'; parameters: { name: string; textes: string[] } }
+  | { kind: 'PY_ENSEMBLE_TEXTES'; parameters: { name: string; textes: string[] } }
+  | { kind: 'PY_TUPLE_TEXTES'; parameters: { name: string; textes: string[] } }
+  | { kind: 'PY_INSERER_TEXTE'; parameters: { name: string; position: NumericExpression; texte: string } }
+  | { kind: 'PY_DICT_PAIRES_TEXTE'; parameters: { name: string; cle: string; texte: string } }
+  | { kind: 'PY_DICT_ECRIRE_TEXTE'; parameters: { name: string; cle: string; texte: string } }
+  /** Une fonction a un parametre dont la valeur par defaut est ECRITE. C'est
+   * le seul endroit du projet ou le mot « defaut » apparait, et il ne
+   * contredit pas la regle 3 : la valeur est dans la phrase. */
+  | { kind: 'PY_FONCTION_DEFAUT'; parameters: { name: string; parametre: string; type: string; texte: string } }
   | { kind: 'PY_INSERER'; parameters: { name: string; position: NumericExpression; valeur: NumericExpression } }
   | { kind: 'PY_RETIRER'; parameters: { name: string; position: NumericExpression } }
   | { kind: 'PY_TRANCHE'; parameters: { name: string; source: string; debut: NumericExpression; fin: NumericExpression } }
@@ -131,6 +152,15 @@ export const EXEMPLES_NATIFS: readonly string[] = [
   // séquences
   'Ajoute "18" à la fin de notes.',
   'Ajoute le texte "cleo" à la fin de noms.',
+  'Incrémente compteur.',
+  'Décrémente compteur.',
+  'Crée une liste nommée noms avec les textes "ada" et "bob".',
+  'Crée un ensemble nommé vus avec les textes "ada" et "bob".',
+  'Crée un tuple nommé paire avec les textes "ada" et "bob".',
+  'Insère le texte "cleo" à la position "0" de noms.',
+  'Crée un dictionnaire nommé index avec la clé "ada" valant le texte "quinze".',
+  'Affecte le texte "absente" à la clé "zoe" de index.',
+  'Crée une fonction nommée salue qui ne retourne rien et prend un str nommé nom valant le texte "Ada".',
   'Insère "12" à la position "0" de notes.',
   'Retire l’élément à la position "0" de notes.',
   'Affecte à debut la tranche de notes de "0" jusqu’avant "3".',

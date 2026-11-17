@@ -40,6 +40,15 @@ const INSTANTANE = [
   ["Affiche a et b séparés par le texte \" \".", "print(a, b, sep=\" \", end=\"\")\n"],
   ["Ajoute \"18\" à la fin de notes.", "notes.append(18)\n"],
   ["Ajoute le texte \"cleo\" à la fin de noms.", "noms.append(\"cleo\")\n"],
+  ["Incrémente compteur.", "compteur += 1\n"],
+  ["Décrémente compteur.", "compteur -= 1\n"],
+  ["Crée une liste nommée noms avec les textes \"ada\" et \"bob\".", "noms: list = [\"ada\", \"bob\"]\n"],
+  ["Crée un ensemble nommé vus avec les textes \"ada\" et \"bob\".", "vus: set = {\"ada\", \"bob\"}\n"],
+  ["Crée un tuple nommé paire avec les textes \"ada\" et \"bob\".", "paire: tuple = (\"ada\", \"bob\")\n"],
+  ["Insère le texte \"cleo\" à la position \"0\" de noms.", "noms.insert(0, \"cleo\")\n"],
+  ["Crée un dictionnaire nommé index avec la clé \"ada\" valant le texte \"quinze\".", "index: dict = {\"ada\": \"quinze\"}\n"],
+  ["Affecte le texte \"absente\" à la clé \"zoe\" de index.", "index[\"zoe\"] = \"absente\"\n"],
+  ["Crée une fonction nommée salue qui ne retourne rien et prend un str nommé nom valant le texte \"Ada\".", "def salue(nom: str = \"Ada\") -> None:\n"],
   ["Insère \"12\" à la position \"0\" de notes.", "notes.insert(0, 12)\n"],
   ["Retire l’élément à la position \"0\" de notes.", "del notes[0]\n"],
   ["Affecte à debut la tranche de notes de \"0\" jusqu’avant \"3\".", "debut = notes[0:3]\n"],
@@ -86,11 +95,11 @@ for (const [phrase, attendu] of INSTANTANE) {
   });
 }
 
-test('P5 : l’instantané couvre les 54 intentions natives', () => {
+test('P5 : l’instantané couvre les 63 intentions natives', () => {
   const genres = new Set();
   for (const [phrase] of INSTANTANE) genres.add(natif(phrase).kind);
   assert.equal(genres.size, NATIVES_PYTHON.size);
-  assert.equal(INSTANTANE.length, 57, '57 formulations pour 54 intentions');
+  assert.equal(INSTANTANE.length, 66, '66 formulations pour 63 intentions');
   // La 54e intention, PY_AJOUTER_TEXTE, a ete trouvee par l'exercice du lot
   // P5 : « Ajoute "cleo" a la fin de noms. » lisait cleo comme un NOM, et
   // le programme echouait a l'execution avec NameError.
