@@ -97,7 +97,7 @@
       "total": 1,
       "unite": "verification",
       "source": "git diff main..HEAD -- src/ : non vide, et c'est voulu depuis P0",
-      "note": "main reste la V1 publique a l'etiquette v0.4.0. La branche porte P0 a P6, S4 et S5, et n'est pas fusionnee. Le paquet 0.5.0 est fabrique et NON publie."
+      "note": "main reste la V1 publique a l'etiquette v0.4.0, sommet 955205d. La branche porte 21 commits, la fusion serait une AVANCE RAPIDE sans conflit, et elle n'est pas faite : elle attend l'autorisation finale."
     },
     {
       "nom": "Phase 2 — usage humain reel, Python",
@@ -109,11 +109,19 @@
     },
     {
       "nom": "Phase 2 — version publique 0.5.0 preparee",
-      "fait": 5,
+      "fait": 6,
       "total": 6,
       "unite": "livrables",
-      "source": "CHANGELOG.md, README.md, docs/ETAT_DU_PROJET.md, docs/LIMITES_CONNUES.md, dist/c-a-0.5.0.vsix",
-      "note": "Version, journal, README, etat public, limites connues et paquet .vsix (51 entrees, 163 445 octets) : faits. Reste la suite hote, bloquee par le mutex de mise a jour de VS Code. RIEN n'est publie, et main n'est pas fusionnee."
+      "source": "CHANGELOG.md, README.md, docs/ETAT_DU_PROJET.md, docs/LIMITES_CONNUES.md, docs/PUBLICATION_0_5_0.md, docs/NOTES_PUBLICATION_0_5_0.md, dist/c-a-0.5.0.vsix",
+      "note": "Version, journal, README, etat public, limites, notes de publication et paquet : faits. Le .vsix est reproductible AU BIT depuis un clone neuf, sha256 a2e830e1. La suite hote passe a 114/114 sur vscode 1.96.4. RIEN n'est fusionne ni publie."
+    },
+    {
+      "nom": "Phase 2 — tests hote sur la version INSTALLEE",
+      "fait": 0,
+      "total": 1,
+      "unite": "execution",
+      "source": "test-utilisateur/journal/hote.txt, passage 15",
+      "note": "Les 114 scenarios passent sur une archive vscode 1.96.4, la version MINIMALE du manifeste. La 1.138.0 installee refuse de demarrer un hote de test : deux processus CodeSetup orphelins, PID 70352 et 71652, detiennent le mutex vscode-updating depuis 15:21:09. Aucun processus n'a ete arrete."
     }
   ]
 }
