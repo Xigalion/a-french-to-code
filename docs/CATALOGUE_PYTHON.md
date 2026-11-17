@@ -15,9 +15,9 @@ Engendré par `node scripts/catalogue-python.mjs`. **Ne pas éditer à la main.*
 
 Le symbole ⏎ marque une fin de ligne dans le code produit.
 
-## 0. Les 14 intentions NATIVES de Python
+## 0. Les 54 intentions NATIVES de Python
 
-16 formulations pour 14 intentions : la conversion en
+57 formulations pour 54 intentions : la conversion en
 compte trois — entier, réel, texte — et c’est une seule intention.
 
 Elles n’existent dans aucun catalogue C, et c’est le catalogue pédagogique
@@ -28,23 +28,64 @@ partagé** : un test le vérifie, sinon elles écriraient aussi du C.
 |---|---|---|
 | `Crée une liste vide nommée notes.` | `notes: list = []` | PY_LIST_GROWS, PY_ANNOTATION_NOT_CHECKED |
 | `Crée une liste nommée notes avec les valeurs "12", "15" et "9".` | `notes: list = [12, 15, 9]` | PY_LIST_IS_MUTABLE, PY_LIST_GROWS, PY_ANNOTATION_NOT_CHECKED |
-| `Ajoute "18" à la fin de notes.` | `notes.append(18)` | PY_LIST_GROWS, PY_ITERATING_WHILE_MODIFYING |
-| `Affecte à nombre le nombre d’éléments de notes.` | `nombre = len(notes)` | PY_LEN_IS_NOT_SIZEOF |
-| `Crée une boucle pour i de "0" jusqu’avant "10".` | `for i in range(0, 10):` | PY_BLOCK_NEEDS_A_BODY, PY_RANGE_EXCLUDES_THE_END, PY_LOOP_VARIABLE_SURVIVES |
-| `Crée une boucle pour chaque note de notes.` | `for note in notes:` | PY_BLOCK_NEEDS_A_BODY, PY_LOOP_VARIABLE_SURVIVES, PY_ITERATING_WHILE_MODIFYING |
+| `Crée une chaîne nommée nom avec le texte "Ada".` | `nom: str = "Ada"` | PY_ANNOTATION_NOT_CHECKED |
+| `Crée un booléen nommé actif de valeur vrai.` | `actif: bool = True` | PY_BOOL_IS_AN_INT, PY_ANNOTATION_NOT_CHECKED |
+| `Crée un nom appelé resultat sans valeur.` | `resultat = None` | PY_NONE_IS_A_VALUE |
+| `Crée une valeur fixe par convention nommée TAILLE de valeur 10.` | `TAILLE = 10` | PY_CONSTANT_IS_ONLY_A_CONVENTION |
+| `Crée un nom appelé copie qui désigne la même liste que notes.` | `copie = notes` | PY_ALIASING_IS_NOT_A_COPY, PY_LIST_IS_MUTABLE |
+| `Crée un tuple nommé point avec les valeurs "1" et "2".` | `point: tuple = (1, 2)` | PY_TUPLE_IS_IMMUTABLE, PY_ANNOTATION_NOT_CHECKED |
+| `Crée le point d’entrée principal.` | `if __name__ == "__main__":` | PY_BLOCK_NEEDS_A_BODY, PY_MAIN_IS_A_CONVENTION |
 | `Affecte à q le quotient entier de "total" par "nombre".` | `q = (total // nombre)` | PY_FLOOR_DIVISION_ROUNDS_DOWN |
 | `Affecte à q le quotient réel de "total" par "nombre".` | `q = (total / nombre)` | PY_REAL_DIVISION_IS_ALWAYS_REAL |
 | `Affecte à r le reste entier de "total" par "nombre".` | `r = (total % nombre)` | PY_MODULO_FOLLOWS_THE_DIVISOR_SIGN, PY_FLOOR_DIVISION_ROUNDS_DOWN |
-| `Crée une chaîne nommée nom avec le texte "Ada".` | `nom: str = "Ada"` | PY_ANNOTATION_NOT_CHECKED |
-| `Crée un booléen nommé actif de valeur vrai.` | `actif: bool = True` | PY_BOOL_IS_AN_INT, PY_ANNOTATION_NOT_CHECKED |
+| `Affecte à p le résultat de "a" élevé à la puissance "b".` | `p = (a ** b)` | PY_POWER_IS_EXACT_ON_INTEGERS |
+| `Affecte à nombre le nombre d’éléments de notes.` | `nombre = len(notes)` | PY_LEN_IS_NOT_SIZEOF |
 | `Affecte à n l’entier obtenu de texte.` | `n = int(texte)` | PY_CONVERSION_CAN_RAISE |
 | `Affecte à x le réel obtenu de texte.` | `x = float(texte)` | PY_CONVERSION_CAN_RAISE |
 | `Affecte à s le texte obtenu de n.` | `s = str(n)` | PY_CONVERSION_CAN_RAISE |
 | `Lis une saisie dans reponse.` | `reponse = input()` | PY_INPUT_IS_ALWAYS_A_STRING |
-| `Crée le point d’entrée principal.` | `if __name__ == "__main__":` | PY_BLOCK_NEEDS_A_BODY, PY_MAIN_IS_A_CONVENTION |
+| `Affiche le type de valeur.` | `print(type(valeur), end="")` | PY_TYPE_IS_NOT_A_CHECK, PY_NO_SEPARATOR_ADDED |
+| `Affiche a et b séparés par le texte " ".` | `print(a, b, sep=" ", end="")` | PY_SEPARATOR_IS_EXPLICIT, PY_NO_SEPARATOR_ADDED |
+| `Ajoute "18" à la fin de notes.` | `notes.append(18)` | PY_LIST_GROWS, PY_ITERATING_WHILE_MODIFYING |
+| `Ajoute le texte "cleo" à la fin de noms.` | `noms.append("cleo")` | PY_LIST_GROWS, PY_STRING_IS_IMMUTABLE |
+| `Insère "12" à la position "0" de notes.` | `notes.insert(0, 12)` | PY_LIST_IS_MUTABLE, PY_DEL_SHIFTS_THE_REST |
+| `Retire l’élément à la position "0" de notes.` | `del notes[0]` | PY_DEL_SHIFTS_THE_REST, PY_LIST_IS_MUTABLE |
+| `Affecte à debut la tranche de notes de "0" jusqu’avant "3".` | `debut = notes[0:3]` | PY_SLICE_COPIES |
+| `Affiche le dernier élément de notes.` | `print(notes[-1], end="")` | PY_INDEX_CAN_BE_NEGATIVE, PY_NO_SEPARATOR_ADDED |
+| `Affecte à x et y les valeurs de point.` | `x, y = point` | PY_MULTIPLE_RETURN_IS_A_TUPLE |
+| `Crée un dictionnaire vide nommé index.` | `index: dict = {}` | PY_EMPTY_BRACES_IS_A_DICT, PY_ANNOTATION_NOT_CHECKED |
+| `Crée un dictionnaire nommé index avec la clé "ada" valant "15".` | `index: dict = {"ada": 15}` | PY_EMPTY_BRACES_IS_A_DICT, PY_ANNOTATION_NOT_CHECKED |
+| `Affecte à n la valeur de la clé "ada" de index.` | `n = index["ada"]` | PY_MISSING_KEY_RAISES |
+| `Affecte "15" à la clé "ada" de index.` | `index["ada"] = 15` | PY_MISSING_KEY_RAISES |
+| `Crée une boucle pour la clé nom et la valeur note de index.` | `for nom, note in index.items():` | PY_BLOCK_NEEDS_A_BODY, PY_LOOP_VARIABLE_SURVIVES |
+| `Crée un ensemble nommé vus avec les valeurs "1" et "2".` | `vus: set = {1, 2}` | PY_SET_REMOVES_DUPLICATES, PY_EMPTY_BRACES_IS_A_DICT |
+| `Affecte à phrase le texte de debut suivi de fin.` | `phrase = (debut + fin)` | PY_STRING_IS_IMMUTABLE |
+| `Affecte à mots les morceaux de phrase séparés par le texte " ".` | `mots = phrase.split(" ")` | PY_STRING_IS_IMMUTABLE |
+| `Affecte à phrase les éléments de mots joints par le texte " ".` | `phrase = " ".join(mots)` | PY_JOIN_IS_ON_THE_SEPARATOR, PY_STRING_IS_IMMUTABLE |
+| `Affecte à cri le texte de phrase en majuscules.` | `cri = phrase.upper()` | PY_CASE_IS_NOT_REVERSIBLE, PY_STRING_IS_IMMUTABLE |
+| `Affecte à propre le texte de phrase sans les espaces des extrémités.` | `propre = phrase.strip()` | PY_STRING_IS_IMMUTABLE |
+| `Affecte à ligne le texte "Bonjour {nom}" avec le champ nom valant nom.` | `ligne = f"Bonjour {nom}"` | PY_FSTRING_IS_EVALUATED_NOW |
+| `Crée un bloc si "x" appartient à notes.` | `if x in notes:` | PY_BLOCK_NEEDS_A_BODY, PY_MEMBERSHIP_IS_LINEAR |
+| `Crée un bloc si resultat est sans valeur.` | `if resultat is None:` | PY_BLOCK_NEEDS_A_BODY, PY_IS_IS_IDENTITY, PY_NONE_IS_A_VALUE |
+| `Crée un filtrage sur "jour".` | `match jour:` | PY_BLOCK_NEEDS_A_BODY, PY_MATCH_DOES_NOT_FALL_THROUGH |
+| `Ajoute un motif pour la valeur 5.` | `case 5:` | PY_BLOCK_NEEDS_A_BODY, PY_MATCH_DOES_NOT_FALL_THROUGH |
+| `Ajoute le motif qui accepte tout.` | `case _:` | PY_BLOCK_NEEDS_A_BODY, PY_MATCH_DOES_NOT_FALL_THROUGH |
+| `Crée une boucle pour chaque note de notes.` | `for note in notes:` | PY_BLOCK_NEEDS_A_BODY, PY_LOOP_VARIABLE_SURVIVES, PY_ITERATING_WHILE_MODIFYING |
+| `Crée une boucle pour l’indice i et la valeur note de notes.` | `for i, note in enumerate(notes):` | PY_BLOCK_NEEDS_A_BODY, PY_LOOP_VARIABLE_SURVIVES |
+| `Crée une boucle pour i de "0" jusqu’avant "10".` | `for i in range(0, 10):` | PY_BLOCK_NEEDS_A_BODY, PY_RANGE_EXCLUDES_THE_END, PY_LOOP_VARIABLE_SURVIVES |
+| `Appelle somme avec le paramètre a valant "1" et le paramètre b valant "2".` | `somme(a=1, b=2)` | PY_ANNOTATION_NOT_CHECKED |
+| `Retourne les résultats de "a" et "b".` | `return a, b` | PY_MULTIPLE_RETURN_IS_A_TUPLE |
+| `Crée un bloc avec le fichier "notes.txt" ouvert en lecture nommé f.` | `with open("notes.txt", "r") as f:` | PY_BLOCK_NEEDS_A_BODY, PY_WITH_CLOSES_FOR_YOU |
+| `Crée un bloc avec le fichier "notes.txt" ouvert en écriture nommé f.` | `with open("notes.txt", "w") as f:` | PY_BLOCK_NEEDS_A_BODY, PY_WITH_CLOSES_FOR_YOU |
+| `Crée une boucle pour chaque ligne ligne de f.` | `for ligne in f:` | PY_BLOCK_NEEDS_A_BODY, PY_LOOP_VARIABLE_SURVIVES |
+| `Crée un bloc à essayer.` | `try:` | PY_BLOCK_NEEDS_A_BODY |
+| `Ajoute une branche en cas d’erreur de type ValueError.` | `except ValueError:` | PY_BLOCK_NEEDS_A_BODY, PY_EXCEPT_NEEDS_A_TYPE |
+| `Lève une erreur de type ValueError avec le texte "note invalide".` | `raise ValueError("note invalide")` | PY_RAISE_STOPS_THE_FUNCTION |
+| `Importe le module math.` | `import math` | PY_IMPORT_RUNS_THE_MODULE |
+| `Importe sqrt du module math.` | `from math import sqrt` | PY_IMPORT_RUNS_THE_MODULE |
 
-Intentions natives livrées : **14**, dont **3** ouvrent un bloc.
-Sur les **55** proposées : il en reste **41** à écrire,
+Intentions natives livrées : **54**, dont **14** ouvrent un bloc.
+Sur les **55** proposées : il en reste **1** à écrire,
 et elles sont détaillées, formulation par formulation, dans
 `docs/phase2/CATALOGUE_NATIF_PYTHON_PROPOSE.md`.
 
@@ -184,8 +225,8 @@ répond alors `CONSTRUCTION_NON_PORTEE`.
 - intentions portées par le lot P3 : **32**, dont **30** avec une phrase d’exemple rendable
 - intentions non portées : **52**
 - raisons écrites au registre : **52**
-- intentions natives livrées : **14**
-- total des intentions que Python sait écrire : **46**
+- intentions natives livrées : **54**
+- total des intentions que Python sait écrire : **86**
 
 La partition est vérifiée par `test/python.test.mjs` : chacune des 84
 intentions est soit rendue, soit refusée avec une raison, jamais les deux,

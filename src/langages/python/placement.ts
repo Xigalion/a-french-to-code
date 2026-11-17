@@ -64,7 +64,11 @@ const PAS_DEFAUT = 4;
 const EN_TETES = new Set(['IF', 'ELSE_IF', 'ELSE', 'WHILE', 'FUNC_DEF',
   // Lot P4 : les en-tetes du catalogue NATIF. La liste est explicite ici
   // plutot qu'importee, pour que le placement ne depende pas du rendu.
-  'PY_POUR_INTERVALLE', 'PY_POUR_CHAQUE', 'PY_SI_PRINCIPAL']);
+  'PY_POUR_INTERVALLE', 'PY_POUR_CHAQUE', 'PY_SI_PRINCIPAL',
+  // Lot P5 : les en-tetes du catalogue natif elargi.
+  'PY_POUR_INDICE_ET_VALEUR', 'PY_DICT_PARCOURIR', 'PY_LIRE_LIGNES',
+  'PY_APPARTIENT', 'PY_EST_NONE', 'PY_MATCH', 'PY_CAS', 'PY_CAS_DEFAUT',
+  'PY_AVEC_FICHIER', 'PY_ESSAYER', 'PY_SAUF']);
 /** Les genres qui continuent une chaîne conditionnelle. */
 const BRANCHES = new Set(['ELSE_IF', 'ELSE']);
 /** Les genres qui exigent une boucle englobante. */

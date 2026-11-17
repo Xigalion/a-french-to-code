@@ -64,20 +64,36 @@ test('P4 : aucune formulation native n’est acceptée par le catalogue partagé
   }
 });
 
-test('P4 : les intentions déclarées sont exactement celles qui sont rendues', () => {
-  const rendues = new Set(EXACTS.map(([, , kind]) => kind));
+test('P5 : les intentions déclarées sont exactement celles qui sont rendues', () => {
+  // Adapte au lot P5 : les formulations EXACTS ci-dessus couvrent le lot P4 ;
+  // ce sont les EXEMPLES PUBLIÉS qui font autorité pour les cinquante-trois,
+  // et un test séparé vérifie que chacun est reconnu.
+  const rendues = new Set();
+  for (const phrase of EXEMPLES_NATIFS) {
+    const resultat = natif(phrase);
+    if (resultat !== undefined && resultat.status === 'rendu') rendues.add(resultat.kind);
+  }
   const mortes = [...NATIVES_PYTHON].filter(kind => !rendues.has(kind));
-  assert.deepEqual(mortes, [], 'intentions déclarées qu’aucun test n’atteint');
+  assert.deepEqual(mortes, [], 'intentions déclarées qu’aucun exemple n’atteint');
   const inconnues = [...rendues].filter(kind => !NATIVES_PYTHON.has(kind));
   assert.deepEqual(inconnues, [], 'intentions rendues et non déclarées');
-  assert.equal(NATIVES_PYTHON.size, 14);
+  assert.equal(NATIVES_PYTHON.size, 54);
+  // Les dix-huit formulations du lot P4 restent toutes rendues : la refonte
+  // declarative du lot P5 ne doit avoir rien perdu.
+  for (const [, , kind] of EXACTS) assert.ok(NATIVES_PYTHON.has(kind), kind);
 });
 
-test('P4 : les en-têtes natifs sont exactement ceux qui finissent par « : »', () => {
-  for (const [phrase, attendu, kind] of EXACTS) {
-    assert.equal(attendu.trimEnd().endsWith(':'), EN_TETES_NATIFS.has(kind), phrase);
+test('P5 : les en-têtes natifs sont exactement ceux qui finissent par « : »', () => {
+  // La règle vaut pour TOUS les exemples publiés, pas seulement ceux du
+  // lot P4 : un en-tête déclaré et non terminé par « : » poserait un bloc que
+  // Python ne reconnaîtrait pas.
+  for (const phrase of EXEMPLES_NATIFS) {
+    const resultat = natif(phrase);
+    if (resultat === undefined || resultat.status !== 'rendu') continue;
+    assert.equal(resultat.code.trimEnd().endsWith(':'), EN_TETES_NATIFS.has(resultat.kind),
+      phrase + ' → ' + resultat.kind);
   }
-  assert.equal(EN_TETES_NATIFS.size, 3);
+  assert.equal(EN_TETES_NATIFS.size, 14);
 });
 
 // --------------------------------------------------------------------------
@@ -147,11 +163,20 @@ test('P4 : « Affecte à … » hors de nos queues DÉCLINE, pour garder le diag
   assert.equal(natif('Déclare un entier nommé n.'), undefined);
 });
 
-test('P4 : du texte supplémentaire est refusé, jamais ignoré', () => {
+test('P5 : du texte supplémentaire est refusé, jamais ignoré, et pour TOUS les motifs', () => {
   for (const phrase of ['Crée une liste vide nommée notes maintenant.',
-    'Lis une saisie dans reponse svp.', 'Crée le point d’entrée principal du programme.']) {
+    'Lis une saisie dans reponse svp.', 'Crée le point d’entrée principal du programme.',
+    'Importe le module math tout de suite.', 'Crée un bloc à essayer vraiment.']) {
     const resultat = natif(phrase);
     assert.ok(resultat !== undefined && resultat.status === 'refus', phrase);
+    assert.equal(resultat.code, 'UNEXPECTED_TEXT', phrase);
+  }
+  // La règle est générale : elle s'applique à chaque exemple publié, pas à une
+  // liste de cas choisis.
+  for (const phrase of EXEMPLES_NATIFS) {
+    const avecReste = phrase.replace(/\.?$/u, '') + ' maintenant.';
+    const resultat = natif(avecReste);
+    assert.ok(resultat !== undefined && resultat.status === 'refus', avecReste);
   }
 });
 

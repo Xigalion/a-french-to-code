@@ -29,11 +29,11 @@
     },
     {
       "nom": "Phase 2 — lots d'implementation",
-      "fait": 7,
+      "fait": 8,
       "total": 9,
       "unite": "lots P0 a P6, plus P4a et S4",
-      "source": "docs/phase2/LOT_P0_CONTRAT.md, LOT_P3_CONTRAT_ET_BILAN.md, LOT_P4A_CONTRAT_ET_BILAN.md, LOT_P4_CONTRAT_ET_BILAN.md, LOT_S4_CONTRAT_ET_BILAN.md, LOT_S5_CONTRAT_ET_BILAN.md",
-      "note": "P0, P1, P2, P3, P4a, P4 et S5 livres. S5 : 98 reformulations syntaxiques, deux corpus distincts, trois defauts trouves dont un dans sa propre table. Restent P5 et P6."
+      "source": "docs/phase2/LOT_P0_CONTRAT.md, LOT_P3_CONTRAT_ET_BILAN.md, LOT_P4A_CONTRAT_ET_BILAN.md, LOT_P4_CONTRAT_ET_BILAN.md, LOT_S4_CONTRAT_ET_BILAN.md, LOT_S5_CONTRAT_ET_BILAN.md, LOT_P5_CONTRAT_ET_BILAN.md",
+      "note": "P0, P1, P2, P3, P4a, P4, S5 et P5 livres. P5 : 54 intentions natives, refonte en table, trois defauts trouves. Reste P6, l'exercice de cloture Python."
     },
     {
       "nom": "Phase 2 — integration TECHNIQUE de la souplesse",
@@ -53,11 +53,11 @@
     },
     {
       "nom": "Phase 2 — perimetre pedagogique Python",
-      "fait": 1,
+      "fait": 2,
       "total": 2,
       "unite": "etapes",
       "source": "docs/phase2/INVENTAIRE_PYTHON.md, docs/phase2/DECISIONS_PYTHON.md",
-      "note": "Inventaire des 9 domaines livre : 39 reutilisables + 31 intentions neuves, soit ~70. Reste a ecrire le contrat des intentions natives, qui depend des decisions ouvertes."
+      "note": "Inventaire des 9 domaines livre, et le catalogue natif ECRIT : 54 intentions sur les 55 proposees, plus une trouvee par l'exercice. Les classes restent un domaine a part, par la decision D6."
     },
     {
       "nom": "Phase 2 — decisions de contrat Python",
@@ -77,19 +77,19 @@
     },
     {
       "nom": "Phase 2 — intentions Python NATIVES concues",
-      "fait": 14,
+      "fait": 54,
       "total": 55,
       "unite": "intentions",
-      "source": "test/pythonNatif.test.mjs, docs/CATALOGUE_PYTHON.md 0, exercice/python/journal/execution-natif.md",
-      "note": "14 livrees, 16 formulations, 13 informations passives de plus. Les 41 autres restent a ecrire : dictionnaires, ensembles, chaines, tuples, match, with, exceptions. Le denominateur 55 est la proposition validee comme base de travail, pas un plafond."
+      "source": "test/pythonP5.test.mjs (instantane fige), docs/CATALOGUE_PYTHON.md 0",
+      "note": "54 livrees, 57 formulations, 46 informations passives. Les deux non livrees sont PY_SINON_DE_BOUCLE (recommandee contre) et PY_BOUCLE_PUIS_TEST (sans formulation) ; une 54e a ete AJOUTEE par l'exercice, PY_AJOUTER_TEXTE. Le denominateur 55 est la proposition validee comme base de travail, pas un plafond."
     },
     {
       "nom": "Phase 2 — validation par EXECUTION reelle",
-      "fait": 2,
-      "total": 2,
+      "fait": 3,
+      "total": 3,
       "unite": "programmes Python executes",
-      "source": "exercice/python/journal/execution.md, execution-natif.md",
-      "note": "2 programmes Python ecrits par C-A sans une retouche et executes par python3 : 16 et 41 instructions, sorties conformes a un calcul fait a la main. Le second passe par la session de l'hote. Zero programme Python compile par un tiers, et aucun ecrit par un humain."
+      "source": "exercice/python/journal/execution.md, execution-natif.md, execution-collections.md",
+      "note": "3 programmes Python ecrits par C-A sans une retouche et executes par python3 : 16, 41 et 54 instructions, sorties conformes a un calcul fait a la main. Les deux derniers passent par la session de l'hote. Aucun programme ecrit par un humain."
     },
     {
       "nom": "Phase 2 — main intact",
@@ -97,7 +97,7 @@
       "total": 1,
       "unite": "verification",
       "source": "git diff main..HEAD -- src/ : non vide, et c'est voulu depuis P0",
-      "note": "main reste la V1 publique a l'etiquette v0.4.0. La branche porte P0 a P4, S4 et S5, et n'est pas fusionnee."
+      "note": "main reste la V1 publique a l'etiquette v0.4.0. La branche porte P0 a P5, S4 et S5, et n'est pas fusionnee."
     },
     {
       "nom": "Phase 2 — usage humain reel, Python",
