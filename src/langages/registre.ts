@@ -1,0 +1,80 @@
+import type { Instruction } from '../translate.ts';
+import { CONTEXT_VERIFIED_KINDS, DECLARATION_KINDS, STATEMENT_KINDS } from '../statementScope.ts';
+import { renderC17 } from './c17/rendu.ts';
+
+/** Comment un langage délimite ses blocs. C'est une **étiquette**, pas une
+ * abstraction : elle sélectionne une implémentation de placement, elle
+ * n'essaie pas d'unifier les accolades et l'indentation. Décision 2 du socle. */
+export type Blocs = 'accolades' | 'indentation';
+
+/** Une intention non portée est un **refus nommé**, jamais un rendu
+ * approximatif. Décision 3 du socle, et c'est elle qui empêche de forcer un
+ * concept du C dans un langage qui ne l'a pas. */
+export type RenduResultat =
+  | { status: 'rendu'; code: string }
+  | { status: 'refus'; code: 'INTENTION_NON_PORTEE'; raison: string };
+
+export type Langage = {
+  readonly nom: string;
+  /** Extensions de fichier que ce langage reconnaît, point compris. */
+  readonly extensions: readonly string[];
+  readonly blocs: Blocs;
+  /** Les intentions que ce langage porte. Toute autre est refusée. */
+  readonly portees: ReadonlySet<string>;
+  /** Pourquoi une intention n'est pas portée. Une raison par intention
+   * absente de `portees` : un refus sans raison n'apprend rien. */
+  readonly raisons: ReadonlyMap<string, string>;
+  readonly rendre: (instruction: Instruction) => RenduResultat;
+};
+
+/** Tous les genres d'intention que le moteur publie. La liste vient de la
+ * partition de `statementScope`, qu'un test impose exhaustive : le registre
+ * ne tient donc pas son propre inventaire, qui divergerait. */
+export const GENRES: ReadonlySet<string> = new Set([
+  ...DECLARATION_KINDS, ...STATEMENT_KINDS, ...CONTEXT_VERIFIED_KINDS,
+]);
+
+/** C17 porte tout : c'est le langage pour lequel les 84 intentions ont été
+ * conçues. Un langage qui en porte moins n'est pas un langage incomplet,
+ * c'est un autre langage. */
+export const C17: Langage = {
+  nom: 'c17',
+  extensions: ['.c', '.h'],
+  blocs: 'accolades',
+  portees: GENRES,
+  raisons: new Map(),
+  rendre: (instruction) => ({ status: 'rendu', code: renderC17(instruction) }),
+};
+
+const PAR_NOM = new Map<string, Langage>([[C17.nom, C17]]);
+
+export const LANGAGES: ReadonlyMap<string, Langage> = PAR_NOM;
+
+/** Inscrit un langage. Appelée par chaque module de langage, jamais par le
+ * moteur : `src/` ne connaît pas la liste de ses langages cibles. */
+export function inscrire(langage: Langage): void {
+  if (PAR_NOM.has(langage.nom)) throw new Error('Langage déjà inscrit : ' + langage.nom);
+  PAR_NOM.set(langage.nom, langage);
+}
+
+/** Le langage d'un fichier, par son extension. `undefined` si aucun : l'hôte
+ * doit alors refuser la commande, et non choisir un langage par défaut. */
+export function langagePour(extension: string): Langage | undefined {
+  const cherchee = extension.toLowerCase();
+  for (const langage of PAR_NOM.values()) if (langage.extensions.includes(cherchee)) return langage;
+  return undefined;
+}
+
+/** Rend une intention dans un langage, ou dit pourquoi il ne la porte pas.
+ * Aucun chemin ne produit un code vide : c'est un rendu ou un refus. */
+export function rendre(langage: Langage, instruction: Instruction): RenduResultat {
+  if (!langage.portees.has(instruction.kind)) {
+    return {
+      status: 'refus', code: 'INTENTION_NON_PORTEE',
+      raison: langage.raisons.get(instruction.kind)
+        ?? 'Le langage ' + langage.nom + ' ne porte pas cette intention, et aucune raison n’a été écrite : '
+          + 'c’est un défaut du registre, pas une limite du langage.',
+    };
+  }
+  return langage.rendre(instruction);
+}
