@@ -15,9 +15,9 @@ Engendré par `node scripts/catalogue-python.mjs`. **Ne pas éditer à la main.*
 
 Le symbole ⏎ marque une fin de ligne dans le code produit.
 
-## 0. Les 63 intentions NATIVES de Python
+## 0. Les 64 intentions NATIVES de Python
 
-66 formulations pour 63 intentions : la conversion en
+68 formulations pour 64 intentions : la conversion en
 compte trois — entier, réel, texte — et c’est une seule intention.
 
 Elles n’existent dans aucun catalogue C, et c’est le catalogue pédagogique
@@ -83,22 +83,24 @@ partagé** : un test le vérifie, sinon elles écriraient aussi du C.
 | `Crée une boucle pour l’indice i et la valeur note de notes.` | `for i, note in enumerate(notes):` | PY_BLOCK_NEEDS_A_BODY, PY_LOOP_VARIABLE_SURVIVES |
 | `Crée une boucle pour i de "0" jusqu’avant "10".` | `for i in range(0, 10):` | PY_BLOCK_NEEDS_A_BODY, PY_RANGE_EXCLUDES_THE_END, PY_LOOP_VARIABLE_SURVIVES |
 | `Appelle somme avec le paramètre a valant "1" et le paramètre b valant "2".` | `somme(a=1, b=2)` | PY_ANNOTATION_NOT_CHECKED |
+| `Appelle salue avec le paramètre nom valant "cri".` | `salue(nom=cri)` | PY_ANNOTATION_NOT_CHECKED |
 | `Retourne les résultats de "a" et "b".` | `return a, b` | PY_MULTIPLE_RETURN_IS_A_TUPLE |
 | `Crée un bloc avec le fichier "notes.txt" ouvert en lecture nommé f.` | `with open("notes.txt", "r") as f:` | PY_BLOCK_NEEDS_A_BODY, PY_WITH_CLOSES_FOR_YOU |
 | `Crée un bloc avec le fichier "notes.txt" ouvert en écriture nommé f.` | `with open("notes.txt", "w") as f:` | PY_BLOCK_NEEDS_A_BODY, PY_WITH_CLOSES_FOR_YOU |
 | `Crée une boucle pour chaque ligne ligne de f.` | `for ligne in f:` | PY_BLOCK_NEEDS_A_BODY, PY_LOOP_VARIABLE_SURVIVES |
+| `Écris la chaîne nom dans le fichier f.` | `f.write(nom)` | PY_WRITE_NEEDS_A_STRING |
 | `Crée un bloc à essayer.` | `try:` | PY_BLOCK_NEEDS_A_BODY |
 | `Ajoute une branche en cas d’erreur de type ValueError.` | `except ValueError:` | PY_BLOCK_NEEDS_A_BODY, PY_EXCEPT_NEEDS_A_TYPE |
 | `Lève une erreur de type ValueError avec le texte "note invalide".` | `raise ValueError("note invalide")` | PY_RAISE_STOPS_THE_FUNCTION |
 | `Importe le module math.` | `import math` | PY_IMPORT_RUNS_THE_MODULE |
 | `Importe sqrt du module math.` | `from math import sqrt` | PY_IMPORT_RUNS_THE_MODULE |
 
-Intentions natives livrées : **63**, dont **15** ouvrent un bloc.
-Sur les **55** proposées : il en reste **-8** à écrire,
+Intentions natives livrées : **64**, dont **15** ouvrent un bloc.
+Sur les **55** proposées : il en reste **-9** à écrire,
 et elles sont détaillées, formulation par formulation, dans
 `docs/phase2/CATALOGUE_NATIF_PYTHON_PROPOSE.md`.
 
-## 1. Les 30 intentions rendues
+## 1. Les 31 intentions rendues
 
 | Phrase française | Python produit | Informations passives |
 |---|---|---|
@@ -132,6 +134,7 @@ et elles sont détaillées, formulation par formulation, dans
 | `Affiche l'élément "0" de t.` | `print(t[0], end="")` | PY_NO_SEPARATOR_ADDED |
 | `Affiche la chaîne s.` | `print(s, end="")` | PY_NO_SEPARATOR_ADDED |
 | `Affiche le caractère de l'élément "i" de s.` | `print(s[i], end="")` | PY_NO_SEPARATOR_ADDED |
+| `Écris le texte "bonjour" dans le fichier f.` | `f.write("bonjour")` | PY_WRITE_NEEDS_A_STRING |
 
 **Aucun bloc ne reçoit de corps**, et aucun `pass` n’est écrit : le corps est
 à l’étudiant. Le fichier est donc incomplet — et invalide — jusqu’à ce qu’il
@@ -140,8 +143,8 @@ fichier compilable.
 
 ### Deux intentions portées qui n’apparaissent pas ci-dessus
 
-Le lot P3 porte **32** intentions, et le tableau n’en montre que
-**30**. La différence vient de la **phrase d’exemple** du catalogue C,
+Le lot P3 porte **33** intentions, et le tableau n’en montre que
+**31**. La différence vient de la **phrase d’exemple** du catalogue C,
 pas de l’intention :
 
 - `NUMERIC_ASSIGN` : l’exemple est `Affecte à x le résultat numérique de "(double) 7 / 2".`, et il contient une division.
@@ -151,7 +154,7 @@ C’est la même observation qui avait corrigé la mesure de la sonde : le refus
 porte sur `/`, pas sur l’intention. Elles se rendent dès que l’expression n’en
 contient pas.
 
-## 2. Les 52 intentions refusées
+## 2. Les 51 intentions refusées
 
 Un refus n’est pas une interdiction d’enseigner la notion : chaque raison
 nomme la construction **native** qui porte la même compétence. Trois sortes :
@@ -176,14 +179,13 @@ existe sous une autre forme, qui demande ses propres phrases).
 | `DECL_INT` | `Déclare un entier nommé age.` | ATTENTE | Python ne sépare pas la déclaration de l’initialisation : un nom naît avec sa valeur. Écrire « n = 0 » inventerait un zéro, et une annotation seule ne crée aucun nom. La notion de variable s’enseigne donc par la phrase qui donne la valeur, et une information passive explique la différence. |
 | `DECL_POINTER` | `Déclare un pointeur de type int nommé p.` | NOTION_ABSENTE | Python n’a pas de pointeur : ni adresse, ni déréférencement, ni arithmétique de pointeurs. La compétence visée — deux noms qui désignent le **même** objet, et la différence entre modifier l’objet et rebinder le nom — s’enseignera par l’aliasing d’une liste, qui est la même leçon avec les outils du langage. |
 | `DO_WHILE` | `Crée une boucle avec test final tant que "i < limite".` | NOTION_ABSENTE | Python n’a pas de boucle à test final. La compétence « exécuter au moins une fois, puis répéter tant que » s’écrit avec une boucle « while » et une sortie explicite, et elle recevra sa propre phrase plutôt qu’une traduction qui réordonnerait le corps. |
-| `FILE_AT_END` | `Crée un bloc si la fin du fichier f est atteinte.` | FORME_AUTRE | les fichiers existent en Python, et c’est une des familles les plus utiles ; mais ils s’ouvrent dans un bloc « with » qui ferme tout seul, se parcourent ligne par ligne, et n’ont pas d’indicateur de fin de fichier à tester. Les phrases d’ouverture, de parcours et d’écriture seront écrites pour cette forme, pas portées depuis « fopen » et « feof ». |
-| `FILE_CLOSE` | `Ferme le fichier f.` | FORME_AUTRE | les fichiers existent en Python, et c’est une des familles les plus utiles ; mais ils s’ouvrent dans un bloc « with » qui ferme tout seul, se parcourent ligne par ligne, et n’ont pas d’indicateur de fin de fichier à tester. Les phrases d’ouverture, de parcours et d’écriture seront écrites pour cette forme, pas portées depuis « fopen » et « feof ». |
-| `FILE_DECL` | `Déclare un fichier nommé f.` | FORME_AUTRE | les fichiers existent en Python, et c’est une des familles les plus utiles ; mais ils s’ouvrent dans un bloc « with » qui ferme tout seul, se parcourent ligne par ligne, et n’ont pas d’indicateur de fin de fichier à tester. Les phrases d’ouverture, de parcours et d’écriture seront écrites pour cette forme, pas portées depuis « fopen » et « feof ». |
-| `FILE_OPEN` | `Affecte à f l'ouverture du fichier "donnees.txt" en lecture.` | FORME_AUTRE | les fichiers existent en Python, et c’est une des familles les plus utiles ; mais ils s’ouvrent dans un bloc « with » qui ferme tout seul, se parcourent ligne par ligne, et n’ont pas d’indicateur de fin de fichier à tester. Les phrases d’ouverture, de parcours et d’écriture seront écrites pour cette forme, pas portées depuis « fopen » et « feof ». |
+| `FILE_AT_END` | `Crée un bloc si la fin du fichier f est atteinte.` | FORME_AUTRE | les fichiers existent en Python, et c’est une des familles les plus utiles ; mais ils s’ouvrent dans un bloc « with » qui ferme tout seul, se parcourent ligne par ligne, et n’ont pas d’indicateur de fin de fichier à tester. Les phrases d’ouverture, de parcours et d’écriture **sont écrites** pour cette forme (lots P5 et P6), et non portées depuis « fopen » et « feof » : un bloc « with », un parcours de lignes, et deux écritures. |
+| `FILE_CLOSE` | `Ferme le fichier f.` | FORME_AUTRE | les fichiers existent en Python, et c’est une des familles les plus utiles ; mais ils s’ouvrent dans un bloc « with » qui ferme tout seul, se parcourent ligne par ligne, et n’ont pas d’indicateur de fin de fichier à tester. Les phrases d’ouverture, de parcours et d’écriture **sont écrites** pour cette forme (lots P5 et P6), et non portées depuis « fopen » et « feof » : un bloc « with », un parcours de lignes, et deux écritures. |
+| `FILE_DECL` | `Déclare un fichier nommé f.` | FORME_AUTRE | les fichiers existent en Python, et c’est une des familles les plus utiles ; mais ils s’ouvrent dans un bloc « with » qui ferme tout seul, se parcourent ligne par ligne, et n’ont pas d’indicateur de fin de fichier à tester. Les phrases d’ouverture, de parcours et d’écriture **sont écrites** pour cette forme (lots P5 et P6), et non portées depuis « fopen » et « feof » : un bloc « with », un parcours de lignes, et deux écritures. |
+| `FILE_OPEN` | `Affecte à f l'ouverture du fichier "donnees.txt" en lecture.` | FORME_AUTRE | les fichiers existent en Python, et c’est une des familles les plus utiles ; mais ils s’ouvrent dans un bloc « with » qui ferme tout seul, se parcourent ligne par ligne, et n’ont pas d’indicateur de fin de fichier à tester. Les phrases d’ouverture, de parcours et d’écriture **sont écrites** pour cette forme (lots P5 et P6), et non portées depuis « fopen » et « feof » : un bloc « with », un parcours de lignes, et deux écritures. |
 | `FILE_READ_INT` | `Lis un entier depuis le fichier f dans x.` | ATTENTE | « Lis un entier depuis le fichier f dans x. » cacherait deux opérations en une phrase : lire une ligne, puis la convertir, avec une exception possible si la ligne est vide. La règle 6 interdit de laisser croire sûr ce qui ne l’est pas : la lecture et la conversion recevront deux phrases distinctes. |
-| `FILE_READ_STRING` | `Lis une chaîne de dimension 32 depuis le fichier f dans s.` | FORME_AUTRE | les fichiers existent en Python, et c’est une des familles les plus utiles ; mais ils s’ouvrent dans un bloc « with » qui ferme tout seul, se parcourent ligne par ligne, et n’ont pas d’indicateur de fin de fichier à tester. Les phrases d’ouverture, de parcours et d’écriture seront écrites pour cette forme, pas portées depuis « fopen » et « feof ». |
-| `FILE_WRITE_INT` | `Écris la valeur de x dans le fichier f.` | FORME_AUTRE | les fichiers existent en Python, et c’est une des familles les plus utiles ; mais ils s’ouvrent dans un bloc « with » qui ferme tout seul, se parcourent ligne par ligne, et n’ont pas d’indicateur de fin de fichier à tester. Les phrases d’ouverture, de parcours et d’écriture seront écrites pour cette forme, pas portées depuis « fopen » et « feof ». |
-| `FILE_WRITE_TEXT` | `Écris le texte "bonjour" dans le fichier f.` | FORME_AUTRE | les fichiers existent en Python, et c’est une des familles les plus utiles ; mais ils s’ouvrent dans un bloc « with » qui ferme tout seul, se parcourent ligne par ligne, et n’ont pas d’indicateur de fin de fichier à tester. Les phrases d’ouverture, de parcours et d’écriture seront écrites pour cette forme, pas portées depuis « fopen » et « feof ». |
+| `FILE_READ_STRING` | `Lis une chaîne de dimension 32 depuis le fichier f dans s.` | FORME_AUTRE | les fichiers existent en Python, et c’est une des familles les plus utiles ; mais ils s’ouvrent dans un bloc « with » qui ferme tout seul, se parcourent ligne par ligne, et n’ont pas d’indicateur de fin de fichier à tester. Les phrases d’ouverture, de parcours et d’écriture **sont écrites** pour cette forme (lots P5 et P6), et non portées depuis « fopen » et « feof » : un bloc « with », un parcours de lignes, et deux écritures. |
+| `FILE_WRITE_INT` | `Écris la valeur de x dans le fichier f.` | NOTION_ABSENTE | la méthode d’écriture de Python n’accepte qu’une CHAÎNE : écrire un nombre demande de le convertir d’abord, et C-A ne convertit pas à votre place. La compétence s’enseigne par deux phrases, la conversion puis l’écriture — « Écris le texte … » et « Écris la chaîne … » sont, elles, portées. |
 | `FOR` | `Crée une boucle pour i de valeur initiale "0" tant que "i < 3" avec mise à jour "i + 1".` | ATTENTE | la boucle « pour » à trois clauses demanderait de placer la mise à jour à la fin du corps, donc de restructurer ce que l’étudiant a écrit. Python parcourt une séquence : « range », « for each » et « enumerate » recevront leurs propres phrases, et elles enseignent la même compétence de répétition bornée. |
 | `FREE` | `Libère la mémoire pointée par p.` | NOTION_ABSENTE | Python gère la mémoire lui-même : il n’y a ni allocation explicite, ni réallocation, ni libération, et donc ni fuite à la main ni libération double. La compétence « faire grandir une collection » s’enseignera par l’agrandissement d’une liste, avec une information disant ce que le langage fait à votre place. |
 | `FUNC_PROTOTYPE` | `Déclare le prototype d'une fonction nommée somme qui retourne un int et prend un int nommé a.` | NOTION_ABSENTE | Python n’a pas de prototype ni de liaison : une fonction est définie, et un nom est visible une fois le module exécuté. La compétence « déclarer avant d’utiliser » n’existe pas sous cette forme : la compétence « organiser un programme en morceaux réutilisables » s’enseignera par « import » et par l’ordre de définition dans le module, avec une information qui dit ce que l’ordre garantit et ce qu’il ne garantit pas. |
@@ -231,11 +233,11 @@ répond alors `CONSTRUCTION_NON_PORTEE`.
 ## 4. Vérification
 
 - intentions du catalogue C balayées : **84**
-- intentions portées par le lot P3 : **32**, dont **30** avec une phrase d’exemple rendable
-- intentions non portées : **52**
-- raisons écrites au registre : **52**
-- intentions natives livrées : **63**
-- total des intentions que Python sait écrire : **95**
+- intentions portées par le lot P3 : **33**, dont **31** avec une phrase d’exemple rendable
+- intentions non portées : **51**
+- raisons écrites au registre : **51**
+- intentions natives livrées : **64**
+- total des intentions que Python sait écrire : **97**
 
 La partition est vérifiée par `test/python.test.mjs` : chacune des 84
 intentions est soit rendue, soit refusée avec une raison, jamais les deux,

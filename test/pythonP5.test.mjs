@@ -79,6 +79,8 @@ const INSTANTANE = [
   ["Crée un bloc avec le fichier \"notes.txt\" ouvert en lecture nommé f.", "with open(\"notes.txt\", \"r\") as f:\n"],
   ["Crée un bloc avec le fichier \"notes.txt\" ouvert en écriture nommé f.", "with open(\"notes.txt\", \"w\") as f:\n"],
   ["Crée une boucle pour chaque ligne ligne de f.", "for ligne in f:\n"],
+  ["Écris la chaîne nom dans le fichier f.", "f.write(nom)\n"],
+  ["Appelle salue avec le paramètre nom valant \"cri\".", "salue(nom=cri)\n"],
   ["Crée un bloc à essayer.", "try:\n"],
   ["Ajoute une branche en cas d’erreur de type ValueError.", "except ValueError:\n"],
   ["Lève une erreur de type ValueError avec le texte \"note invalide\".", "raise ValueError(\"note invalide\")\n"],
@@ -95,11 +97,11 @@ for (const [phrase, attendu] of INSTANTANE) {
   });
 }
 
-test('P5 : l’instantané couvre les 63 intentions natives', () => {
+test('P5 : l’instantané couvre les 64 intentions natives', () => {
   const genres = new Set();
   for (const [phrase] of INSTANTANE) genres.add(natif(phrase).kind);
   assert.equal(genres.size, NATIVES_PYTHON.size);
-  assert.equal(INSTANTANE.length, 66, '66 formulations pour 63 intentions');
+  assert.equal(INSTANTANE.length, 68, '68 formulations pour 64 intentions');
   // La 54e intention, PY_AJOUTER_TEXTE, a ete trouvee par l'exercice du lot
   // P5 : « Ajoute "cleo" a la fin de noms. » lisait cleo comme un NOM, et
   // le programme echouait a l'execution avec NameError.

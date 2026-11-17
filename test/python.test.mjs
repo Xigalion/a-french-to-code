@@ -40,8 +40,10 @@ test('P3 : les 84 genres sont partitionnés, sans trou, sans doublon, sans fant�
   // exactement ce que le lot P3 a trouvé avec NUMERIC_CONVERT.
   const fantomes = [...RAISONS_PYTHON.keys()].filter(g => !GENRES.has(g));
   assert.deepEqual(fantomes, [], 'raisons écrites pour des noms qui ne sont pas des genres');
-  assert.equal(PORTEES_PYTHON.size, 32);
-  assert.equal(RAISONS_PYTHON.size, 52);
+  // Lot P6 : FILE_WRITE_TEXT est passée des refus aux portées — même phrase,
+  // même sens, rendu différent. La somme reste 84.
+  assert.equal(PORTEES_PYTHON.size, 33);
+  assert.equal(RAISONS_PYTHON.size, 51);
   assert.equal(PORTEES_PYTHON.size + RAISONS_PYTHON.size, 84);
 });
 
@@ -51,7 +53,7 @@ test('P3 : chaque refus nomme la construction native, et n’interdit rien', () 
     assert.ok(/^(ATTENTE|NOTION_ABSENTE|FORME_AUTRE)/u.test(raison), 'refus sans sorte : ' + genre);
     // Consigne du fondateur : un refus de portage n'est pas une interdiction
     // d'enseigner. Chaque raison doit donc dire par quoi la compétence passe.
-    assert.ok(/s’enseigne|s’enseignera|recevra|recevront|seront écrites|s’écrit/u.test(raison),
+    assert.ok(/s’enseigne|s’enseignera|recevra|recevront|seront écrites|sont écrites|s’écrit/u.test(raison),
       'raison qui refuse sans nommer la suite : ' + genre);
   }
 });

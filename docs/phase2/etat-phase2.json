@@ -29,11 +29,11 @@
     },
     {
       "nom": "Phase 2 — lots d'implementation",
-      "fait": 8,
+      "fait": 9,
       "total": 9,
       "unite": "lots P0 a P6, plus P4a et S4",
-      "source": "docs/phase2/LOT_P0_CONTRAT.md, LOT_P3_CONTRAT_ET_BILAN.md, LOT_P4A_CONTRAT_ET_BILAN.md, LOT_P4_CONTRAT_ET_BILAN.md, LOT_S4_CONTRAT_ET_BILAN.md, LOT_S5_CONTRAT_ET_BILAN.md, LOT_P5_CONTRAT_ET_BILAN.md",
-      "note": "P0, P1, P2, P3, P4a, P4, S5 et P5 livres. P5 : 54 intentions natives, refonte en table, trois defauts trouves. Reste P6, l'exercice de cloture Python."
+      "source": "docs/phase2/LOT_P0_CONTRAT.md, LOT_P3_CONTRAT_ET_BILAN.md, LOT_P4A_CONTRAT_ET_BILAN.md, LOT_P4_CONTRAT_ET_BILAN.md, LOT_S4_CONTRAT_ET_BILAN.md, LOT_S5_CONTRAT_ET_BILAN.md, LOT_P5_CONTRAT_ET_BILAN.md, LOT_P6_EXERCICE_CLOTURE.md",
+      "note": "P0, P1, P2, P3, P4a, P4, S5, P5 et P6 livres. P6 : six programmes, 238 instructions, 97/97 intentions employees, 49/49 informations, 0 retouche."
     },
     {
       "nom": "Phase 2 — integration TECHNIQUE de la souplesse",
@@ -69,27 +69,27 @@
     },
     {
       "nom": "Phase 2 — intentions du catalogue C rendues en Python",
-      "fait": 32,
+      "fait": 33,
       "total": 84,
       "unite": "intentions",
       "source": "test/python.test.mjs, exercice/python/journal/execution.md",
-      "note": "32 rendues et testees, 52 refusees avec une raison ecrite : la partition des 84 est verifiee par un test. Ce chiffre ne dit rien du catalogue natif : voir la barre suivante."
+      "note": "33 rendues et testees, 51 refusees avec une raison ecrite : la partition des 84 est verifiee par un test. FILE_WRITE_TEXT est passee des refus aux portees au lot P6."
     },
     {
       "nom": "Phase 2 — intentions Python NATIVES concues",
-      "fait": 54,
-      "total": 55,
+      "fait": 64,
+      "total": 64,
       "unite": "intentions",
       "source": "test/pythonP5.test.mjs (instantane fige), docs/CATALOGUE_PYTHON.md 0",
-      "note": "54 livrees, 57 formulations, 46 informations passives. Les deux non livrees sont PY_SINON_DE_BOUCLE (recommandee contre) et PY_BOUCLE_PUIS_TEST (sans formulation) ; une 54e a ete AJOUTEE par l'exercice, PY_AJOUTER_TEXTE. Le denominateur 55 est la proposition validee comme base de travail, pas un plafond."
+      "note": "64 livrees, 68 formulations, 49 informations passives. Les deux proposees non livrees restent recommandees contre : PY_SINON_DE_BOUCLE et PY_BOUCLE_PUIS_TEST. Quatre lacunes ont ete trouvees par l'exercice de cloture et comblees."
     },
     {
       "nom": "Phase 2 — validation par EXECUTION reelle",
-      "fait": 3,
-      "total": 3,
+      "fait": 9,
+      "total": 9,
       "unite": "programmes Python executes",
-      "source": "exercice/python/journal/execution.md, execution-natif.md, execution-collections.md",
-      "note": "3 programmes Python ecrits par C-A sans une retouche et executes par python3 : 16, 41 et 54 instructions, sorties conformes a un calcul fait a la main. Les deux derniers passent par la session de l'hote. Aucun programme ecrit par un humain."
+      "source": "exercice/python/journal/cloture.md, execution.md, execution-natif.md, execution-collections.md",
+      "note": "9 programmes Python ecrits par C-A sans une retouche et executes par python3 : 16, 41, 54 et les six de l'exercice de cloture (238 instructions). Toutes les sorties conformes a un calcul fait a la main. Aucun programme ecrit par un humain."
     },
     {
       "nom": "Phase 2 — main intact",

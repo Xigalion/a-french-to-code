@@ -41,7 +41,7 @@ export type InformationPython = {
   | 'PY_SEPARATOR_IS_EXPLICIT' | 'PY_POWER_IS_EXACT_ON_INTEGERS'
   // Fin du catalogue Python.
   | 'PY_AUGMENTED_ASSIGNMENT_IS_IN_PLACE' | 'PY_TEXT_IS_NOT_A_NUMBER'
-  | 'PY_DEFAULT_IS_EVALUATED_ONCE';
+  | 'PY_DEFAULT_IS_EVALUATED_ONCE' | 'PY_WRITE_NEEDS_A_STRING';
   severity: 'information';
   range: SourceRange;
   message: string;
@@ -208,6 +208,9 @@ const TEXTES: Readonly<Record<InformationPython['code'], string>> = {
     'La valeur par défaut est évaluée UNE SEULE FOIS, à la définition de la fonction — pas à chaque '
     + 'appel. Avec un texte, cela ne se voit pas ; avec une liste, la même liste serait partagée entre '
     + 'tous les appels, et c’est l’un des pièges les plus coûteux de Python.',
+  PY_WRITE_NEEDS_A_STRING:
+    'La méthode d’écriture n’accepte qu’une CHAÎNE : un nombre doit être converti d’abord. Et elle '
+    + 'n’ajoute aucun saut de ligne — pour aller à la ligne dans le fichier, il faut l’écrire.',
   PY_POWER_IS_EXACT_ON_INTEGERS:
     'Sur deux entiers, « ** » donne un entier exact, aussi grand qu’il faut : 2 ** 100 s’écrit en '
     + 'entier, sans débordement. Avec un exposant négatif ou réel, le résultat est un nombre à virgule.',
@@ -217,6 +220,8 @@ const TEXTES: Readonly<Record<InformationPython['code'], string>> = {
 const EN_TETES = new Set(['IF', 'ELSE_IF', 'ELSE', 'WHILE', 'FUNC_DEF']);
 const AFFICHAGES = new Set(['PRINT_INT', 'PRINT_TEXT', 'PRINT_NEWLINE', 'PRINT_FORMATTED',
   'NUMERIC_PRINT', 'PRINT_CHAR', 'PRINT_STRING', 'ARRAY_PRINT', 'ARRAY_PRINT_CHAR']);
+/** L'ecriture dans un fichier : portee, et elle a son information propre. */
+const ECRITURES = new Set(['FILE_WRITE_TEXT']);
 const CARACTERES = new Set(['INIT_CHAR', 'ASSIGN_CHAR', 'ARRAY_ASSIGN_CHAR', 'PRINT_CHAR']);
 const ANNOTATIONS = new Set(['NUMERIC_INIT', 'INIT_CHAR', 'FUNC_DEF']);
 const AFFECTATIONS = new Set(['ASSIGN_INT', 'ASSIGN_EXPRESSION', 'NUMERIC_ASSIGN']);
@@ -285,6 +290,7 @@ const NATIVES: Readonly<Record<string, readonly InformationPython['code'][]>> = 
   PY_RETOUR_MULTIPLE: ['PY_MULTIPLE_RETURN_IS_A_TUPLE'],
   PY_AVEC_FICHIER: ['PY_BLOCK_NEEDS_A_BODY', 'PY_WITH_CLOSES_FOR_YOU'],
   PY_LIRE_LIGNES: ['PY_BLOCK_NEEDS_A_BODY', 'PY_LOOP_VARIABLE_SURVIVES'],
+  PY_ECRIRE_CHAINE: ['PY_WRITE_NEEDS_A_STRING'],
   PY_ESSAYER: ['PY_BLOCK_NEEDS_A_BODY'],
   PY_SAUF: ['PY_BLOCK_NEEDS_A_BODY', 'PY_EXCEPT_NEEDS_A_TYPE'],
   PY_LEVER: ['PY_RAISE_STOPS_THE_FUNCTION'],
@@ -308,6 +314,7 @@ export function expliquerPython(resultat: TranslationResult): InformationPython[
 
   if (CARACTERES.has(kind)) codes.push('PY_CHAR_IS_A_STRING');
   if (AFFICHAGES.has(kind)) codes.push('PY_NO_SEPARATOR_ADDED');
+  if (ECRITURES.has(kind)) codes.push('PY_WRITE_NEEDS_A_STRING');
   if (EN_TETES.has(kind)) codes.push('PY_BLOCK_NEEDS_A_BODY');
   if (kind === 'IF' || kind === 'ELSE_IF' || kind === 'WHILE') codes.push('PY_TRUTHINESS');
   if (ANNOTATIONS.has(kind)) codes.push('PY_ANNOTATION_NOT_CHECKED');

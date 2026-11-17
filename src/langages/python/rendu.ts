@@ -47,6 +47,12 @@ export const PORTEES_PYTHON: ReadonlySet<string> = new Set([
   'PRINT_CHAR', 'PRINT_STRING', 'ARRAY_PRINT', 'ARRAY_PRINT_CHAR',
   // Caractère (D8)
   'INIT_CHAR', 'ASSIGN_CHAR', 'ARRAY_ASSIGN_CHAR',
+  // Ecriture de texte dans un fichier (lot P6). La phrase du catalogue
+  // partage dit exactement ce que Python fait, et son rendu differe : c'est
+  // la definition d'une intention ADAPTABLE, et la dupliquer dans le
+  // catalogue natif aurait cree une intention morte — le catalogue partage
+  // gagne toujours.
+  'FILE_WRITE_TEXT',
   // Blocs
   'IF', 'ELSE_IF', 'ELSE', 'WHILE', 'FUNC_DEF',
 ]);
@@ -157,6 +163,11 @@ export function rendrePython(instruction: Instruction): RenduPython {
     case 'PRINT_CHAR': return nom(instruction.parameters.name, () => affiche(instruction.parameters.name));
     case 'PRINT_STRING': return nom(instruction.parameters.name, () => affiche(instruction.parameters.name));
     case 'PRINT_TEXT': return affiche(renderStringLiteral(instruction.parameters.text));
+    // `write` n'ajoute AUCUN saut de ligne, et il n'accepte qu'une chaine :
+    // les deux sont dits par l'information passive.
+    case 'FILE_WRITE_TEXT':
+      return nom(instruction.parameters.name,
+        () => rendu(`${instruction.parameters.name}.write(${renderStringLiteral(instruction.parameters.text)})\n`));
     // Le saut de ligne est écrit explicitement, et `end=""` reste posé : la
     // règle « aucun séparateur ajouté » n'a aucune exception.
     case 'PRINT_NEWLINE': return affiche('"\\n"');

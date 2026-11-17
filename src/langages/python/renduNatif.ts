@@ -58,7 +58,8 @@ export const NATIVES_PYTHON: ReadonlySet<string> = new Set([
   // fonctions
   'PY_PARAM_NOMME', 'PY_RETOUR_MULTIPLE',
   // fichiers, erreurs, modules
-  'PY_AVEC_FICHIER', 'PY_LIRE_LIGNES', 'PY_ESSAYER', 'PY_SAUF', 'PY_LEVER',
+  'PY_AVEC_FICHIER', 'PY_LIRE_LIGNES', 'PY_ECRIRE_CHAINE',
+  'PY_ESSAYER', 'PY_SAUF', 'PY_LEVER',
   'PY_IMPORTER', 'PY_IMPORTER_DE',
 ]);
 
@@ -330,6 +331,12 @@ export function rendrePythonNatif(instruction: InstructionPython): RenduNatif {
       return refus('Genre interne : il se construit en PY_AVEC_FICHIER avec le mode « w ».');
     case 'PY_LIRE_LIGNES':
       return rendu(`for ${instruction.parameters.name} in ${instruction.parameters.fichier}:\n`);
+    // `write` n'ajoute AUCUN saut de ligne, et il n'accepte qu'une chaine :
+    // les deux sont dits par l'information passive, et aucun des deux n'est
+    // corrige en silence. L'ecriture d'un TEXTE, elle, passe par la phrase du
+    // catalogue partage, qui dit exactement la meme chose.
+    case 'PY_ECRIRE_CHAINE':
+      return rendu(`${instruction.parameters.fichier}.write(${instruction.parameters.source})\n`);
     case 'PY_ESSAYER':
       return rendu('try:\n');
     // Le type d'erreur est exigé : un `except:` nu attrape tout, interruption

@@ -106,6 +106,12 @@ export type InstructionPython =
    * mode « w ». Il n'apparaît jamais dans un AST. */
   | { kind: 'PY_AVEC_FICHIER_ECRITURE'; parameters: { chemin: string; name: string; mode: 'r' | 'w' } }
   | { kind: 'PY_LIRE_LIGNES'; parameters: { name: string; fichier: string } }
+  /** Ecrire dans un fichier. Lacune trouvee par l'exercice de cloture du lot
+   * P6 : la raison de refus annoncait que « les phrases d'ouverture, de
+   * parcours et d'ECRITURE seront ecrites », et seules les deux premieres
+   * l'etaient. `write` n'accepte qu'une chaine, et il n'ajoute aucun saut de
+   * ligne : les deux sont dits par une information passive. */
+  | { kind: 'PY_ECRIRE_CHAINE'; parameters: { fichier: string; source: string } }
   | { kind: 'PY_ESSAYER'; parameters: Record<string, never> }
   | { kind: 'PY_SAUF'; parameters: { erreur: string } }
   | { kind: 'PY_LEVER'; parameters: { erreur: string; message: string } }
@@ -192,11 +198,13 @@ export const EXEMPLES_NATIFS: readonly string[] = [
   'Crée une boucle pour i de "0" jusqu’avant "10".',
   // fonctions
   'Appelle somme avec le paramètre a valant "1" et le paramètre b valant "2".',
+  'Appelle salue avec le paramètre nom valant "cri".',
   'Retourne les résultats de "a" et "b".',
   // fichiers, erreurs, modules
   'Crée un bloc avec le fichier "notes.txt" ouvert en lecture nommé f.',
   'Crée un bloc avec le fichier "notes.txt" ouvert en écriture nommé f.',
   'Crée une boucle pour chaque ligne ligne de f.',
+  'Écris la chaîne nom dans le fichier f.',
   'Crée un bloc à essayer.',
   'Ajoute une branche en cas d’erreur de type ValueError.',
   'Lève une erreur de type ValueError avec le texte "note invalide".',

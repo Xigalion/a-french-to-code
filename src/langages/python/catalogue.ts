@@ -71,6 +71,8 @@ const AMORCES: readonly string[] = [
   // Fin du catalogue : l'affectation augmentee, et les deux formes proches
   // qui refusent faute de pas ecrit.
   'incrémente', 'incrémenter', 'décrémente', 'décrémenter', 'augmente', 'diminue',
+  // L'ecriture dans un fichier, trouvee manquante par l'exercice de cloture.
+  'écris', 'écrire',
 ];
 
 export const MOTIFS: readonly Motif[] = [
@@ -212,6 +214,11 @@ export const MOTIFS: readonly Motif[] = [
   { forme: 'Appelle {NOM} avec le paramètre {NOM} valant {EXPR} et le paramètre {NOM} valant {EXPR}',
     kind: 'PY_PARAM_NOMME',
     demonstration: 'Appelle somme avec le paramètre a valant "1" et le paramètre b valant "2".' },
+  // Un seul parametre nomme. Trouve manquant par l'exercice de cloture : la
+  // forme a deux parametres obligeait a repeter le meme nom, et Python refuse
+  // « salue(nom=cri, nom=cri) » a l'analyse.
+  { forme: 'Appelle {NOM} avec le paramètre {NOM} valant {EXPR}', kind: 'PY_PARAM_NOMME',
+    demonstration: 'Appelle salue avec le paramètre nom valant "cri".' },
   { forme: 'Retourne les résultats de {EXPR} et {EXPR}', kind: 'PY_RETOUR_MULTIPLE',
     demonstration: 'Retourne les résultats de "a" et "b".' },
 
@@ -222,6 +229,8 @@ export const MOTIFS: readonly Motif[] = [
     demonstration: 'Crée un bloc avec le fichier "notes.txt" ouvert en écriture nommé f.' },
   { forme: 'Crée une boucle pour chaque ligne {NOM} de {NOM}', kind: 'PY_LIRE_LIGNES',
     demonstration: 'Crée une boucle pour chaque ligne ligne de f.' },
+  { forme: 'Écris la chaîne {NOM} dans le fichier {NOM}', kind: 'PY_ECRIRE_CHAINE',
+    demonstration: 'Écris la chaîne nom dans le fichier f.' },
   { forme: 'Crée un bloc à essayer', kind: 'PY_ESSAYER',
     demonstration: 'Crée un bloc à essayer.' },
   { forme: 'Ajoute une branche en cas d’erreur de type {NOM}', kind: 'PY_SAUF',
@@ -259,6 +268,9 @@ const PROCHES: readonly { forme: string; code: string; message: string }[] = [
   { forme: 'Crée une boucle pour {NOM} de {EXPR} à {EXPR}', code: 'MISSING_EXCLUSIVE_BOUND',
     message: 'La borne de « range » est exclue, et « à » ne dit pas si elle l’est : écrivez '
       + '« jusqu’avant ». La formulation est lourde exprès.' },
+  { forme: 'Écris la valeur de {NOM} dans le fichier {NOM}', code: 'WRITE_NEEDS_A_STRING',
+    message: 'La méthode d’écriture de Python n’accepte qu’une chaîne : un nombre doit être converti '
+      + 'd’abord, et C-A ne convertit pas à votre place. Écrivez la conversion, puis l’écriture.' },
   { forme: 'Augmente {NOM}', code: 'MISSING_STEP',
     message: 'De combien ? Le pas n’est pas écrit dans la phrase, et C-A n’en invente aucun. '
       + '« Incrémente » et « Décrémente » disent un pas de 1 ; pour un autre pas, écrivez le calcul.' },
@@ -422,7 +434,7 @@ function lire(phrase: string, trouve: RegExpExecArray, types: string[]): Lues | 
 
 /** Construit l'intention depuis ses captures. Une ligne par genre : c'est le
  * seul endroit où la table rencontre l'AST typé. */
-function construire(kind: GenrePython, c: Lues): InstructionPython {
+function construire(kind: GenrePython, c: Lues): InstructionPython | DiagnosticPy {
   const nom = (index: number): string => {
     const valeur = c.noms[index];
     if (valeur === undefined) throw new Error('Invariant interne : nom attendu.');
@@ -521,14 +533,31 @@ function construire(kind: GenrePython, c: Lues): InstructionPython {
       return { kind, parameters: { indice: nom(0), valeur: nom(1), collection: nom(2) } };
     case 'PY_POUR_INTERVALLE':
       return { kind, parameters: { name: nom(0), debut: expr(0), fin: expr(1) } };
-    case 'PY_PARAM_NOMME':
-      return { kind, parameters: { name: nom(0),
-        arguments: [{ nom: nom(1), valeur: expr(0) }, { nom: nom(2), valeur: expr(1) }] } };
+    case 'PY_PARAM_NOMME': {
+      // Un parametre nomme par capture : la forme a un parametre et celle a
+      // deux partagent ce genre, et l'arite se lit dans les captures.
+      const arguments_: { nom: string; valeur: NumericExpression }[] = [];
+      for (let index = 1; index < c.noms.length; index++) {
+        arguments_.push({ nom: nom(index), valeur: expr(index - 1) });
+      }
+      // Python refuse un nom de parametre repete A L'ANALYSE. C'est une erreur
+      // de FORME, visible sans rien savoir du programme : C-A la refuse, au
+      // lieu d'ecrire un fichier que Python ne lira pas.
+      const noms = arguments_.map(argument => argument.nom);
+      if (new Set(noms).size !== noms.length) {
+        return { code: 'REPEATED_PARAMETER_NAME', category: 'understanding', severity: 'error',
+          message: 'Le même nom de paramètre est donné deux fois. Python refuse un appel nommé qui '
+            + 'répète un nom, et C-A n’écrit pas un fichier qu’il ne lirait pas.',
+          range: { start: 0, end: 0 } };
+      }
+      return { kind, parameters: { name: nom(0), arguments: arguments_ } };
+    }
     case 'PY_RETOUR_MULTIPLE': return { kind, parameters: { valeurs: [expr(0), expr(1)] } };
     case 'PY_AVEC_FICHIER': return { kind, parameters: { chemin: texte(0), name: nom(0), mode: 'r' } };
     case 'PY_AVEC_FICHIER_ECRITURE':
       return { kind: 'PY_AVEC_FICHIER', parameters: { chemin: texte(0), name: nom(0), mode: 'w' } };
     case 'PY_LIRE_LIGNES': return { kind, parameters: { name: nom(0), fichier: nom(1) } };
+    case 'PY_ECRIRE_CHAINE': return { kind, parameters: { fichier: nom(1), source: nom(0) } };
     case 'PY_ESSAYER': return { kind, parameters: {} };
     case 'PY_SAUF': return { kind, parameters: { erreur: nom(0) } };
     case 'PY_LEVER': return { kind, parameters: { erreur: nom(0), message: texte(0) } };
@@ -553,7 +582,14 @@ export function analyserCatalogueNatif(phrase: string): AnalysePython | undefine
     if (!trouve) continue;
     const lues = lire(phrase, trouve, types);
     if ('code' in lues) return { status: 'refuse', diagnostic: lues };
-    return { status: 'reconnu', instruction: construire(kind, lues) };
+    const construite = construire(kind, lues);
+    if ('code' in construite) {
+      // La portee d'un refus de construction est la phrase entiere : le defaut
+      // n'est pas dans un mot, il est dans la combinaison.
+      return { status: 'refuse',
+        diagnostic: { ...construite, range: { start: 0, end: phrase.length } } };
+    }
+    return { status: 'reconnu', instruction: construite };
   }
   for (const { motif, code, message } of PROCHES_COMPILES) {
     const trouve = motif.exec(phrase);

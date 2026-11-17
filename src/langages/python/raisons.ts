@@ -132,10 +132,18 @@ const FAMILLES: readonly Famille[] = [
   {
     raison: 'FORME_AUTRE — les fichiers existent en Python, et c’est une des familles les plus utiles ; mais '
       + 'ils s’ouvrent dans un bloc « with » qui ferme tout seul, se parcourent ligne par ligne, et n’ont '
-      + 'pas d’indicateur de fin de fichier à tester. Les phrases d’ouverture, de parcours et d’écriture '
-      + 'seront écrites pour cette forme, pas portées depuis « fopen » et « feof ».',
-    genres: ['FILE_DECL', 'FILE_OPEN', 'FILE_CLOSE', 'FILE_WRITE_TEXT', 'FILE_WRITE_INT',
+      + 'pas d’indicateur de fin de fichier à tester. Les phrases d’ouverture, de parcours et '
+      + 'd’écriture **sont écrites** pour cette forme (lots P5 et P6), et non portées depuis '
+      + '« fopen » et « feof » : un bloc « with », un parcours de lignes, et deux écritures.',
+    genres: ['FILE_DECL', 'FILE_OPEN', 'FILE_CLOSE', 'FILE_WRITE_INT',
       'FILE_READ_STRING', 'FILE_AT_END'],
+  },
+  {
+    raison: 'NOTION_ABSENTE — la méthode d’écriture de Python n’accepte qu’une CHAÎNE : écrire un '
+      + 'nombre demande de le convertir d’abord, et C-A ne convertit pas à votre place. La compétence '
+      + 's’enseigne par deux phrases, la conversion puis l’écriture — « Écris le texte … » et '
+      + '« Écris la chaîne … » sont, elles, portées.',
+    genres: ['FILE_WRITE_INT'],
   },
   {
     raison: 'ATTENTE (décision D12) — « Lis un entier depuis le fichier f dans x. » cacherait deux '

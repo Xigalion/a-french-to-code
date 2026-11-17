@@ -77,7 +77,7 @@ test('P5 : les intentions déclarées sont exactement celles qui sont rendues', 
   assert.deepEqual(mortes, [], 'intentions déclarées qu’aucun exemple n’atteint');
   const inconnues = [...rendues].filter(kind => !NATIVES_PYTHON.has(kind));
   assert.deepEqual(inconnues, [], 'intentions rendues et non déclarées');
-  assert.equal(NATIVES_PYTHON.size, 63);
+  assert.equal(NATIVES_PYTHON.size, 64);
   // Les dix-huit formulations du lot P4 restent toutes rendues : la refonte
   // declarative du lot P5 ne doit avoir rien perdu.
   for (const [, , kind] of EXACTS) assert.ok(NATIVES_PYTHON.has(kind), kind);
