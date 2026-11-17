@@ -19,3 +19,6 @@ passage 11 : vscode 1.138.0 | 99 reussis, 0 echecs  (branche phase-2, apres le l
 passage 12 : vscode 1.138.0 | 104 reussis, 0 echecs  (branche phase-2, lot S4 : souplesse dans l'editeur)
 
 passage 13 : vscode 1.138.0 | 109 reussis, 0 echecs  (branche phase-2, lot P4a : Python dans l'editeur)
+
+passage 14 : NON EXECUTE  (lot P4 : mutex vscode-updating detenu par l instance en cours ;
+             4 scenarios natifs ecrits et non prouves. Voir docs/phase2/LOT_P4_CONTRAT_ET_BILAN.md 9)

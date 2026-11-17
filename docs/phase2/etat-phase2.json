@@ -29,11 +29,11 @@
     },
     {
       "nom": "Phase 2 — lots d'implementation",
-      "fait": 5,
-      "total": 8,
-      "unite": "lots P0 a P6, plus P4a",
-      "source": "docs/phase2/LOT_P0_CONTRAT.md, LOT_P3_CONTRAT_ET_BILAN.md, LOT_P4A_CONTRAT_ET_BILAN.md, test/python.test.mjs, test/sessionPython.test.mjs",
-      "note": "P0, P1, P2, P3 et P4a livres. P4a : Python dans l'editeur, derriere un reglage desactive par defaut ; il a trouve deux defauts reels du placement indente (fins de ligne, pas d'indentation). Restent P4, P5, P6."
+      "fait": 6,
+      "total": 9,
+      "unite": "lots P0 a P6, plus P4a et S4",
+      "source": "docs/phase2/LOT_P0_CONTRAT.md, LOT_P3_CONTRAT_ET_BILAN.md, LOT_P4A_CONTRAT_ET_BILAN.md, LOT_P4_CONTRAT_ET_BILAN.md, LOT_S4_CONTRAT_ET_BILAN.md",
+      "note": "P0, P1, P2, P3, P4a et P4 livres. P4 : 14 intentions NATIVES, un programme de 41 instructions ecrit par la session de l'hote et execute. Restent P5, P6, S5."
     },
     {
       "nom": "Phase 2 — souplesse linguistique",
@@ -53,11 +53,11 @@
     },
     {
       "nom": "Phase 2 — decisions de contrat Python",
-      "fait": 4,
+      "fait": 13,
       "total": 13,
       "unite": "decisions du fondateur",
       "source": "docs/phase2/DECISIONS_PYTHON.md",
-      "note": "D8 caractere, D9 annotations, D10 aucun separateur, et le respect des differences semantiques : validees le 17 novembre et IMPLEMENTEES au lot P3. Restent D1 a D7, D11, D12, et D13 (le modulo) ouverte par le lot P3."
+      "note": "Les treize validees le 17 novembre. Appliquees au lot P4 : D1, D2, D3, D4, D7, D13, et D8/D9/D10 l'etaient au lot P3. D5, D6, D11 et D12 ouvrent des domaines entiers et sont le lot P5."
     },
     {
       "nom": "Phase 2 — intentions du catalogue C rendues en Python",
@@ -65,15 +65,23 @@
       "total": 84,
       "unite": "intentions",
       "source": "test/python.test.mjs, exercice/python/journal/execution.md",
-      "note": "32 rendues et testees, 52 refusees avec une raison ecrite : la partition des 84 est verifiee par un test. Le denominateur est 84 parce qu'il est MESURABLE ; le 39 de la sonde venait d'une experience jetable, avec d'autres criteres. Ce chiffre ne dit rien du catalogue natif : voir la barre suivante."
+      "note": "32 rendues et testees, 52 refusees avec une raison ecrite : la partition des 84 est verifiee par un test. Ce chiffre ne dit rien du catalogue natif : voir la barre suivante."
     },
     {
       "nom": "Phase 2 — intentions Python NATIVES concues",
-      "fait": 0,
-      "total": 31,
+      "fait": 14,
+      "total": 55,
       "unite": "intentions",
-      "source": "docs/phase2/INVENTAIRE_PYTHON.md §2",
-      "note": "Zero. C'est la ou est le travail pedagogique : range, for each, enumerate, dictionnaires, ensembles, methodes de chaines, with, match. Aucune n'est portee depuis C : elles sont a concevoir, et la plupart dependent d'une decision ouverte."
+      "source": "test/pythonNatif.test.mjs, docs/CATALOGUE_PYTHON.md 0, exercice/python/journal/execution-natif.md",
+      "note": "14 livrees, 16 formulations, 13 informations passives de plus. Les 41 autres restent a ecrire : dictionnaires, ensembles, chaines, tuples, match, with, exceptions. Le denominateur 55 est la proposition validee comme base de travail, pas un plafond."
+    },
+    {
+      "nom": "Phase 2 — validation par EXECUTION reelle",
+      "fait": 2,
+      "total": 2,
+      "unite": "programmes Python executes",
+      "source": "exercice/python/journal/execution.md, execution-natif.md",
+      "note": "2 programmes Python ecrits par C-A sans une retouche et executes par python3 : 16 et 41 instructions, sorties conformes a un calcul fait a la main. Le second passe par la session de l'hote. Zero programme Python compile par un tiers, et aucun ecrit par un humain."
     },
     {
       "nom": "Phase 2 — main intact",
@@ -81,7 +89,15 @@
       "total": 1,
       "unite": "verification",
       "source": "git diff main..HEAD -- src/ : non vide, et c'est voulu depuis P0",
-      "note": "main reste la V1 publique a l'etiquette v0.4.0. La branche porte P0, P1, P2, P3, P4a et S4, et n'est pas fusionnee."
+      "note": "main reste la V1 publique a l'etiquette v0.4.0. La branche porte P0 a P4 et S4, et n'est pas fusionnee."
+    },
+    {
+      "nom": "Phase 2 — usage humain reel, Python",
+      "fait": 0,
+      "total": 10,
+      "unite": "seances",
+      "source": "aucune : rien n est mesure",
+      "note": "Zero. Personne n a essaye Python, et le reglage c-a.python est desactive par defaut. Ce chiffre ne doit jamais etre confondu avec les precedents : les quatre autres barres mesurent ce qui est CONSTRUIT, celle-ci ce qui est VECU."
     }
   ]
 }

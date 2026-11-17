@@ -61,7 +61,10 @@ export type DemandePython = {
 const PAS_DEFAUT = 4;
 
 /** Les genres qui ouvrent un bloc en Python : leur en-tête finit par « : ». */
-const EN_TETES = new Set(['IF', 'ELSE_IF', 'ELSE', 'WHILE', 'FUNC_DEF']);
+const EN_TETES = new Set(['IF', 'ELSE_IF', 'ELSE', 'WHILE', 'FUNC_DEF',
+  // Lot P4 : les en-tetes du catalogue NATIF. La liste est explicite ici
+  // plutot qu'importee, pour que le placement ne depende pas du rendu.
+  'PY_POUR_INTERVALLE', 'PY_POUR_CHAQUE', 'PY_SI_PRINCIPAL']);
 /** Les genres qui continuent une chaîne conditionnelle. */
 const BRANCHES = new Set(['ELSE_IF', 'ELSE']);
 /** Les genres qui exigent une boucle englobante. */

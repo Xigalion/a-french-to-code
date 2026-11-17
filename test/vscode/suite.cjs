@@ -1241,6 +1241,51 @@ exports.run = async function run() {
         assert.ok(state.document.getText().includes('printf("%d", age);'));
       });
     });
+    // Lot P4 — les intentions NATIVES de Python, dans l'editeur reel.
+    await test('lot P4 : une intention native est inseree, avec son information', async () => {
+      await avecPython(async () => {
+        const state = await fixturePython('');
+        await preview('Cr\u00e9e une liste nomm\u00e9e notes avec les valeurs "12", "15" et "9".');
+        const codes = api.inspect().information.map(i => i.code);
+        assert.ok(codes.includes('PY_LIST_IS_MUTABLE'), codes.join(', '));
+        assert.ok(codes.every(code => code.startsWith('PY_')), codes.join(', '));
+        await inserted();
+        const fin = state.document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+        assert.equal(state.document.getText(),
+          '# Cr\u00e9e une liste nomm\u00e9e notes avec les valeurs "12", "15" et "9".'
+          + fin + 'notes: list = [12, 15, 9]');
+      });
+    });
+    await test('lot P4 : une boucle native place le curseur dans son corps', async () => {
+      await avecPython(async () => {
+        const state = await fixturePython('');
+        await preview('Cr\u00e9e une boucle pour chaque note de notes.');
+        await inserted();
+        const texte = state.document.getText();
+        assert.ok(texte.endsWith('for note in notes:'), texte);
+        assert.ok(!texte.includes('pass'));
+      });
+    });
+    await test('lot P4 : une liste sans contenu est refusee, et rien n est invente', async () => {
+      await avecPython(async () => {
+        const state = await fixturePython('');
+        await start('Cr\u00e9e une liste nomm\u00e9e notes.');
+        await accept();
+        const diagnostic = api.inspect().diagnostic;
+        assert.equal(diagnostic.code, 'MISSING_LIST_CONTENT');
+        assert.equal(diagnostic.stage, 'translation');
+        assert.equal(state.document.getText(), '');
+      });
+    });
+    await test('lot P4 : une phrase native est refusee dans un fichier .c', async () => {
+      // La propriete qui garantit que le moteur C17 n'a pas bouge : le
+      // catalogue natif de Python n'est atteignable que par un .py.
+      const state = await fixture(CORPS);
+      await start('Cr\u00e9e une liste vide nomm\u00e9e notes.');
+      await accept();
+      assert.equal(api.inspect().diagnostic.stage, 'translation');
+      assert.equal(state.document.getText(), CORPS);
+    });
     await test('changer indentSize seul invalide le plan', async () => {
       const { editor } = await fixture();
       await preview('Crée la fonction principale');

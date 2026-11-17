@@ -11,9 +11,9 @@
 //   1. les intentions du catalogue C que Python rend aujourd'hui ;
 //   2. celles qu'il refuse, avec la raison et la construction native.
 //
-// Il ne dit PAS ce que sera le catalogue pédagogique Python : les intentions
-// natives — range, dictionnaires, with, match — n'existent pas encore.
-// Elles sont proposées dans docs/phase2/CATALOGUE_NATIF_PYTHON_PROPOSE.md.
+// Depuis le lot P4, il dit une TROISIÈME chose : les intentions NATIVES
+// livrées, celles qui n'existent dans aucun catalogue C. Les autres restent
+// proposées dans docs/phase2/CATALOGUE_NATIF_PYTHON_PROPOSE.md.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,6 +22,8 @@ import { rendre } from '../src/langages/registre.ts';
 import { PYTHON } from '../src/langages/python/langage.ts';
 import { expliquerPython } from '../src/langages/python/informations.ts';
 import { RAISONS_PYTHON } from '../src/langages/python/raisons.ts';
+import { EXEMPLES_NATIFS } from '../src/langages/python/instructions.ts';
+import { NATIVES_PYTHON, EN_TETES_NATIFS } from '../src/langages/python/renduNatif.ts';
 import { PORTEES_PYTHON } from '../src/langages/python/rendu.ts';
 
 const racine = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -53,6 +55,19 @@ for (const phrase of phrases) {
 // document et le bilan du lot P3 affichent deux nombres qui se contredisent.
 const porteesMaisRefusees = [...refuses.values()].filter(item => PORTEES_PYTHON.has(item.genre));
 
+/** Le catalogue NATIF, engendré depuis les exemples publiés par le moteur. */
+const natifs = [];
+for (const phrase of EXEMPLES_NATIFS) {
+  const resultat = PYTHON.natif(phrase);
+  if (resultat === undefined || resultat.status !== 'rendu') {
+    console.error('EXEMPLE NATIF NON RENDU : ' + phrase);
+    process.exit(1);
+  }
+  natifs.push({ kind: resultat.kind, phrase,
+    code: resultat.code.replace(/\n$/u, '').split('\n').join(' ⏎ '),
+    informations: resultat.informations.map(information => information.code) });
+}
+
 const L = [];
 const dire = texte => L.push(texte);
 dire('# Catalogue Python — ce que C-A écrit aujourd’hui');
@@ -71,6 +86,26 @@ dire('> État : **lot P3**, branche `phase-2-architecture`. Python n’est pas d
 dire('> la version publique, et la commande VS Code n’ouvre pas encore de `.py`.');
 dire('');
 dire('Le symbole ⏎ marque une fin de ligne dans le code produit.');
+dire('');
+dire(`## 0. Les ${NATIVES_PYTHON.size} intentions NATIVES de Python`);
+dire('');
+dire(`${natifs.length} formulations pour ${NATIVES_PYTHON.size} intentions : la conversion en`);
+dire('compte trois — entier, réel, texte — et c’est une seule intention.');
+dire('');
+dire('Elles n’existent dans aucun catalogue C, et c’est le catalogue pédagogique');
+dire('de Python qui commence ici. **Aucune n’est acceptée par le catalogue');
+dire('partagé** : un test le vérifie, sinon elles écriraient aussi du C.');
+dire('');
+dire('| Phrase française | Python produit | Informations passives |');
+dire('|---|---|---|');
+for (const item of natifs) {
+  dire(`| \`${item.phrase}\` | \`${item.code}\` | ${item.informations.join(', ') || '—'} |`);
+}
+dire('');
+dire(`Intentions natives livrées : **${NATIVES_PYTHON.size}**, dont **${EN_TETES_NATIFS.size}** ouvrent un bloc.`);
+dire('Sur les **55** proposées : il en reste **' + (55 - NATIVES_PYTHON.size) + '** à écrire,');
+dire('et elles sont détaillées, formulation par formulation, dans');
+dire('`docs/phase2/CATALOGUE_NATIF_PYTHON_PROPOSE.md`.');
 dire('');
 dire(`## 1. Les ${rendus.length} intentions rendues`);
 dire('');
@@ -139,6 +174,8 @@ dire(`- intentions du catalogue C balayées : **${vues.size}**`);
 dire(`- intentions portées par le lot P3 : **${PORTEES_PYTHON.size}**, dont **${rendus.length}** avec une phrase d’exemple rendable`);
 dire(`- intentions non portées : **${refuses.size - porteesMaisRefusees.length}**`);
 dire(`- raisons écrites au registre : **${RAISONS_PYTHON.size}**`);
+dire(`- intentions natives livrées : **${NATIVES_PYTHON.size}**`);
+dire(`- total des intentions que Python sait écrire : **${PORTEES_PYTHON.size + NATIVES_PYTHON.size}**`);
 dire('');
 dire('La partition est vérifiée par `test/python.test.mjs` : chacune des 84');
 dire('intentions est soit rendue, soit refusée avec une raison, jamais les deux,');
@@ -149,6 +186,7 @@ writeFileSync(join(racine, 'docs', 'CATALOGUE_PYTHON.md'), L.join('\n'), 'utf8')
 console.log('intentions balayées :', vues.size);
 console.log('rendues             :', rendus.length);
 console.log('refusées            :', refuses.size);
+console.log('natives livrées     :', NATIVES_PYTHON.size);
 console.log('rapport             : docs/CATALOGUE_PYTHON.md');
 if (vues.size !== rendus.length + refuses.size) {
   console.error('INCOHÉRENCE : la somme ne fait pas le compte.');

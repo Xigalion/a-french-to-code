@@ -43,12 +43,15 @@ function integration(code: string, message: string): Failure {
   return { status: 'error', diagnostic: { stage: 'integration', code, message } };
 }
 
-type Lecture = {
-  strict: TranslationResult;
-  translation?: Extract<TranslationResult, { status: 'translated' }>;
-  normalisation?: Normalisation;
-  diagnostic?: SessionDiagnostic;
-};
+/** Par quelle voie la phrase a été comprise. Les trois sont exclusives, et
+ * leur ORDRE est la garantie du lot : le catalogue partagé d'abord — une
+ * phrase qu'il accepte se comporte donc exactement comme en C17 —, puis le
+ * catalogue natif de Python, puis, seulement si l'utilisateur l'a demandé, la
+ * couche de variantes. */
+type Resolution =
+  | { via: 'porte'; translation: Extract<TranslationResult, { status: 'translated' }>; normalisation?: Normalisation }
+  | { via: 'natif'; kind: string; code: string; informations: readonly InformationAffichable[] }
+  | { via: 'refus'; diagnostic: SessionDiagnostic };
 
 export class PythonTranslationSession {
   private readonly initial: TargetState;
@@ -78,34 +81,61 @@ export class PythonTranslationSession {
 
   get normalisation(): Normalisation | undefined {
     if (!['editing', 'preparing', 'review'].includes(this.currentPhase)) return undefined;
-    const valeur = this.pending?.normalisation ?? this.lire().normalisation;
+    const resolution = this.resoudre();
+    const valeur = this.pending?.normalisation
+      ?? (resolution.via === 'porte' ? resolution.normalisation : undefined);
     return valeur === undefined ? undefined : { ...valeur };
   }
 
   get information(): InformationAffichable[] {
     if (!['editing', 'preparing', 'review'].includes(this.currentPhase)) return [];
-    const valeurs = this.pending?.information
-      ?? expliquerPython(this.lire().translation ?? translate(this.text));
+    const valeurs = this.pending?.information ?? this.informationsDe(this.resoudre());
     return valeurs.map(valeur => ({ ...valeur, range: { ...valeur.range } }));
   }
 
-  /** Strict d'abord, exactement comme la session C : une phrase du catalogue
-   * ne traverse jamais la couche de variantes. */
-  private lire(): Lecture {
+  private informationsDe(resolution: Resolution): readonly InformationAffichable[] {
+    if (resolution.via === 'porte') return expliquerPython(resolution.translation);
+    if (resolution.via === 'natif') return resolution.informations;
+    return [];
+  }
+
+  /** Les trois voies, dans l'ordre. C'est la seule fonction qui décide de
+   * quel catalogue vient une phrase. */
+  private resoudre(): Resolution {
+    // 1. Le catalogue PARTAGÉ d'abord, toujours. Une phrase qu'il accepte ne
+    //    traverse ni le catalogue natif ni la couche de variantes.
     const strict = translate(this.text);
-    if (strict.status === 'translated') return { strict, translation: strict };
-    if (!this.souple) return { strict };
+    if (strict.status === 'translated') return { via: 'porte', translation: strict };
+
+    // 2. Le catalogue NATIF de Python. `undefined` veut dire « ce n'est pas
+    //    une de mes phrases » : le diagnostic du catalogue partagé est alors
+    //    celui que l'utilisateur doit lire, et on le garde.
+    const natif = PYTHON.natif?.(this.text);
+    if (natif !== undefined) {
+      if (natif.status === 'rendu') {
+        return { via: 'natif', kind: natif.kind, code: natif.code, informations: natif.informations };
+      }
+      // Un refus du catalogue natif est un défaut de COMPRÉHENSION de la
+      // phrase, sauf celui qui vient du rendu d'une construction.
+      return { via: 'refus', diagnostic: {
+        stage: natif.code === 'CONSTRUCTION_NON_PORTEE' ? 'rendu' : 'translation',
+        code: natif.code, message: natif.message, range: natif.range } };
+    }
+
+    const refusStrict: SessionDiagnostic = { stage: 'translation', ...strict.diagnostics[0] };
+    // 3. La couche de variantes, et seulement si l'utilisateur l'a activée.
+    if (!this.souple) return { via: 'refus', diagnostic: refusStrict };
     const verdict = normaliser(this.text);
     if (verdict.verdict === 'normalise' || verdict.verdict === 'resolu') {
-      return { strict, translation: verdict.resultat,
+      return { via: 'porte', translation: verdict.resultat,
         normalisation: { source: verdict.source, canonique: verdict.canonique, lectures: verdict.lecturesEssayees } };
     }
     if (verdict.verdict === 'ambigu') {
-      return { strict, diagnostic: { stage: 'variantes', code: verdict.code,
+      return { via: 'refus', diagnostic: { stage: 'variantes', code: verdict.code,
         message: verdict.message + ' Lectures possibles : '
           + verdict.lectures.map(lecture => `« ${lecture.phrase} » (${lecture.intention})`).join(' ; ') + '.' } };
     }
-    return { strict };
+    return { via: 'refus', diagnostic: refusStrict };
   }
 
   updateText(text: string): void {
@@ -157,17 +187,20 @@ export class PythonTranslationSession {
   { status: 'planifie'; plan: PlanApplicable; after: string; information: InformationAffichable[];
     normalisation?: Normalisation }
   | Failure {
-    const lecture = this.lire();
-    if (lecture.diagnostic) return { status: 'error', diagnostic: lecture.diagnostic };
-    const translated = lecture.translation;
-    if (!translated) {
-      const refus = lecture.strict;
-      if (refus.status !== 'rejected') throw new Error('Invariant interne : refus attendu.');
-      return { status: 'error', diagnostic: { stage: 'translation', ...refus.diagnostics[0] } };
-    }
-    const rendu = rendre(PYTHON, translated.instruction);
-    if (rendu.status !== 'rendu') {
-      return { status: 'error', diagnostic: { stage: 'rendu', code: rendu.code, message: rendu.raison } };
+    const resolution = this.resoudre();
+    if (resolution.via === 'refus') return { status: 'error', diagnostic: resolution.diagnostic };
+    let code: string;
+    let kind: string;
+    if (resolution.via === 'natif') {
+      code = resolution.code;
+      kind = resolution.kind;
+    } else {
+      const rendu = rendre(PYTHON, resolution.translation.instruction);
+      if (rendu.status !== 'rendu') {
+        return { status: 'error', diagnostic: { stage: 'rendu', code: rendu.code, message: rendu.raison } };
+      }
+      code = rendu.code;
+      kind = resolution.translation.instruction.kind;
     }
     const pas = PythonTranslationSession.pas(target);
     if (pas === undefined) {
@@ -177,8 +210,7 @@ export class PythonTranslationSession {
     }
     const plan: PlanPython = planifierPython({
       document: { text: target.document.text }, cursorOffset: target.cursorOffset,
-      comment: PYTHON.commentaire(this.text), code: rendu.code,
-      kind: translated.instruction.kind, eol: target.eol, pas,
+      comment: PYTHON.commentaire(this.text), code, kind, eol: target.eol, pas,
     });
     if (plan.status !== 'planifie') {
       return { status: 'error', diagnostic: { stage: 'placement', ...plan.diagnostics[0] } };
@@ -192,8 +224,9 @@ export class PythonTranslationSession {
         cursorAfter: plan.cursor?.offset ?? edit.range.start + edit.newText.length,
         source: { text: this.text } },
       after,
-      information: expliquerPython(translated),
-      ...(lecture.normalisation ? { normalisation: lecture.normalisation } : {}),
+      information: [...this.informationsDe(resolution)],
+      ...(resolution.via === 'porte' && resolution.normalisation
+        ? { normalisation: resolution.normalisation } : {}),
     };
   }
 

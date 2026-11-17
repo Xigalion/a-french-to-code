@@ -19,6 +19,23 @@ export type RenduResultat =
   // refus nommes ; les confondre cacherait laquelle des deux il faut traiter.
   | { status: 'refus'; code: 'INTENTION_NON_PORTEE' | 'CONSTRUCTION_NON_PORTEE'; raison: string };
 
+/** Une information passive, quel que soit le langage. Les codes diffèrent
+ * d'un langage à l'autre, et les réunir dans une seule union serait forcer
+ * un langage dans le moule de l'autre. */
+export type InformationLangage = {
+  code: string; severity: 'information'; range: { start: number; end: number }; message: string;
+};
+
+/** Le résultat du catalogue **propre** à un langage : des intentions qui
+ * n'existent pas dans le catalogue partagé.
+ *
+ * `undefined` signifie « cette phrase n'appartient pas à ce catalogue », et il
+ * ne faut pas le confondre avec un refus : dans le premier cas, c'est le
+ * diagnostic du catalogue partagé que l'utilisateur doit lire. */
+export type ResultatNatif =
+  | { status: 'rendu'; kind: string; code: string; informations: readonly InformationLangage[] }
+  | { status: 'refus'; code: string; message: string; range: { start: number; end: number } };
+
 export type Langage = {
   readonly nom: string;
   /** Extensions de fichier que ce langage reconnaît, point compris. */
@@ -34,6 +51,10 @@ export type Langage = {
    * absente de `portees` : un refus sans raison n'apprend rien. */
   readonly raisons: ReadonlyMap<string, string>;
   readonly rendre: (instruction: Instruction) => RenduResultat;
+  /** Le catalogue pédagogique propre au langage. `undefined` : le langage n'en
+   * a pas, et C17 est dans ce cas — les 84 intentions ont été conçues pour
+   * lui, il n'a rien à ajouter. */
+  readonly natif?: (text: string) => ResultatNatif | undefined;
 };
 
 /** Tous les genres d'intention que le moteur publie. La liste vient de la

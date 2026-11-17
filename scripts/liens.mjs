@@ -23,6 +23,11 @@ const suivis = new Set(execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8
 
 const documents = [...suivis].filter(chemin => chemin.endsWith('.md'));
 const problemes = [];
+/** Dossiers ignorés par git : ce qu'on y cite est une trace locale, pas un
+ * chemin du dépôt. La liste est explicite, et non déduite de `.gitignore` :
+ * un dossier ignoré pour une autre raison ne doit pas devenir invérifiable. */
+const TRACES = ['.cache/', 'dist/', 'extension/out/', 'node_modules/'];
+let traces = 0;
 let liens = 0;
 let citations = 0;
 
@@ -69,6 +74,13 @@ for (const document of documents) {
     if (texte.includes('*') || texte.includes('{')) continue; // un motif, pas un chemin
     if (texte.includes('<') || texte.includes('>')) continue;  // un gabarit, pas un chemin
     if (HISTORIQUES.has(texte)) continue;
+    // Une TRACE locale n'est pas un chemin du dépôt : `.cache/`, `dist/` et
+    // `extension/out/` sont ignorés par git, et les documents qui les citent
+    // le disent (« traces finales locales »). Vérifier leur existence ne
+    // mesurait donc que l'état de CETTE machine : le contrôle passait ici et
+    // aurait échoué sur un clone neuf. Trouvé le 17 novembre 2026, quand une
+    // suite hôte en échec a supprimé le rapport qu'elle produit.
+    if (TRACES.some(prefixe => texte.startsWith(prefixe))) { traces++; continue; }
     citations++;
     const chemin = normalize(texte.replace(/^\.\//u, ''));
     const absolu = resolve(racine, chemin);
@@ -86,6 +98,7 @@ for (const document of documents) {
 console.log('documents          : ' + documents.length);
 console.log('liens Markdown     : ' + liens);
 console.log('chemins cités      : ' + citations);
+console.log('traces locales      : ' + traces + '  (hors dépôt, non vérifiables)');
 console.log('problèmes          : ' + problemes.length);
 for (const probleme of problemes) console.log('  ' + probleme);
 process.exit(problemes.length === 0 ? 0 : 1);

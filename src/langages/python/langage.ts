@@ -14,6 +14,9 @@ import { inscrire } from '../registre.ts';
 import type { Langage } from '../registre.ts';
 import { PORTEES_PYTHON, rendrePython } from './rendu.ts';
 import { RAISONS_PYTHON } from './raisons.ts';
+import { analyserCataloguePython } from './instructions.ts';
+import { rendrePythonNatif } from './renduNatif.ts';
+import { expliquerNatifPython } from './informations.ts';
 
 export const PYTHON: Langage = {
   nom: 'python',
@@ -30,6 +33,25 @@ export const PYTHON: Langage = {
       // portée, mais la construction qu'elle contient ne l'est pas — une
       // division, un pointeur dans une expression, un nom réservé.
       : { status: 'refus', code: 'CONSTRUCTION_NON_PORTEE', raison: resultat.raison };
+  },
+  // Le catalogue NATIF, lot P4. Une seule entrée : analyse, rendu et
+  // informations d'un coup, parce que pour une intention native la phrase
+  // française et le code produit appartiennent au même module. L'intérieur
+  // reste séparé en trois fichiers, chacun testé pour lui-même.
+  natif: (text) => {
+    const analyse = analyserCataloguePython(text);
+    if (analyse === undefined) return undefined;
+    if (analyse.status === 'refuse') {
+      return { status: 'refus', code: analyse.diagnostic.code,
+        message: analyse.diagnostic.message, range: analyse.diagnostic.range };
+    }
+    const rendu = rendrePythonNatif(analyse.instruction);
+    if (rendu.status === 'refus') {
+      return { status: 'refus', code: 'CONSTRUCTION_NON_PORTEE',
+        message: rendu.raison, range: { start: 0, end: text.length } };
+    }
+    return { status: 'rendu', kind: analyse.instruction.kind, code: rendu.code,
+      informations: expliquerNatifPython(analyse.instruction.kind, { start: 0, end: text.length }) };
   },
 };
 

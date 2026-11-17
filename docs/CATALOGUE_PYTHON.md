@@ -15,6 +15,39 @@ Engendré par `node scripts/catalogue-python.mjs`. **Ne pas éditer à la main.*
 
 Le symbole ⏎ marque une fin de ligne dans le code produit.
 
+## 0. Les 14 intentions NATIVES de Python
+
+16 formulations pour 14 intentions : la conversion en
+compte trois — entier, réel, texte — et c’est une seule intention.
+
+Elles n’existent dans aucun catalogue C, et c’est le catalogue pédagogique
+de Python qui commence ici. **Aucune n’est acceptée par le catalogue
+partagé** : un test le vérifie, sinon elles écriraient aussi du C.
+
+| Phrase française | Python produit | Informations passives |
+|---|---|---|
+| `Crée une liste vide nommée notes.` | `notes: list = []` | PY_LIST_GROWS, PY_ANNOTATION_NOT_CHECKED |
+| `Crée une liste nommée notes avec les valeurs "12", "15" et "9".` | `notes: list = [12, 15, 9]` | PY_LIST_IS_MUTABLE, PY_LIST_GROWS, PY_ANNOTATION_NOT_CHECKED |
+| `Ajoute "18" à la fin de notes.` | `notes.append(18)` | PY_LIST_GROWS, PY_ITERATING_WHILE_MODIFYING |
+| `Affecte à nombre le nombre d’éléments de notes.` | `nombre = len(notes)` | PY_LEN_IS_NOT_SIZEOF |
+| `Crée une boucle pour i de "0" jusqu’avant "10".` | `for i in range(0, 10):` | PY_BLOCK_NEEDS_A_BODY, PY_RANGE_EXCLUDES_THE_END, PY_LOOP_VARIABLE_SURVIVES |
+| `Crée une boucle pour chaque note de notes.` | `for note in notes:` | PY_BLOCK_NEEDS_A_BODY, PY_LOOP_VARIABLE_SURVIVES, PY_ITERATING_WHILE_MODIFYING |
+| `Affecte à q le quotient entier de "total" par "nombre".` | `q = (total // nombre)` | PY_FLOOR_DIVISION_ROUNDS_DOWN |
+| `Affecte à q le quotient réel de "total" par "nombre".` | `q = (total / nombre)` | PY_REAL_DIVISION_IS_ALWAYS_REAL |
+| `Affecte à r le reste entier de "total" par "nombre".` | `r = (total % nombre)` | PY_MODULO_FOLLOWS_THE_DIVISOR_SIGN, PY_FLOOR_DIVISION_ROUNDS_DOWN |
+| `Crée une chaîne nommée nom avec le texte "Ada".` | `nom: str = "Ada"` | PY_ANNOTATION_NOT_CHECKED |
+| `Crée un booléen nommé actif de valeur vrai.` | `actif: bool = True` | PY_BOOL_IS_AN_INT, PY_ANNOTATION_NOT_CHECKED |
+| `Affecte à n l’entier obtenu de texte.` | `n = int(texte)` | PY_CONVERSION_CAN_RAISE |
+| `Affecte à x le réel obtenu de texte.` | `x = float(texte)` | PY_CONVERSION_CAN_RAISE |
+| `Affecte à s le texte obtenu de n.` | `s = str(n)` | PY_CONVERSION_CAN_RAISE |
+| `Lis une saisie dans reponse.` | `reponse = input()` | PY_INPUT_IS_ALWAYS_A_STRING |
+| `Crée le point d’entrée principal.` | `if __name__ == "__main__":` | PY_BLOCK_NEEDS_A_BODY, PY_MAIN_IS_A_CONVENTION |
+
+Intentions natives livrées : **14**, dont **3** ouvrent un bloc.
+Sur les **55** proposées : il en reste **41** à écrire,
+et elles sont détaillées, formulation par formulation, dans
+`docs/phase2/CATALOGUE_NATIF_PYTHON_PROPOSE.md`.
+
 ## 1. Les 30 intentions rendues
 
 | Phrase française | Python produit | Informations passives |
@@ -151,6 +184,8 @@ répond alors `CONSTRUCTION_NON_PORTEE`.
 - intentions portées par le lot P3 : **32**, dont **30** avec une phrase d’exemple rendable
 - intentions non portées : **52**
 - raisons écrites au registre : **52**
+- intentions natives livrées : **14**
+- total des intentions que Python sait écrire : **46**
 
 La partition est vérifiée par `test/python.test.mjs` : chacune des 84
 intentions est soit rendue, soit refusée avec une raison, jamais les deux,
