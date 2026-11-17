@@ -300,3 +300,21 @@ test('P3 : le programme d’exercice est reproduit par le moteur, trait pour tra
   // phrase EXACTE, dans la syntaxe de Python.
   for (const [, phrase] of etapes) assert.ok(document.includes('# ' + phrase), phrase);
 });
+
+test('P3 : la proposition de catalogue natif et l’inventaire ne derivent pas', () => {
+  // Deux documents qui se citent et qu'aucun outil ne compare finissent par se
+  // contredire : l'inventaire annoncait 31 intentions nouvelles et ses propres
+  // tableaux en comptaient 55. Ce test compare les NOMS, qui sont ce que les
+  // deux documents ont de verifiable.
+  const noms = chemin => new Set((readFileSync(new URL(chemin, import.meta.url), 'utf8')
+    .match(/PY_[A-Z_]+/gu) ?? []).filter(nom => nom !== 'PY_'));
+  const inventaire = noms('../docs/phase2/INVENTAIRE_PYTHON.md');
+  const propose = noms('../docs/phase2/CATALOGUE_NATIF_PYTHON_PROPOSE.md');
+  const oubliees = [...inventaire].filter(nom => !propose.has(nom));
+  assert.deepEqual(oubliees, [], 'nommées par l’inventaire, absentes de la proposition');
+  assert.ok(inventaire.size >= 55, 'inventaire : ' + inventaire.size);
+  // La proposition en nomme davantage : elle ajoute les codes d'information et
+  // PY_MODULO, ouvert par la décision D13 du lot P3.
+  assert.ok(propose.has('PY_MODULO'));
+  assert.ok(propose.has('PY_MATCH_DOES_NOT_FALL_THROUGH'));
+});

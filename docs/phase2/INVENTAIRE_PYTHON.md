@@ -17,7 +17,10 @@ Python V1 — qui n'est pas le périmètre de réutilisation de C-A.
 > adaptables sont **37**, pas 22, et 6 intentions de plus forment la classe
 > « structure de blocs » : la somme exacte est `17 + 37 + 6 + 24 = 84`. Et
 > `NUMERIC_CONVERT` n'existe pas : la conversion explicite est un nœud
-> `cast` dans une expression, pas une intention. Le nom venait de la table
+> `cast` dans une expression, pas une intention. Et les intentions natives
+> proposées sont **55**, pas 31 : le compte des tableaux de la section 2
+> n'avait jamais été additionné. Un test compare désormais les noms de ce
+> document à ceux de la proposition. Le nom venait de la table
 > de `scripts/audit-architecture.mjs`, qui signalait les classes
 > orphelines sans échouer ; elle échoue désormais.
 > Voir `docs/phase2/LOT_P3_CONTRAT_ET_BILAN.md` §7.
@@ -30,10 +33,11 @@ Python V1 — qui n'est pas le périmètre de réutilisation de C-A.
 | **adaptables** | 37 | réutilisées, autre forme produite ; la phrase française reste |
 | **structure de blocs** | 6 | réutilisées, mais leur POSE change : `if`, `elif`, `else`, `while`, `for`, `def` |
 | **propres à C** | 24 | **non portées**, et chacune nomme la construction Python qui enseigne la même compétence |
-| **nouvelles, propres à Python** | **31 proposées** | à concevoir : c'est là qu'est le vrai travail pédagogique |
+| **nouvelles, propres à Python** | **55 proposées** | à concevoir : c'est là qu'est le vrai travail pédagogique. Formulations exactes dans `CATALOGUE_NATIF_PYTHON_PROPOSE.md` |
 
-**Python V1 viserait donc ~70 intentions**, dont 31 n'existent pas
-aujourd'hui. Le chiffre de 37 mesuré par la sonde n'était pas un périmètre :
+**Python V1 viserait donc ~70 intentions**, et il faudra donc CHOISIR : 32
+sont portées depuis C-A au lot P3, et 55 natives sont proposées, soit 87 si
+tout était livré. Aucune des 55 n'existe aujourd'hui. Le chiffre de 37 mesuré par la sonde n'était pas un périmètre :
 c'était la part de C-A qui se recycle.
 
 ### Une correction à la mesure de la sonde
