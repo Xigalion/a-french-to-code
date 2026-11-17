@@ -4,8 +4,9 @@ import type { CalculationAdvisory } from '../../src/calculationAdvisories.ts';
 import { explainInstruction } from '../../src/pedagogicalInformation.ts';
 import type { PedagogicalInformation } from '../../src/pedagogicalInformation.ts';
 import { planPlacement, validatePlan } from '../../src/planPlacement.ts';
+import { normaliser } from '../../src/langue/variantes.ts';
 import type { DocumentSnapshot, PlacementPlan } from '../../src/planPlacement.ts';
-import type { SourceRange } from '../../src/translate.ts';
+import type { SourceRange, TranslationResult } from '../../src/translate.ts';
 
 export type TargetState = {
   document: DocumentSnapshot;
@@ -17,12 +18,28 @@ export type TargetState = {
   open: boolean;
 };
 export type SessionDiagnostic = {
-  stage: 'translation' | 'placement' | 'integration';
+  stage: 'translation' | 'placement' | 'integration' | 'variantes';
   code: string;
   message: string;
   range?: SourceRange;
 };
 export type Preview = { token: number; before: string; after: string; eol: '\n' | '\r\n' };
+/** What the flexibility layer did, when it did anything. Shown for review:
+ * the user must see the catalogue sentence C-A understood, otherwise the
+ * normalisation would be an implicit behaviour. */
+export type Normalisation = { source: string; canonique: string; lectures: number };
+/** Strict mode is the default. The flexible mode is opt-in, and it only ever
+ * runs on a sentence the strict engine has already refused. */
+export type SessionOptions = { souple?: boolean };
+type Lecture = {
+  /** What the strict engine answered on the user's own sentence. */
+  strict: TranslationResult;
+  /** The translation to build the plan from, strict or normalised. */
+  translation?: Extract<TranslationResult, { status: 'translated' }>;
+  normalisation?: Normalisation;
+  /** A refusal the flexible layer produces and the strict engine cannot. */
+  diagnostic?: SessionDiagnostic;
+};
 type Failure = { status: 'error'; diagnostic: SessionDiagnostic };
 
 function integration(code: string, message: string): Failure {
@@ -32,22 +49,57 @@ function integration(code: string, message: string): Failure {
 /** The native UI and a future persistent UI share this session, not their widgets. */
 export class TranslationSession {
   private readonly initial: TargetState;
-  private pending: { token: number; plan: PlacementPlan; after: string; advisories: CalculationAdvisory[]; information: PedagogicalInformation[] } | undefined;
+  private pending: { token: number; plan: PlacementPlan; after: string; advisories: CalculationAdvisory[];
+    information: PedagogicalInformation[]; normalisation?: Normalisation } | undefined;
   private counter = 0;
   private invalidation: string | undefined;
   private currentPhase: 'editing' | 'preparing' | 'review' | 'stale' | 'applying' | 'done' | 'cancelled' = 'editing';
   private text = '';
+  private readonly souple: boolean;
 
-  constructor(target: TargetState, draft = '') {
+  constructor(target: TargetState, draft = '', options: SessionOptions = {}) {
     this.initial = { ...target, document: { ...target.document } };
     this.text = draft;
+    this.souple = options.souple === true;
   }
 
   get phase(): string { return this.currentPhase; }
   get draft(): string { return this.text; }
+  get flexible(): boolean { return this.souple; }
+  /** The normalisation the current draft would use, or undefined. */
+  get normalisation(): Normalisation | undefined {
+    if (!['editing', 'preparing', 'review'].includes(this.currentPhase)) return undefined;
+    const value = this.pending?.normalisation ?? this.lire().normalisation;
+    return value === undefined ? undefined : { ...value };
+  }
+
+  /** The single place that decides WHICH sentence is translated.
+   *
+   * Strict first, always: a catalogue sentence never traverses the flexible
+   * layer, so the strict mode is bit-for-bit what it was. The layer runs only
+   * on a refusal, and only when the user turned it on. A refusal it cannot
+   * resolve keeps the STRICT diagnostic: rule 5 says the diagnostic teaches,
+   * and the strict one is the one that names what is missing.
+   */
+  private lire(): Lecture {
+    const strict = translate(this.text);
+    if (strict.status === 'translated') return { strict, translation: strict };
+    if (!this.souple) return { strict };
+    const verdict = normaliser(this.text);
+    if (verdict.verdict === 'normalise' || verdict.verdict === 'resolu') {
+      return { strict, translation: verdict.resultat,
+        normalisation: { source: verdict.source, canonique: verdict.canonique, lectures: verdict.lecturesEssayees } };
+    }
+    if (verdict.verdict === 'ambigu') {
+      return { strict, diagnostic: { stage: 'variantes', code: verdict.code,
+        message: verdict.message + ' Lectures possibles : '
+          + verdict.lectures.map(lecture => `« ${lecture.phrase} » (${lecture.intention})`).join(' ; ') + '.' } };
+    }
+    return { strict };
+  }
   get information(): PedagogicalInformation[] {
     if (!['editing', 'preparing', 'review'].includes(this.currentPhase)) return [];
-    const values = this.pending?.information ?? explainInstruction(translate(this.text));
+    const values = this.pending?.information ?? explainInstruction(this.lire().translation ?? translate(this.text));
     return values.map(value => ({ ...value, range: { ...value.range } }));
   }
   /** The line the plan was proven to relate to: an if chain root, or the loop
@@ -66,7 +118,7 @@ export class TranslationSession {
 
   get advisories(): CalculationAdvisory[] {
     if (this.currentPhase !== 'editing' && this.currentPhase !== 'preparing' && this.currentPhase !== 'review') return [];
-    const values = this.pending?.advisories ?? analyzeCalculations(translate(this.text)).advisories;
+    const values = this.pending?.advisories ?? analyzeCalculations(this.lire().translation ?? translate(this.text)).advisories;
     return values.map(value => ({ ...value, range: { ...value.range } }));
   }
 
@@ -109,10 +161,17 @@ export class TranslationSession {
   diagnose(target: TargetState): SessionDiagnostic | undefined {
     const failure = this.checkTarget(target);
     if (failure) return failure.diagnostic;
-    const translated = translate(this.text);
-    if (translated.status === 'rejected') return { stage: 'translation', ...translated.diagnostics[0] };
+    const lecture = this.lire();
+    if (lecture.diagnostic) return lecture.diagnostic;
+    const translated = lecture.translation;
+    if (!translated) {
+      const refusal = lecture.strict;
+      if (refusal.status !== 'rejected') throw new Error('Invariant interne : refus attendu.');
+      return { stage: 'translation', ...refusal.diagnostics[0] };
+    }
     const placed = planPlacement({ document: target.document, cursorOffset: target.cursorOffset,
-      indentUnit: target.indentUnit, fallbackEol: target.eol, translation: translated });
+      indentUnit: target.indentUnit, fallbackEol: target.eol, translation: translated,
+      ...(lecture.normalisation ? { originalSentence: this.text } : {}) });
     if (placed.status === 'rejected') return { stage: 'placement', ...placed.diagnostics[0] };
     return undefined;
   }
@@ -122,17 +181,21 @@ export class TranslationSession {
     if (this.currentPhase !== 'editing') return integration('SESSION_NOT_EDITABLE', 'Cette session ne peut pas préparer un nouvel aperçu.');
     const diagnostic = this.diagnose(target);
     if (diagnostic) return { status: 'error', diagnostic };
-    const translated = translate(this.text);
-    if (translated.status !== 'translated') return integration('INTERNAL_ERROR', 'La traduction n’a pas pu être préparée.');
+    const lecture = this.lire();
+    const translated = lecture.translation;
+    if (!translated) return integration('INTERNAL_ERROR', 'La traduction n’a pas pu être préparée.');
     const result = planPlacement({ document: target.document, cursorOffset: target.cursorOffset,
-      indentUnit: target.indentUnit, fallbackEol: target.eol, translation: translated });
+      indentUnit: target.indentUnit, fallbackEol: target.eol, translation: translated,
+      ...(lecture.normalisation ? { originalSentence: this.text } : {}) });
     if (result.status !== 'planned') return integration('INTERNAL_ERROR', 'Le placement n’a pas pu être préparé.');
     const plan = result.plan;
     const edit = plan.edits[0];
     if (plan.edits.length !== 1 || !edit) return integration('INTERNAL_ERROR', 'Un plan à emplacement unique est requis.');
     const after = plan.base.text.slice(0, edit.range.start) + edit.newText + plan.base.text.slice(edit.range.end);
     const token = ++this.counter;
-    this.pending = { token, plan, after, advisories: analyzeCalculations(translated).advisories, information: explainInstruction(translated) };
+    this.pending = { token, plan, after, advisories: analyzeCalculations(translated).advisories,
+      information: explainInstruction(translated),
+      ...(lecture.normalisation ? { normalisation: lecture.normalisation } : {}) };
     this.currentPhase = 'preparing';
     return { status: 'preview', preview: { token, before: plan.base.text, after, eol: plan.eol } };
   }

@@ -28,10 +28,16 @@ export type PlacementRequest = {
   indentUnit?: string;
   /** Used only when no line ending exists at or before the target. */
   fallbackEol?: '\n' | '\r\n';
+  /** The sentence the USER wrote, when it differs from the canonical
+   * sentence the translation came from — the only case being the
+   * linguistic flexibility layer, which normalises before translating.
+   * Rule 2 demands the traceability comment carry the user’s words, not
+   * C-A’s rewriting of them. Left undefined, nothing changes at all. */
+  originalSentence?: string;
 };
 export type PlacementDiagnostic = {
   code: BranchCode | TransferCode | SwitchCode | StructCode | ContextCode | FunctionCode | ScopeCode
-    | 'RETURN_NEEDS_VALUE' | 'RETURN_IN_VOID_FUNCTION' | 'INVALID_DOCUMENT' | 'INVALID_CURSOR' | 'INVALID_INDENT_UNIT' | 'INVALID_EOL'
+    | 'RETURN_NEEDS_VALUE' | 'RETURN_IN_VOID_FUNCTION' | 'INVALID_DOCUMENT' | 'INVALID_CURSOR' | 'INVALID_INDENT_UNIT' | 'INVALID_EOL' | 'INVALID_ORIGINAL_SENTENCE'
     | 'INVALID_TRANSLATION_RESULT' | 'TARGET_LINE_NOT_BLANK'
     | 'TARGET_IN_COMMENT' | 'LEXICAL_CONTEXT_UNDETERMINED'
     | 'UNSUPPORTED_LINE_CONTINUATION' | 'UNSUPPORTED_TRIGRAPH'
@@ -44,6 +50,8 @@ export type PlacementDiagnostic = {
 };
 export type PlacementPlan = {
   attachment?: Attachment;
+  /** Recorded so the freshness rebuild reproduces the same comment. */
+  originalSentence?: string;
   branchContext?: { indentUnit: string };
   /** Set for break/continue: the loop the transfer was proven to control. */
   loopTarget?: LoopTarget;
@@ -129,6 +137,15 @@ export function planPlacement(request: PlacementRequest): PlacementResult {
   const fallbackEol = request.fallbackEol === undefined ? '\n' : request.fallbackEol;
   if (fallbackEol !== '\n' && fallbackEol !== '\r\n') {
     return reject('INVALID_EOL', 'invalid-request', 'La fin de ligne de repli doit être LF ou CRLF.');
+  }
+  // A `//` comment ends at the line break, so a sentence carrying one
+  // would push the C out of the comment. Refused, never trimmed.
+  const originalSentence = request.originalSentence;
+  if (originalSentence !== undefined
+    && (typeof originalSentence !== 'string' || originalSentence.trim() === ''
+      || /[\r\n]/u.test(originalSentence))) {
+    return reject('INVALID_ORIGINAL_SENTENCE', 'invalid-request',
+      'La phrase d’origine doit être une ligne unique non vide : un commentaire « // » s’arrête à la fin de la ligne.');
   }
   // Re-translation verifies source, intent, exact parameters, comments, code,
   // fragment ID/role, terminal LF and relative cursor. Never repair received data.
@@ -244,7 +261,8 @@ export function planPlacement(request: PlacementRequest): PlacementResult {
   // closing line. No loop state is kept, and no body analyser is needed.
   const isBlock = BLOCK_KINDS.includes(canonical.instruction.kind);
   const codeLines = fragment.code.slice(0, -1).split('\n');
-  const lines = [baseIndent + fragment.comment,
+  const comment = originalSentence === undefined ? fragment.comment : `// ${originalSentence}`;
+  const lines = [baseIndent + comment,
     ...codeLines.map((line, index) => baseIndent + (isBlock && index === 1 ? indentUnit : line))];
   const rendered = lines.join(eol) + eol;
   const newText = isBlock ? rendered : rendered + baseIndent + eol;
@@ -255,6 +273,7 @@ export function planPlacement(request: PlacementRequest): PlacementResult {
     status: 'planned', diagnostics: [],
     plan: {
       ...(attachment ? { attachment, branchContext: { indentUnit } } : {}),
+      ...(originalSentence === undefined ? {} : { originalSentence }),
       ...(loopTarget ? { loopTarget } : {}),
       ...(switchTarget ? { switchTarget } : {}),
       ...(structTarget ? { structTarget } : {}),
@@ -289,7 +308,8 @@ export function validatePlan(plan: PlacementPlan, document: DocumentSnapshot): P
     const translation = translate(plan.source.text);
     if (translation.status !== 'translated') return reject('STALE_PLAN', 'stale-plan', 'La traduction du plan contextuel a changé.');
     const rebuilt = planPlacement({ document, cursorOffset: edit.range.start, translation,
-      indentUnit: plan.recognizerContext.indentUnit, fallbackEol: plan.eol });
+      indentUnit: plan.recognizerContext.indentUnit, fallbackEol: plan.eol,
+      ...(plan.originalSentence === undefined ? {} : { originalSentence: plan.originalSentence }) });
     // The structure is re-established on exactly the confirmed line.
     if (rebuilt.status !== 'planned' || !sameData(plan, rebuilt.plan)) {
       return reject('STALE_PLAN', 'stale-plan', 'La structure englobante a changé : demandez un nouvel aperçu.');
@@ -301,7 +321,8 @@ export function validatePlan(plan: PlacementPlan, document: DocumentSnapshot): P
     const translation = translate(plan.source.text);
     if (translation.status !== 'translated') return reject('STALE_PLAN', 'stale-plan', 'La traduction du plan de branche a changé.');
     const rebuilt = planPlacement({ document, cursorOffset: edit.range.start, translation,
-      indentUnit: plan.branchContext.indentUnit, fallbackEol: plan.eol });
+      indentUnit: plan.branchContext.indentUnit, fallbackEol: plan.eol,
+      ...(plan.originalSentence === undefined ? {} : { originalSentence: plan.originalSentence }) });
     // Target identity is re-established on exactly the confirmed line, never relocated.
     if (rebuilt.status !== 'planned' || !sameData(plan, rebuilt.plan)) {
       return reject('STALE_PLAN', 'stale-plan', 'Le rattachement de la branche a changé : demandez un nouvel aperçu.');

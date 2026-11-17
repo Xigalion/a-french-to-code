@@ -37,11 +37,11 @@
     },
     {
       "nom": "Phase 2 — souplesse linguistique",
-      "fait": 3,
+      "fait": 4,
       "total": 4,
       "unite": "etapes",
-      "source": "src/langue/variantes.ts, test/variantes.test.mjs, docs/phase2/MESURES_SOUPLESSE.md",
-      "note": "Module ecrit, 16 tests, borne mesuree sur un corpus de 235 phrases. Reste l'integration a l'hote, desactivee par defaut."
+      "source": "docs/phase2/LOT_S4_CONTRAT_ET_BILAN.md, MESURES_SOUPLESSE.md, MESURES_CORPUS.md",
+      "note": "Integree a l'hote, desactivee par defaut (reglage c-a.souplesse). 104 tests hote, 9 tests de session, corpus ecrit a la main de 94 phrases : 38/38 au sens exact, 0 acceptee a tort, 0 sens different, 43 phrases claires refusees."
     },
     {
       "nom": "Phase 2 — perimetre pedagogique Python",

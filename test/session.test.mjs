@@ -274,8 +274,15 @@ test('manifeste : raccourci limité au C éditable, aucune exécution externe', 
   assert.equal(binding.mac, 'cmd+k a');
   assert.ok(binding.when.includes('editorTextFocus') && binding.when.includes('!editorReadonly'));
   assert.ok(binding.when.includes('resourceScheme == file') && binding.when.includes('resourceExtname == .c'));
-  assert.equal(manifest.contributes.commands.length, 1);
+  // Adapte au lot S4 : une seconde commande existe, « c-a.souplesse », qui
+  // ne fait que basculer un reglage. Elle n'a VOLONTAIREMENT aucun raccourci :
+  // changer de mode ne doit pas pouvoir arriver par une frappe.
+  assert.equal(manifest.contributes.commands.length, 2);
   assert.equal(manifest.contributes.commands[0].command, binding.command);
+  assert.equal(manifest.contributes.commands[1].command, 'c-a.souplesse');
+  assert.equal(manifest.contributes.keybindings.length, 1);
+  // Le mode souple est desactive par defaut : le mode strict reste la reference.
+  assert.equal(manifest.contributes.configuration.properties['c-a.souplesse'].default, false);
   assert.equal(manifest.browser, undefined);
 });
 

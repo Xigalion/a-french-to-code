@@ -11,16 +11,16 @@ hors des guillemets, des littéraux caractère et des identifiants.
 | | |
 |---|---|
 | phrases du catalogue traduites | 138 |
-| entrées du lexique | 16 |
-| **phrases libres engendrées** | **235** |
+| entrées du lexique | 18 |
+| **phrases libres engendrées** | **240** |
 
 ## 2. Ce que la couche en fait, par nombre de substitutions
 
 | k | phrases | résolues | ambiguës | refusées | lectures max | lectures moyennes | temps |
 |---|---|---|---|---|---|---|---|
-| **1** | 164 | **162** | 2 | 0 | 2 | 1.3 | 15 ms |
-| **2** | 56 | **56** | 0 | 0 | 2 | 1.1 | 4 ms |
-| **3** | 13 | **13** | 0 | 0 | 1 | 1 | 1 ms |
+| **1** | 169 | **167** | 2 | 0 | 2 | 1.1 | 89 ms |
+| **2** | 56 | **56** | 0 | 0 | 2 | 1.1 | 46 ms |
+| **3** | 13 | **13** | 0 | 0 | 1 | 1 | 3 ms |
 | **4** | 2 | **2** | 0 | 0 | 1 | 1 | 0 ms |
 
 *Mesuré **sans borne** (substitutions 99, lectures 4096) : ce tableau dit ce
@@ -30,12 +30,12 @@ que la couche saurait faire, et la borne se choisit ensuite.*
 
 | Borne | phrases résolues | phrases perdues par la borne |
 |---|---|---|
-| 1 | **162** | 71 |
-| 2 | **218** | 15 |
-| 3 | **231** | 2 |
-| 4 | **233** | 0 |
-| 5 | **233** | 0 |
-| 6 | **233** | 0 |
+| 1 | **167** | 71 |
+| 2 | **223** | 15 |
+| 3 | **236** | 2 |
+| 4 | **238** | 0 |
+| 5 | **238** | 0 |
+| 6 | **238** | 0 |
 
 ## 4. Lecture des chiffres
 
@@ -43,9 +43,9 @@ que la couche saurait faire, et la borne se choisit ensuite.*
   candidates plafonnent à **2**. La raison est structurelle :
   seules deux entrées du lexique ont plusieurs formes, donc la plupart des
   substitutions ne multiplient rien ;
-- **le temps est négligeable** : 19 ms pour 235 phrases, moteur strict appelé
+- **le temps est négligeable** : 138 ms pour 240 phrases, moteur strict appelé
   pour chaque lecture ;
-- **les ambiguïtés ne viennent pas du cumul** : 2 sur 235, toutes à k = 1, et
+- **les ambiguïtés ne viennent pas du cumul** : 2 sur 240, toutes à k = 1, et
   toutes dues aux deux entrées homonymes du lexique. Ajouter des substitutions
   n’en crée pas ;
 - **aucune phrase du corpus n’est refusée** : chaque phrase libre dérivée du

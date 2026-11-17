@@ -1089,6 +1089,76 @@ exports.run = async function run() {
       await inserted();
       assert.ok(state.document.getText().includes('    int age;'));
     });
+    // Lot S4 — la souplesse linguistique DANS l'editeur reel. Le reglage est
+    // remis a false apres chaque scenario : le mode strict est la reference,
+    // et un scenario qui laisserait le mode souple actif contaminerait les suivants.
+    async function avecSouplesse(body) {
+      try {
+        await vscode.workspace.getConfiguration('c-a').update('souplesse', true, vscode.ConfigurationTarget.Global);
+        await waitFor(() => vscode.workspace.getConfiguration('c-a').get('souplesse') === true, 'reglage souplesse actif');
+        await body();
+      } finally {
+        await vscode.workspace.getConfiguration('c-a').update('souplesse', false, vscode.ConfigurationTarget.Global);
+      }
+    }
+    await test('lot S4 : mode strict par defaut, une variante reste refusee', async () => {
+      assert.equal(vscode.workspace.getConfiguration('c-a').get('souplesse'), false);
+      const state = await fixture(CORPS);
+      await start('Afficher la valeur de age.');
+      await accept();
+      assert.equal(api.inspect().souple, false);
+      assert.equal(api.inspect().diagnostic.stage, 'translation');
+      assert.equal(api.inspect().normalisation, undefined);
+      assert.equal(state.document.getText(), CORPS);
+    });
+    await test('lot S4 : la commande bascule le reglage, dans les deux sens', async () => {
+      assert.equal(vscode.workspace.getConfiguration('c-a').get('souplesse'), false);
+      try {
+        await vscode.commands.executeCommand('c-a.souplesse');
+        await waitFor(() => vscode.workspace.getConfiguration('c-a').get('souplesse') === true, 'souplesse activee');
+        await vscode.commands.executeCommand('c-a.souplesse');
+        await waitFor(() => vscode.workspace.getConfiguration('c-a').get('souplesse') === false, 'souplesse desactivee');
+      } finally {
+        await vscode.workspace.getConfiguration('c-a').update('souplesse', false, vscode.ConfigurationTarget.Global);
+      }
+    });
+    await test('lot S4 : une variante inseree garde LA PHRASE DE L UTILISATEUR en commentaire', async () => {
+      await avecSouplesse(async () => {
+        const state = await fixture(CORPS);
+        await preview('Afficher la valeur de age.');
+        assert.equal(api.inspect().souple, true);
+        assert.equal(api.inspect().normalisation.canonique, 'Affiche la valeur de age.');
+        // L'utilisateur VOIT que le mode souple a lu une autre phrase.
+        assert.match(api.inspect().confirmationTitle, /mode souple/);
+        await inserted();
+        assert.equal(state.document.getText(),
+          CORPS + '// Afficher la valeur de age.\nprintf("%d", age);\n\n');
+        // Une seule modification annulable, comme en mode strict.
+        await vscode.commands.executeCommand('undo');
+        await waitFor(() => state.document.getText() === CORPS, 'annulation en une fois');
+      });
+    });
+    await test('lot S4 : une phrase ambigue est refusee dans l editeur', async () => {
+      await avecSouplesse(async () => {
+        const state = await fixture(CORPS);
+        await start('Montre c.');
+        await accept();
+        const diagnostic = api.inspect().diagnostic;
+        assert.equal(diagnostic.stage, 'variantes');
+        assert.equal(diagnostic.code, 'AMBIGUITE_NON_RESOLUE');
+        assert.match(String(api.inspect().validation), /Ambigu/);
+        assert.equal(state.document.getText(), CORPS);
+      });
+    });
+    await test('lot S4 : la normalisation est journalisee dans le canal Pedagogie', async () => {
+      await avecSouplesse(async () => {
+        await fixture(CORPS);
+        await preview('Afficher la valeur de age.');
+        assert.match(api.inspect().pedagogyEntry, /NORMALISATION/);
+        assert.match(api.inspect().pedagogyEntry, /Affiche la valeur de age\./);
+        await cancel();
+      });
+    });
     await test('changer indentSize seul invalide le plan', async () => {
       const { editor } = await fixture();
       await preview('Crée la fonction principale');

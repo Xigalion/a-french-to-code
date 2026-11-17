@@ -34,6 +34,12 @@ export const LEXIQUE: readonly Entree[] = [
   { libre: 'déclarer', formes: ['Déclare'], motif: 'infinitif' },
   { libre: 'déclarez', formes: ['Déclare'], motif: 'impératif pluriel' },
   { libre: 'retourner', formes: ['Retourne'], motif: 'infinitif' },
+  // Ces deux infinitifs manquaient au prototype, sans raison : leurs verbes
+  // sont au catalogue comme les quatre precedents. Le corpus ecrit a la main
+  // les a trouves (docs/phase2/MESURES_CORPUS.md), et le lexique ne grandit
+  // que sur une formulation mesuree.
+  { libre: 'affecter', formes: ['Affecte'], motif: 'infinitif, trouve par le corpus libre' },
+  { libre: 'inclure', formes: ['Inclue'], motif: 'infinitif, trouve par le corpus libre' },
   { libre: 'appelé', formes: ['nommé'], motif: 'synonyme' },
   { libre: 'appelée', formes: ['nommée'], motif: 'synonyme' },
   { libre: 'valant', formes: ['de valeur'], motif: 'synonyme' },
@@ -55,9 +61,14 @@ export const BUDGET = { substitutions: 4, candidates: 64 };
  * lexique. Une variable peut s'appeler « mets ». */
 const AVANT_IDENTIFIANT = ['nommé', 'nommée', 'nommés', 'nommées', 'appelé', 'appelée', 'nom'];
 
+/** A verdict that carries a result carries an ACCEPTED one: the strict engine
+ * is the arbiter, so a refused reading never reaches a caller. Saying so in the
+ * type spares every caller a status check it cannot fail. */
+type Traduite = Extract<TranslationResult, { status: 'translated' }>;
+
 export type Verdict =
-  | { verdict: 'strict'; source: string; canonique: string; resultat: TranslationResult }
-  | { verdict: 'normalise' | 'resolu'; source: string; canonique: string; resultat: TranslationResult;
+  | { verdict: 'strict'; source: string; canonique: string; resultat: Traduite }
+  | { verdict: 'normalise' | 'resolu'; source: string; canonique: string; resultat: Traduite;
     lecturesEssayees: number; lecturesValides: number }
   | { verdict: 'ambigu'; code: 'AMBIGUITE_NON_RESOLUE'; source: string; message: string;
     lectures: readonly { phrase: string; intention: string; code: string }[] }
@@ -181,7 +192,7 @@ export function normaliser(phrase: string, budget: { substitutions: number; cand
 
   // 2. Le moteur strict est l'arbitre : une candidate n'est retenue que s'il
   //    l'accepte. La couche ne décide jamais qu'une phrase est valide.
-  const acceptees: { essai: string; resultat: TranslationResult; sens: string }[] = [];
+  const acceptees: { essai: string; resultat: Traduite; sens: string }[] = [];
   for (const essai of essais) {
     const resultat = translate(essai);
     if (resultat.status === 'translated') acceptees.push({ essai, resultat, sens: sens(resultat) });
@@ -193,15 +204,14 @@ export function normaliser(phrase: string, budget: { substitutions: number; cand
         + 'Ce qui manque n’est pas deviné : ' + directe.diagnostics[0].message };
   }
 
-  const distincts = new Map<string, { essai: string; resultat: TranslationResult }>();
+  const distincts = new Map<string, { essai: string; resultat: Traduite }>();
   for (const candidate of acceptees) if (!distincts.has(candidate.sens)) distincts.set(candidate.sens, candidate);
   if (distincts.size > 1) {
     return { verdict: 'ambigu', code: 'AMBIGUITE_NON_RESOLUE', source: phrase,
       lectures: [...distincts.values()].map(lecture => ({
         phrase: lecture.essai,
-        intention: lecture.resultat.status === 'translated' ? lecture.resultat.instruction.kind : '',
-        code: lecture.resultat.status === 'translated'
-          ? (lecture.resultat.fragments[0]?.code ?? '').replace(/\n$/u, '') : '',
+        intention: lecture.resultat.instruction.kind,
+        code: (lecture.resultat.fragments[0]?.code ?? '').replace(/\n$/u, ''),
       })),
       message: 'Cette phrase a ' + distincts.size + ' lectures de sens différent. C-A ne choisit pas : '
         + 'reformulez avec l’une des phrases du catalogue.' };

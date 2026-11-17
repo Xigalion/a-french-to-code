@@ -15,3 +15,5 @@ passage 9 : vscode 1.138.0 | 99 reussis, 0 echecs  (apres le lot 32)
 passage 10 : vscode 1.138.0 | 99 reussis, 0 echecs  (depot prepare pour publication)
 
 passage 11 : vscode 1.138.0 | 99 reussis, 0 echecs  (branche phase-2, apres le lot P0)
+
+passage 12 : vscode 1.138.0 | 104 reussis, 0 echecs  (branche phase-2, lot S4 : souplesse dans l'editeur)

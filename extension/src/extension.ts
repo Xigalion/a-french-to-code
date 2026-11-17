@@ -14,6 +14,8 @@ export type SessionInspection = {
   advisories: CalculationAdvisory[];
   information: PedagogicalInformation[];
   attachmentLabel: string | undefined;
+  souple: boolean;
+  normalisation: { source: string; canonique: string; lectures: number } | undefined;
   validation: string | vscode.InputBoxValidationMessage | undefined;
   confirmationTitle: string | undefined;
   pedagogyEntry: string;
@@ -31,8 +33,16 @@ function indentation(editor: vscode.TextEditor): { unit: string; signature: stri
 }
 
 function message(diagnostic: SessionDiagnostic): string {
-  const label = diagnostic.stage === 'translation' ? 'Traduction' : diagnostic.stage === 'placement' ? 'Placement refusé' : 'Intégration';
+  const label = diagnostic.stage === 'translation' ? 'Traduction'
+    : diagnostic.stage === 'placement' ? 'Placement refusé'
+      : diagnostic.stage === 'variantes' ? 'Ambiguïté' : 'Intégration';
   return `${label} : ${diagnostic.message}`;
+}
+
+/** The flexible mode is a user setting, read once per session so it cannot
+ * change under a prepared preview. Absent or malformed, it is off. */
+function souplesseActive(): boolean {
+  return vscode.workspace.getConfiguration('c-a').get<boolean>('souplesse') === true;
 }
 
 class NativeSession {
@@ -66,13 +76,14 @@ class NativeSession {
     draft: string,
     finished: (draft: string) => void,
     pedagogy: vscode.OutputChannel,
+    souple = false,
   ) {
     this.editor = editor; this.store = store; this.id = id; this.finished = finished;
     this.pedagogy = pedagogy;
     this.document = editor.document;
     this.column = editor.viewColumn ?? vscode.ViewColumn.One;
     this.initial = initial;
-    this.controller = new TranslationSession(initial, draft);
+    this.controller = new TranslationSession(initial, draft, { souple });
     const observe = () => {
       if (this.disposed || this.finishing) return;
       this.controller.observe(this.capture());
@@ -126,6 +137,9 @@ class NativeSession {
     if (this.disposed || this.finishing || this.controller.phase === 'applying') return;
     this.diagnostic = this.controller.diagnose(this.capture());
     const advisories = this.diagnostic ? [] : this.controller.advisories;
+    // A normalisation the user cannot see would be an implicit behaviour, and
+    // rule 3 forbids those. It is named before any preview is prepared.
+    if (this.input) this.input.prompt = this.prompt();
     if (this.input) this.input.validationMessage = this.diagnostic ? message(this.diagnostic)
       : advisories.length ? { message: `${advisories.length} avertissement(s) — ${advisories[0]?.message} Consultez « C-A — Pédagogie » après préparation de l’aperçu.`,
         severity: vscode.InputBoxValidationSeverity.Warning } : undefined;
@@ -154,8 +168,8 @@ class NativeSession {
       if (this.input === input) this.input = undefined;
       input.dispose();
     };
-    input.title = 'C-A : instruction française';
-    input.prompt = 'Entrée prépare l’aperçu uniquement. Échap annule.';
+    input.title = this.controller.flexible ? 'C-A : instruction française — mode souple' : 'C-A : instruction française';
+    input.prompt = this.prompt();
     input.placeholder = 'Exemples : Crée un bloc si "actif && age >= 18". / Ajoute une branche sinon. / Crée une boucle tant que "i < limite".';
     input.ignoreFocusOut = true;
     input.value = this.controller.draft;
@@ -199,11 +213,22 @@ class NativeSession {
     input.show();
   }
 
+  /** Never a correction to copy: it states the catalogue sentence C-A read,
+   * which the user asked it to look for by turning the mode on. */
+  private prompt(): string {
+    const base = 'Entrée prépare l’aperçu uniquement. Échap annule.';
+    const normalisation = this.controller.normalisation;
+    if (!normalisation) return this.controller.flexible ? `Mode souple actif. ${base}` : base;
+    return `Mode souple : C-A lit « ${normalisation.canonique} ». Le commentaire gardera votre phrase. ${base}`;
+  }
+
   private choices(current: boolean): Choice[] {
     const advisories = this.diagnostic ? [] : this.controller.advisories;
     return current ? [
       { label: 'Insérer', description: this.controller.attachmentLabel ?? 'Appliquer exactement l’aperçu affiché', action: 'insert',
-        ...(advisories.length ? { detail: advisories[0]?.message ?? '' } : {}) },
+        ...(this.controller.normalisation
+          ? { detail: `Mode souple : phrase lue « ${this.controller.normalisation.canonique} » ; commentaire conservé.` }
+          : advisories.length ? { detail: advisories[0]?.message ?? '' } : {}) },
       { label: 'Modifier la phrase', action: 'edit' }, { label: 'Annuler', action: 'cancel' },
     ] : [{ label: 'Revenir au fichier', description: 'Phrase conservée pour la prochaine commande C-A', action: 'return' }, { label: 'Annuler', action: 'cancel' }];
   }
@@ -221,6 +246,7 @@ class NativeSession {
       picker.dispose();
     };
     picker.title = `C-A : confirmer l’aperçu — fins de ligne ${eol === '\n' ? 'LF' : 'CRLF'}`;
+    if (this.controller.normalisation) picker.title += ' — mode souple';
     const advisories = this.controller.advisories;
     if (advisories.length) picker.title += ` — ${advisories.length} avertissement(s) — C-A — Pédagogie`;
     picker.placeholder = 'Entrée sur « Insérer » modifie le fichier ; Échap annule.';
@@ -258,8 +284,12 @@ class NativeSession {
     this.lastLoggedToken = token;
     const advisories = this.controller.advisories;
     const information = this.controller.information;
-    if (!advisories.length && !information.length) return;
+    const normalisation = this.controller.normalisation;
+    if (!advisories.length && !information.length && !normalisation) return;
     this.pedagogyEntry = `Session ${this.id}, aperçu ${token} — historique, pas un état actif\n${this.controller.draft}\n`
+      + (normalisation
+        ? `NORMALISATION [information] ${normalisation.lectures} lecture(s) essayée(s) : « ${normalisation.canonique} »\n`
+        : '')
       + [...advisories.map(advice => `${advice.code} [${advice.assessment}] UTF-16 [${advice.range.start}, ${advice.range.end}) : ${advice.message}`),
         ...information.map(info => `${info.code} [information] UTF-16 [${info.range.start}, ${info.range.end}) : ${info.message}`)].join('\n');
     this.pedagogy.appendLine(this.pedagogyEntry);
@@ -352,6 +382,8 @@ class NativeSession {
       advisories: this.diagnostic ? [] : this.controller.advisories,
       information: this.diagnostic ? [] : this.controller.information,
       attachmentLabel: this.controller.attachmentLabel,
+      souple: this.controller.flexible,
+      normalisation: this.controller.normalisation,
       validation: this.input?.validationMessage,
       confirmationTitle: this.picker?.title,
       pedagogyEntry: this.pedagogyEntry, loggedPreviews: this.loggedPreviews,
@@ -391,9 +423,24 @@ export function activate(context: vscode.ExtensionContext): ExtensionApi {
     };
     const session = new NativeSession(editor, store, ++nextId, target, typeof draft === 'string' ? draft : rememberedDraft, value => {
       if (active === session) { rememberedDraft = value; active = undefined; }
-    }, pedagogy);
+    }, pedagogy, souplesseActive());
     active = session;
     session.showInput();
+  }));
+  // The setting is the single source of truth; the command only flips it, so
+  // a session already open keeps the mode it started with.
+  context.subscriptions.push(vscode.commands.registerCommand('c-a.souplesse', async () => {
+    const configuration = vscode.workspace.getConfiguration('c-a');
+    const now = configuration.get<boolean>('souplesse') === true;
+    try {
+      await configuration.update('souplesse', !now, vscode.ConfigurationTarget.Global);
+    } catch {
+      void vscode.window.showWarningMessage('C-A : le réglage « c-a.souplesse » n’a pas pu être écrit.');
+      return;
+    }
+    void vscode.window.showInformationMessage(now
+      ? 'C-A : mode strict. Seules les phrases du catalogue sont acceptées.'
+      : 'C-A : mode souple. Une phrase refusée est cherchée dans un lexique fini de variantes ; une phrase ambiguë reste refusée. Prend effet à la prochaine commande C-A.');
   }));
   // Read-only observability: no API bypasses the native confirmation control.
   return { inspect: () => active?.inspect() };

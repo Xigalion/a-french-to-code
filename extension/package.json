@@ -6,24 +6,48 @@
   "publisher": "projet-a-local",
   "private": true,
   "type": "commonjs",
-  "engines": { "vscode": "^1.96.0" },
-  "categories": ["Programming Languages"],
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
   "main": "./out/extension/src/extension.js",
   "capabilities": {
-    "untrustedWorkspaces": { "supported": true },
+    "untrustedWorkspaces": {
+      "supported": true
+    },
     "virtualWorkspaces": false
   },
   "contributes": {
-    "commands": [{
-      "command": "c-a.translate",
-      "title": "C-A : Saisir une instruction",
-      "enablement": "editorLangId == c && resourceScheme == file && resourceExtname == .c"
-    }],
-    "keybindings": [{
-      "command": "c-a.translate",
-      "key": "ctrl+k a",
-      "mac": "cmd+k a",
-      "when": "editorTextFocus && editorLangId == c && resourceScheme == file && resourceExtname == .c && !editorReadonly"
-    }]
+    "commands": [
+      {
+        "command": "c-a.translate",
+        "title": "C-A : Saisir une instruction",
+        "enablement": "editorLangId == c && resourceScheme == file && resourceExtname == .c"
+      },
+      {
+        "command": "c-a.souplesse",
+        "title": "C-A : Activer ou désactiver le mode souple"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "c-a.translate",
+        "key": "ctrl+k a",
+        "mac": "cmd+k a",
+        "when": "editorTextFocus && editorLangId == c && resourceScheme == file && resourceExtname == .c && !editorReadonly"
+      }
+    ],
+    "configuration": {
+      "title": "C-A",
+      "properties": {
+        "c-a.souplesse": {
+          "type": "boolean",
+          "default": false,
+          "description": "Mode souple : si une phrase est refusée par le catalogue, C-A essaie un lexique fini de synonymes et de variantes grammaticales, et n’insère que si une seule lecture du catalogue en sort. Le commentaire de traçabilité conserve votre phrase. Désactivé par défaut : le mode strict est la référence."
+        }
+      }
+    }
   }
 }

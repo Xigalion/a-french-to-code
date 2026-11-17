@@ -162,6 +162,10 @@ test('souplesse : chaque entrée du lexique produit au moins une lecture valide'
     'passe à l’itération suivante': 'Passe à l’itération suivante.',
     'mets': 'Mets la valeur 5 à x.',
     'montre': 'Montre c.',
+    // Lot S4 : deux infinitifs ajoutes au lexique parce que le corpus
+    // ecrit a la main les a trouves manquants.
+    'affecter': 'Affecter la valeur 5 à x.',
+    'inclure': 'Inclure la bibliothèque stdio.h.',
   };
   for (const entree of LEXIQUE) {
     const phrase = phrases[entree.libre];
