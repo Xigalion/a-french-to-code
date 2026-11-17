@@ -22,3 +22,8 @@ passage 13 : vscode 1.138.0 | 109 reussis, 0 echecs  (branche phase-2, lot P4a :
 
 passage 14 : NON EXECUTE  (lot P4 : mutex vscode-updating detenu par l instance en cours ;
              4 scenarios natifs ecrits et non prouves. Voir docs/phase2/LOT_P4_CONTRAT_ET_BILAN.md 9)
+
+passage 15 : vscode 1.96.4 | 113 reussis, 0 echecs  (archive .cache, SANS installateur : les neuf
+             scenarios restants compris. La version INSTALLEE 1.138.0 reste bloquee par deux
+             processus CodeSetup orphelins, PID 70352 et 71652, demarres a 15:21:09 et jamais
+             termines. Aucun processus arrete.)

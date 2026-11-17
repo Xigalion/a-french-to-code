@@ -1286,6 +1286,20 @@ exports.run = async function run() {
       assert.equal(api.inspect().diagnostic.stage, 'translation');
       assert.equal(state.document.getText(), CORPS);
     });
+    await test('v0.5.0 : les deux reglages sont ACTIFS par defaut dans le manifeste', async () => {
+      // Le profil de test les epingle a false pour que les scenarios soient
+      // deterministes. Le defaut du MANIFESTE, lui, est ce que verra un
+      // utilisateur qui n'a rien regle : il se lit par `inspect`, et c'est la
+      // seule facon de le verifier sans dependre du profil.
+      const souplesse = vscode.workspace.getConfiguration('c-a').inspect('souplesse');
+      const python = vscode.workspace.getConfiguration('c-a').inspect('python');
+      assert.equal(souplesse.defaultValue, true, 'le francais souple doit etre actif par defaut');
+      assert.equal(python.defaultValue, true, 'Python doit etre actif par defaut');
+      // Et le mode strict reste ACCESSIBLE : le profil le prouve, puisqu'il
+      // l'a epingle a false et que les scenarios stricts passent.
+      assert.equal(vscode.workspace.getConfiguration('c-a').get('souplesse'), false);
+      assert.equal(vscode.workspace.getConfiguration('c-a').get('python'), false);
+    });
     await test('changer indentSize seul invalide le plan', async () => {
       const { editor } = await fixture();
       await preview('Crée la fonction principale');

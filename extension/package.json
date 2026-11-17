@@ -44,13 +44,13 @@
       "properties": {
         "c-a.souplesse": {
           "type": "boolean",
-          "default": false,
-          "description": "Français souple : si une phrase est refusée par le catalogue, C-A essaie un lexique fini de synonymes, de variantes grammaticales et de reformulations, et n’insère que si une seule lecture en sort. Une phrase ambiguë reste refusée, et le commentaire de traçabilité conserve votre phrase. ÉTAT : désactivé par défaut pendant la validation — le mode strict est la référence. Après validation finale, ce réglage passera à true par défaut, et le mode strict restera accessible en le mettant à false."
+          "default": true,
+          "description": "Français souple, **actif par défaut**. Si une phrase est refusée par le catalogue, et seulement dans ce cas, C-A essaie un lexique fini de synonymes et 98 reformulations déterministes, et n’insère que si une seule lecture en sort. Une phrase ambiguë reste refusée, avec ses lectures nommées, et le commentaire de traçabilité conserve votre phrase. Mettez ce réglage à false pour revenir au **mode strict** : seules les phrases exactes du catalogue y sont acceptées."
         },
         "c-a.python": {
           "type": "boolean",
-          "default": false,
-          "description": "Python : permet d’utiliser C-A dans un fichier .py. Le catalogue Python compte 97 intentions — 33 portées depuis C17 et 64 natives — et 49 informations pédagogiques. Les classes, le « else » de boucle et la boucle à test final n’y sont pas. ÉTAT : désactivé par défaut pendant la validation."
+          "default": true,
+          "description": "Python, **actif par défaut** : la commande C-A fonctionne dans un fichier .py. Le catalogue Python compte 97 intentions — 33 reprises du catalogue partagé et 64 natives — et 49 informations pédagogiques. Les classes, le « else » de boucle et la boucle à test final n’y sont pas. Mettez ce réglage à false pour n’ouvrir que les fichiers .c."
         }
       }
     }

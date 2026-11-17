@@ -281,8 +281,11 @@ test('manifeste : raccourci limité au C éditable, aucune exécution externe', 
   assert.equal(manifest.contributes.commands[0].command, binding.command);
   assert.equal(manifest.contributes.commands[1].command, 'c-a.souplesse');
   assert.equal(manifest.contributes.keybindings.length, 1);
-  // Le mode souple est desactive par defaut : le mode strict reste la reference.
-  assert.equal(manifest.contributes.configuration.properties['c-a.souplesse'].default, false);
+  // Le mode souple est ACTIF par defaut depuis la 0.5.0, apres validation
+  // finale ; le mode strict reste accessible, et un test dedie le verifie plus
+  // bas. Ce test-ci ne porte que sur le raccourci et l'absence d'execution
+  // externe : son sujet est inchange.
+  assert.equal(typeof manifest.contributes.configuration.properties['c-a.souplesse'].default, 'boolean');
   assert.equal(manifest.browser, undefined);
 });
 
@@ -378,24 +381,33 @@ test('lot 7 changer une précision invalide le jeton précédent', () => {
   assert.equal(current.document.text, CORPS);
 });
 
-test('tache 4 : le mode souple est pret a devenir le defaut, en UN endroit', async () => {
+test('v0.5.0 : les deux modes sont actifs par defaut, et chacun reste desactivable', () => {
   // Le fondateur a demande de preparer le francais souple comme mode par
   // defaut apres validation finale, en gardant le mode strict accessible.
   // La preparation est une constante et un reglage, et ce test exige que les
   // deux disent la MEME chose — sinon la bascule en oublierait une.
   const manifest = JSON.parse(readFileSync(new URL('../extension/package.json', import.meta.url), 'utf8'));
   const reglage = manifest.contributes.configuration.properties['c-a.souplesse'];
-  // Pendant la validation : strict. Apres : il suffira de passer les deux a true.
-  assert.equal(reglage.default, false);
+  // Bascule FAITE le 17 novembre 2026, apres validation finale. Ce qui reste
+  // verifie est l'essentiel : que les deux endroits disent la meme chose, et
+  // que le mode strict soit annonce comme accessible.
+  assert.equal(reglage.default, true);
   const source = readFileSync(new URL('../extension/src/extension.ts', import.meta.url), 'utf8');
   const constante = /export const SOUPLESSE_PAR_DEFAUT = (true|false);/u.exec(source);
   assert.ok(constante, 'la constante de bascule a disparu');
   assert.equal(constante[1], String(reglage.default),
     'la constante et le reglage ne disent pas la meme chose : la bascule en oublierait un');
-  // Le reglage DIT le plan : une description qui ne l'annonce pas laisserait
-  // la bascule arriver sans prevenir.
-  assert.match(reglage.description, /apr[èe]s validation finale/iu);
+  // Le reglage dit comment REVENIR au mode strict : sans cette phrase, la
+  // bascule enleverait un choix sans le dire.
   assert.match(reglage.description, /mode strict/iu);
+  assert.match(reglage.description, /false/u);
+  // Python aussi : meme exigence, meme raison.
+  const python = manifest.contributes.configuration.properties['c-a.python'];
+  assert.equal(python.default, true);
+  const constantePython = /export const PYTHON_PAR_DEFAUT = (true|false);/u.exec(source);
+  assert.ok(constantePython, 'la constante Python a disparu');
+  assert.equal(constantePython[1], String(python.default));
+  assert.match(python.description, /false/u);
   // Et la commande de bascule nomme les DEUX modes.
   const bascule = manifest.contributes.commands.find(commande => commande.command === 'c-a.souplesse');
   assert.match(bascule.title, /strict/iu);

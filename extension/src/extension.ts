@@ -42,18 +42,16 @@ function message(diagnostic: SessionDiagnostic): string {
   return `${label} : ${diagnostic.message}`;
 }
 
-/** The default for the flexible mode, and the ONLY line to change when it
- * becomes the default mode.
+/** The default for the flexible mode.
  *
- * The founder asked on 17 November 2026 to prepare flexible French as the
- * default AFTER final validation, keeping strict mode reachable. This is that
- * preparation: one constant, one setting, and a test that checks the manifest
- * default says the same thing.
+ * Switched to `true` on 17 November 2026, after final validation, exactly as
+ * the founder asked. Strict mode stays reachable: setting `c-a.souplesse` to
+ * `false` restores it, and the toggle command works both ways.
  *
- * To switch: set this to `true` AND the `default` of the `c-a.souplesse`
- * setting in `extension/package.json`. Strict mode then stays reachable by
- * setting that to `false`, and the toggle command works both ways. */
-export const SOUPLESSE_PAR_DEFAUT = false;
+ * This constant and the `default` of the setting in `extension/package.json`
+ * must always agree; a test enforces it, because a switch that forgot one of
+ * the two would be invisible. */
+export const SOUPLESSE_PAR_DEFAUT = true;
 
 /** The flexible mode is a user setting, read once per session so it cannot
  * change under a prepared preview. Absent or malformed, it takes the default
@@ -63,13 +61,20 @@ function souplesseActive(): boolean {
   return typeof reglage === 'boolean' ? reglage : SOUPLESSE_PAR_DEFAUT;
 }
 
-/** Python est derriere un reglage, desactive par defaut, et ce n'est pas de la
- * prudence de facade : son catalogue compte 32 intentions portees et aucune
- * intention native, donc il ne sait pas encore creer une liste. L'exposer par
- * defaut enseignerait un Python infirme. Le reglage existe pour qu'il soit
- * essayable, pas pour qu'il soit rencontre par accident. */
+/** Python est ACTIF par defaut depuis le 17 novembre 2026.
+ *
+ * Il etait derriere un reglage desactive tant que son catalogue comptait 32
+ * intentions portees et aucune intention native : il ne savait pas creer une
+ * liste, et l'exposer aurait enseigne un Python infirme. Il compte desormais
+ * 97 intentions, 64 natives, 49 informations passives, et neuf programmes
+ * ecrits par C-A ont ete executes sans une retouche.
+ *
+ * Le reglage reste : le mettre a `false` n'ouvre que les fichiers .c. */
+export const PYTHON_PAR_DEFAUT = true;
+
 function pythonActif(): boolean {
-  return vscode.workspace.getConfiguration('c-a').get<boolean>('python') === true;
+  const reglage = vscode.workspace.getConfiguration('c-a').get<boolean>('python');
+  return typeof reglage === 'boolean' ? reglage : PYTHON_PAR_DEFAUT;
 }
 
 /** Les langages que la commande accepte, par extension et identifiant VS Code.

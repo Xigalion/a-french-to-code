@@ -18,6 +18,13 @@ writeFileSync(path.join(profile, 'User', 'settings.json'), JSON.stringify({
   'files.autoSave': 'off', 'editor.formatOnSave': false, 'editor.formatOnType': false,
   'workbench.startupEditor': 'none', 'window.restoreWindows': 'none', 'extensions.autoUpdate': false,
   'update.mode': 'none', 'telemetry.telemetryLevel': 'off',
+  // Depuis la 0.5.0, le francais souple et Python sont ACTIFS par defaut. Les
+  // scenarios hote qui portent sur le mode strict, ou sur le refus d'un .py,
+  // doivent partir d'un etat connu : le profil les epingle a false, et chaque
+  // scenario qui veut l'autre etat l'active lui-meme. Le DEFAUT du manifeste,
+  // lui, est verifie par un scenario dedie qui lit `inspect().defaultValue` —
+  // epingler ici ne doit pas faire disparaitre la verification du defaut.
+  'c-a.souplesse': false, 'c-a.python': false,
 }));
 const env = { ...process.env, CA_TEST_ROOT: root, CA_TEST_REPORT: report, CA_TEST_WORKSPACE: workspace };
 delete env.ELECTRON_RUN_AS_NODE;
