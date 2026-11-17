@@ -1,7 +1,7 @@
 {
   "_lisezMoi": "État du test utilisateur. Édité à la main après chaque séance, lu par scripts/progression.mjs. Les scores des campagnes 1 à 3 sont historiques et ne se recalculent jamais.",
   "version": "C-A 0.4.0 + lot 32",
-  "miseAJour": "2026-11-16",
+  "miseAJour": "2026-11-17",
   "couverture": {
     "domaines": 9,
     "domainesTotal": 9,
@@ -51,5 +51,21 @@
       "A3": 0,
       "A4": 0
     }
+  },
+  "publication": {
+    "etat": "préparée, NON faite — aucun envoi, aucun changement de visibilité",
+    "licence": "Apache-2.0",
+    "nomPublicPropose": "c-a-french-to-c (à confirmer)",
+    "controlesPasses": 15,
+    "controlesTotal": 15,
+    "etiquettes": 16,
+    "versionPublique": "v0.4.0",
+    "procedure": "docs/PUBLICATION.md",
+    "resteAuFondateur": [
+      "confirmer la destination",
+      "renommer le dépôt distant",
+      "pousser main et les étiquettes",
+      "rendre public"
+    ]
   }
 }

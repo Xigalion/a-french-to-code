@@ -60,8 +60,20 @@ console.log('   Limites de la mesure 2a — à citer avec le chiffre, jamais apr
 for (const limite of p.limites) console.log('     - ' + limite);
 console.log('');
 
+if (etat.publication) {
+  const pub = etat.publication;
+  console.log('3. Publication — ' + pub.etat);
+  console.log('   ' + barre(pub.controlesPasses, pub.controlesTotal) + '  '
+    + pub.controlesPasses + '/' + pub.controlesTotal + ' contrôles d’avant publication');
+  console.log('   licence ' + pub.licence + ' | version ' + pub.versionPublique
+    + ' | ' + pub.etiquettes + ' étiquettes | nom proposé ' + pub.nomPublicPropose);
+  console.log('   reste au fondateur : ' + pub.resteAuFondateur.join(', '));
+  console.log('   procédure et retour arrière : ' + pub.procedure);
+  console.log('');
+}
+
 const total = Object.values(u.remontees).reduce((a, b) => a + b, 0);
-console.log('3. Comptes bruts du test utilisateur (aucune pondération)');
+console.log('4. Comptes bruts du test utilisateur (aucune pondération)');
 console.log('   remontées            : ' + total);
 for (const [nom, valeur] of Object.entries(u.remontees)) console.log('     ' + nom.padEnd(28) + valeur);
 console.log('   paliers d’aide       : '

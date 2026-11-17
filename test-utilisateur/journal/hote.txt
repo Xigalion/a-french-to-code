@@ -11,3 +11,5 @@ stabilite ; ils montrent que la version empaquetee est bien celle qui a ete
 testee.
 
 passage 9 : vscode 1.138.0 | 99 reussis, 0 echecs  (apres le lot 32)
+
+passage 10 : vscode 1.138.0 | 99 reussis, 0 echecs  (depot prepare pour publication)
