@@ -123,7 +123,7 @@ sinon les deux liens d'aide seront morts. C'est volontairement laissé en
 |---|---|
 | l'adresse de courriel des commits | §2.2 |
 | les journaux de validation | ils citent des versions de GCC, de VS Code et des dates. Aucun contenu personnel après nettoyage |
-| le `CLAUDE.md` de travail | il décrit la méthode, les décisions et les dettes du projet, y compris ses faiblesses. C'est un choix de transparence : à relire une fois dans cette optique |
+| ~~le `CLAUDE.md` de travail~~ | **plus exposé** : retiré du suivi et de tout l'historique le 17 novembre 2026, conservé localement. Sa substance est publiée par `docs/ETAT_DU_PROJET.md`, relue dans cette optique |
 | les scores de campagnes | **81,7 %**, **83,7 %**, **93,9 %** — avec, à chaque fois, ce qu'ils ne prouvent pas. Publiés tels quels, ils sont honnêtes ; publiés seuls, ils seraient flatteurs |
 
 Rien dans le dépôt ne décrit un tiers, un établissement ou un étudiant réel.
@@ -174,8 +174,10 @@ réécriture de l'auteur des commits (**faite**, §2.2).
 Restent ouvertes :
 
 1. **publier ou non**, et quand — rien ne sera poussé sans ton accord ;
-2. publier le **`CLAUDE.md` de travail** tel quel, avec ses dettes et ses
-   points ouverts, ou en extraire une version publique ;
+2. ~~publier le `CLAUDE.md` de travail tel quel, ou en extraire une version
+   publique~~ — **tranché le 17 novembre 2026 : seul
+   `docs/ETAT_DU_PROJET.md` est publié.** Le fichier de travail est retiré du
+   suivi **et de tout l'historique**, et conservé localement ;
 3. le **nom public** du dépôt : `A`, `C-A`, ou autre — le dépôt distant
    s'appelle aujourd'hui `A`, ce qui est introuvable par recherche ;
 4. les deux liens `OWNER/REPO` de `.github/ISSUE_TEMPLATE/config.yml` (§4.1).
@@ -237,7 +239,7 @@ a trouvé, et ils sont corrigés :
 | Ajout | Pourquoi |
 |---|---|
 | `CHANGELOG.md` | une version publique identifiable, **avec ses limites**, et non une liste de nouveautés |
-| `docs/ETAT_DU_PROJET.md` | la version publique de `CLAUDE.md`, qui reste dans le dépôt **sans rien perdre** |
+| `docs/ETAT_DU_PROJET.md` | le document d’état **publié**, qui reprend la substance du fichier de travail interne |
 | `docs/REPERES_GIT.md` | les étiquettes, et pourquoi pas des hachages |
 | `docs/PUBLICATION.md` | la procédure, les commandes exactes, et le **retour arrière** |
 | `scripts/liens.mjs` | liens internes et chemins cités |

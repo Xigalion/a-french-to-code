@@ -136,6 +136,19 @@ controle('aucun dossier de travail de compilation suivi', () => {
   return mauvais.length === 0 ? true : mauvais.slice(0, 5).join(', ');
 });
 
+// Les instructions de travail internes restent locales : ni suivies, ni
+// présentes dans l'historique publié. Leur substance est publiée par
+// docs/ETAT_DU_PROJET.md, et c'est la décision du 17 novembre 2026.
+controle('instructions de travail internes hors du dépôt publié', () => {
+  if (suivis.includes('CLAUDE.md')) return 'CLAUDE.md est encore suivi par git';
+  const dansHistorique = git('log', 'main', '--oneline', '--', 'CLAUDE.md').trim();
+  if (dansHistorique !== '') {
+    return dansHistorique.split('\n').length + ' commit(s) de main contiennent encore CLAUDE.md';
+  }
+  const ignore = spawnSync('git', ['check-ignore', '-q', 'CLAUDE.md']).status === 0;
+  return ignore ? true : 'CLAUDE.md n’est pas couvert par .gitignore : il reviendrait au premier « git add -A »';
+});
+
 // 6. Documentation publique et licence.
 controle('documents publics présents', () => {
   const requis = ['README.md', 'CONTRIBUTING.md', 'CHANGELOG.md', 'LICENSE', 'NOTICE',

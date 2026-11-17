@@ -16,3 +16,6 @@ exercice/promotion/journal-complements/build/
 
 # Notes locales non publiees (table de correspondance des identifiants reecrits)
 local/
+
+# Instructions de travail internes : conservees localement, jamais publiees
+/CLAUDE.md

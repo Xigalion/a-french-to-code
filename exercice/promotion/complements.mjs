@@ -113,7 +113,7 @@ export const FICHIERS = [
       // L'aiguillage porte sur « i » et non sur « t[0] » : l'expression
       // contrôlée est analysée par le PROFIL ENTIER, gelé depuis le lot 6, où
       // l'indexation est fermée. Le moteur a refusé « t[0] » ici, et il a
-      // raison : la limite est écrite dans CLAUDE.md.
+      // raison : la limite est écrite dans docs/LIMITES_CONNUES.md.
       ['last', 'Crée un aiguillage sur "i".'],
       ['last', 'Ajoute un cas pour la valeur 0.'],
       ['last', 'Affiche la valeur de i.'],

@@ -3,10 +3,16 @@
 **Pour qui :** un lecteur extérieur qui veut savoir ce qui est construit, ce
 qui est prouvé, comment le projet travaille, et ce qu'il ne faut pas croire.
 
-> C'est la **version publique** de `CLAUDE.md`, le fichier de travail interne.
-> Celui-ci reste dans le dépôt : il contient les instructions de travail, les
-> dettes et les points ouverts, et rien n'en a été retiré. Ce document-ci en
-> présente la substance, ordonnée pour un lecteur qui arrive.
+> **C'est le document d'état du projet, et le seul publié.** Le fichier de
+> travail interne qui lui a servi de source — instructions de travail,
+> conventions, dettes, points ouverts — est **gardé hors du dépôt** : il
+> n'est ni suivi par git, ni présent dans l'historique. Rien n'en a été
+> perdu ; ce document en reprend la substance, ordonnée pour un lecteur qui
+> arrive.
+>
+> Les bilans de lots mentionnent parfois `CLAUDE.md` dans leurs tables de
+> fichiers touchés : c'est un **fait historique** — le lot l'avait bien mis
+> à jour — et non un fichier manquant du dépôt.
 >
 > État au 17 novembre 2026, version **0.4.0**.
 
@@ -207,4 +213,4 @@ langages. Le schéma de données les anticipe ; le code ne les contient pas.
 | [`V1_LIVRAISON_CAMPAGNE3.md`](V1_LIVRAISON_CAMPAGNE3.md) | la livraison de la V1 et sa recommandation |
 | [`TEST_PARCOURS_DECOUVERTE.md`](TEST_PARCOURS_DECOUVERTE.md) | première séance d'un débutant |
 | [`REPERES_GIT.md`](REPERES_GIT.md) | les étiquettes du dépôt, et pourquoi pas des hachages |
-| `../CLAUDE.md` | le fichier de travail interne, inchangé |
+| [`REPERES_GIT.md`](REPERES_GIT.md) | les étiquettes du dépôt, et pourquoi pas des hachages |

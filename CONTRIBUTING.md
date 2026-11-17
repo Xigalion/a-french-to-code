@@ -62,7 +62,7 @@ Le travail avance par **lots**. Un lot livre une capacité, pas une idée.
    Étendre le corpus du différentiel aux formes nouvelles : sinon il prouve
    l'absence de régression sans couvrir ce que le lot livre.
 5. **Écrire le bilan** (`docs/LOT{n}_BILAN.md`) avec les **chiffres réels**,
-   et mettre à jour `docs/CATALOGUE.md` et `CLAUDE.md`.
+   et mettre à jour `docs/CATALOGUE.md` et `docs/ETAT_DU_PROJET.md`.
 
 **Ne jamais supposer qu'un contrat est implémenté, ni qu'un test a été
 exécuté sans résultat affiché.**
