@@ -138,13 +138,24 @@ const fichiers = lister(paquet, '');
 const inventaire = join(dist, 'entrees.txt');
 writeFileSync(inventaire, fichiers.map(([nom, chemin]) => nom + '|' + chemin).join('\n'), 'utf8');
 
+// Les horodatages des entrées sont FIGÉS, et les entrées sont écrites dans
+// l'ordre de l'inventaire. Sans cela, deux constructions du même commit
+// donnaient un .vsix identique entrée par entrée mais de hachage différent,
+// parce qu'un ZIP embarque la date de chaque entrée. Un paquet qu'on ne peut
+// pas vérifier par son hachage n'est pas reproductible, seulement « pareil ».
+//
+// La date retenue — 2026-01-01 00:00 — n'a aucun sens métier, et c'est voulu :
+// une date issue du commit ferait dépendre le paquet de l'historique, et une
+// date courante ramènerait le problème.
 const zip = [
   'Add-Type -AssemblyName System.IO.Compression.FileSystem;',
   "$a = [System.IO.Compression.ZipFile]::Open('" + vsix + "', 'Create');",
+  "$fige = New-Object DateTimeOffset(2026, 1, 1, 0, 0, 0, [TimeSpan]::Zero);",
   "foreach ($l in Get-Content -LiteralPath '" + inventaire + "' -Encoding UTF8) {",
   "  $p = $l -split '\\|', 2;",
-  '  [void][System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($a, $p[1], $p[0],',
-  '    [System.IO.Compression.CompressionLevel]::Optimal); }',
+  '  $e = [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($a, $p[1], $p[0],',
+  '    [System.IO.Compression.CompressionLevel]::Optimal);',
+  '  $e.LastWriteTime = $fige; }',
   '$a.Dispose();',
 ].join(' ');
 execFileSync('powershell', ['-NoProfile', '-NonInteractive', '-Command', zip], { stdio: 'inherit' });
