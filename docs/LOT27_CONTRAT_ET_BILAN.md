@@ -1,7 +1,7 @@
 # Lot 27 — Champs de structure de type tableau : contrat et bilan
 
 > **Correction de rang 2** de `docs/EVALUATION_MODELE1.md`, et décision 2 du
-> fondateur du 15 novembre 2026. Référence différentielle : (identifiant antérieur à la réécriture)
+> fondateur du 15 novembre 2026. Référence différentielle : `lot-26`
 > (lot 26).
 >
 > C'était la **seule retouche manuelle** que l'exercice intégrateur avait

@@ -174,8 +174,8 @@ du **placement**, avec `LOOP_TARGET_NOT_FOUND`. Vérifié directement :
     traduction : translated   break;
     placement  : rejected     LOOP_TARGET_NOT_FOUND
 
-**Depuis quand.** L'attente a été écrite au commit (identifiant antérieur à la réécriture) (lot 11A), et
-la formulation est devenue valide au commit (identifiant antérieur à la réécriture) (lot 11D). Le lot 11D
+**Depuis quand.** L'attente a été écrite au lot 11A (étiquette `lot-11a`), et
+la formulation est devenue valide au lot 11D (étiquette `lot-11d`). Le lot 11D
 n'a pas mis ce test à jour. Il **échouait donc depuis le lot 11D**, sans que
 personne le voie — précisément parce que la suite hôte ne pouvait pas
 s'exécuter. Le fichier `test/vscode/suite.cjs` n'a pas été modifié depuis le

@@ -114,8 +114,8 @@ rendus, `BLOCK_KINDS`, aiguillage), `src/planPlacement.ts`,
 
 | Référence | Comparaisons | Extensions | Régressions | Capacités perdues |
 |---|---|---|---|---|
-| lot 19 ((identifiant antérieur à la réécriture)) | 1 332 084 | 31 750 | **0** | **6 512** |
-| avant le lot 13 ((identifiant antérieur à la réécriture)) | 1 332 084 | 77 658 | **0** | **4 488** |
+| lot 19 (`lot-19`) | 1 332 084 | 31 750 | **0** | **6 512** |
+| avant le lot 13 (`ref-avant-lot-13`) | 1 332 084 | 77 658 | **0** | **4 488** |
 
 **`--no-loss` a signalé 6 512 pertes. Je ne les ai pas écartées.** Le
 harnais imprimait seulement les dix premières ; je l'ai étendu pour les

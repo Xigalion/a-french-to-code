@@ -224,7 +224,7 @@ sont des **régressions** et font échouer la commande.
 | Référence | Comparaisons | Extensions | Régressions |
 |---|---|---|---|
 | `HEAD` (lot 13) | 1 323 444 | 469 | **0** |
-| (identifiant antérieur à la réécriture) (avant le lot 13) | 1 323 444 | 469 | **0** |
+| `ref-avant-lot-13` (avant le lot 13) | 1 323 444 | 469 | **0** |
 
 Le second chiffre dit que les lots 13 et 14 **ensemble** n'ont rien changé hors
 du périmètre approuvé.

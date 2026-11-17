@@ -157,8 +157,8 @@ Commande :
 | Référence | Comparaisons | Extensions | Régressions | Capacités perdues |
 |---|---|---|---|---|
 | `HEAD` (lot 16) | 1 329 017 | 27 997 | **0** | **0** |
-| lot 16 ((identifiant antérieur à la réécriture)) | 1 329 017 | 27 997 | **0** | **0** |
-| avant le lot 13 ((identifiant antérieur à la réécriture)) | 1 329 017 | 46 910 | **0** | **0** |
+| lot 16 (`lot-16`) | 1 329 017 | 27 997 | **0** | **0** |
+| avant le lot 13 (`ref-avant-lot-13`) | 1 329 017 | 46 910 | **0** | **0** |
 
 ### Ce que ce motif ne prouve pas, et ce qui le compense
 

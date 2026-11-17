@@ -13,3 +13,6 @@ dist/
 test-utilisateur/journal/build/
 exercice/promotion/journal/build/
 exercice/promotion/journal-complements/build/
+
+# Notes locales non publiees (table de correspondance des identifiants reecrits)
+local/

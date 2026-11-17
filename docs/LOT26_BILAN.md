@@ -1,7 +1,7 @@
 # Lot 26 — Portée des instructions : bilan
 
 > Contrat : `docs/LOT26_CONTRAT_PROPOSE.md`. Référence différentielle :
-> (identifiant antérieur à la réécriture). **Premier lot du projet qui retire des placements**, par la
+> `evaluation-modele-1`. **Premier lot du projet qui retire des placements**, par la
 > décision 1 du fondateur du 15 novembre 2026.
 
 ---
@@ -124,8 +124,13 @@ prendre : câbler la formulation, ou retirer le genre mort.
 
 ## 6. Suite hôte
 
-Voir le journal `exercice/journal/hote-lot26.txt`. La suite a été relancée
-parce que le lot change le placement, donc le comportement de bout en bout.
+La suite a été relancée parce que le lot change le placement, donc le
+comportement de bout en bout. Le résultat est dans
+`exercice/journal/hote.txt` — **99 réussis sur 99**.
+
+*(Ce bilan citait un fichier `hote-lot26.txt` qui n'a jamais existé : aucun
+journal distinct n'a été conservé pour ce lot. Corrigé le 17 novembre 2026,
+quand le vérificateur de liens l'a signalé.)*
 
 ## 7. Limites, inchangées ou nouvelles
 

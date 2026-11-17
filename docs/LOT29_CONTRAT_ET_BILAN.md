@@ -5,7 +5,7 @@
 > pédagogique explicite, **sans ajouter automatiquement** des espaces ou des
 > retours à la ligne que l'utilisateur n'a pas demandés. »
 >
-> Référence différentielle : (identifiant antérieur à la réécriture) (lot 28).
+> Référence différentielle : `lot-28` (lot 28).
 
 ---
 

@@ -79,7 +79,7 @@ exister.
 
 | Référence | Comparaisons | Extensions | Régressions | Capacités perdues |
 |---|---|---|---|---|
-| lot 23 ((identifiant antérieur à la réécriture)) | 1 334 047 | 369 | **0** | **88** |
+| lot 23 (`lot-23`) | 1 334 047 | 369 | **0** | **88** |
 
 Répartition : 82 au stage `planPlacement`, 6 au stage `translate`.
 

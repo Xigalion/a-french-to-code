@@ -15,7 +15,7 @@ utilisateur. »
 
 | Commit | Contenu |
 |---|---|
-| (identifiant antérieur à la réécriture) | **lots 30 et 31** — audit des intentions inaccessibles, `MEMBER_ASSIGN_CHAR`, information sur l'arithmétique des pointeurs, réduction de la clause en double, cause de l'instabilité hôte, définition de fonction interne, lecture de chaîne bornée, correctif du type de retour `static` |
+| `lots-30-31` | **lots 30 et 31** — audit des intentions inaccessibles, `MEMBER_ASSIGN_CHAR`, information sur l'arithmétique des pointeurs, réduction de la clause en double, cause de l'instabilité hôte, définition de fonction interne, lecture de chaîne bornée, correctif du type de retour `static` |
 
 Détail des six corrections autorisées :
 

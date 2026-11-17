@@ -3,7 +3,7 @@
 > Contrat et bilan dans un seul document, parce que le lot ferme **une**
 > asymétrie trouvée par l'exercice de clôture et ne touche rien d'autre.
 >
-> Date : 16 novembre 2026. Référence différentielle : (identifiant antérieur à la réécriture).
+> Date : 16 novembre 2026. Référence différentielle : `kit-test-utilisateur`.
 
 ---
 
@@ -98,7 +98,7 @@ si `promo` existe, ni s'il a ce champ, ni si l'indice est dans les bornes.
 | formulations nouvelles | **4** |
 | tests Node | **3 834**, 0 échec (dont 10 nouveaux, `test/structElement.test.mjs`) |
 | tests historiques adaptés | **0** |
-| comparaisons différentielles | **1 335 559** contre (identifiant antérieur à la réécriture) |
+| comparaisons différentielles | **1 335 559** contre `kit-test-utilisateur` |
 | extensions approuvées | **154** (motif `champ .* de l’élément`) |
 | régressions | **0** |
 | capacités perdues (`--no-loss`) | **0** |

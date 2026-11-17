@@ -148,6 +148,9 @@ triés par position.
 | `src/numericExpression.ts` | paramètre de budget partagé et message d'expression absente optionnels |
 | `src/calculationAdvisories.ts` | les trois clauses du `for` inspectées |
 | `src/conditionInformation.ts` | `FOR_CLAUSE_ORDER` |
+
+*(`conditionInformation.ts` a été renommé `src/pedagogicalInformation.ts`
+au lot 12 : le nom cité ici est celui qui existait alors.)*
 | `test/forLoop.test.mjs` | **nouveau** — 94 tests |
 | `test/loops.test.mjs`, `test/doWhile.test.mjs` | le cas `for` quitte les listes « non livré » |
 | `test/vscode/suite.cjs` | 7 tests hôte ajoutés |

@@ -91,8 +91,8 @@ Aucun autre test touché, aucun instantané régénéré.
 
 | Référence | Comparaisons | Extensions | Régressions | Capacités perdues |
 |---|---|---|---|---|
-| lot 17 ((identifiant antérieur à la réécriture)) | 1 330 390 | 604 | **0** | **0** |
-| avant le lot 13 ((identifiant antérieur à la réécriture)) | 1 330 390 | 47 558 | **0** | **0** |
+| lot 17 (`lot-17`) | 1 330 390 | 604 | **0** | **0** |
+| avant le lot 13 (`ref-avant-lot-13`) | 1 330 390 | 47 558 | **0** | **0** |
 
 Les 604 extensions contre le lot 17 sont un chiffre **sain** : le lot
 n'ouvre qu'une forme syntaxique étroite, et le compteur le montre, là où

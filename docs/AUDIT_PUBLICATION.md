@@ -72,8 +72,9 @@ premier envoi et coûteuse après.
 **DÉCISION DU FONDATEUR, 16 novembre 2026 : option 2, faite.** Les 38 commits
 portent désormais l'adresse de redirection GitHub du compte ; l'arbre est
 **identique** avant et après, et les **26 citations** d'anciens identifiants
-dans 16 documents ont été mises à jour. Table de correspondance, sauvegarde
-et conséquence pour l'envoi : `docs/HISTORIQUE_REECRITURE.md`.
+dans 16 documents ont été mises à jour. La table de correspondance **n'est pas publiée** : elle vit dans
+`local/`, hors du dépôt suivi. Les documents citent désormais des
+**étiquettes** et non des identifiants (`docs/REPERES_GIT.md`).
 
 **Le premier envoi exigera `git push --force-with-lease origin main`** : le
 dépôt distant contient encore l'ancien « Initial commit ».
@@ -179,16 +180,104 @@ Restent ouvertes :
    s'appelle aujourd'hui `A`, ce qui est introuvable par recherche ;
 4. les deux liens `OWNER/REPO` de `.github/ISSUE_TEMPLATE/config.yml` (§4.1).
 
-## 8. État de la vérification
+## 8. Deuxième passe — 17 novembre 2026
 
-Au moment de cet audit :
+La première passe (§1 à §7) est **conservée telle quelle**. Celle-ci ajoute ce
+qu'elle avait manqué, et ce que les décisions du fondateur ont rendu
+nécessaire.
 
-- `npm run check` : **3 834 tests, 0 échec** ;
-- suite hôte VS Code : **99 / 99**, huit passages verts consécutifs ;
-- `node scripts/anonymiser.mjs` : **0 fichier** à réécrire ;
-- aucun fichier suivi non textuel ;
-- `.gitignore` couvre les paquets, les caches, les binaires et les dossiers
-  de travail de compilation.
+### 8.1 Ce que la première passe avait manqué : l'historique
+
+La première passe a nettoyé les **fichiers suivis**. Elle n'avait pas
+cherché le nom d'utilisateur dans les **commits antérieurs** — et il y était,
+dans **6 commits** de `main` : les journaux de compilation des campagnes 1 et
+2, et le chemin du `CLAUDE.md` parent.
+
+Nettoyer l'arbre courant ne suffit donc pas : publier l'historique aurait
+publié le nom. Correction : **une seconde réécriture complète**, qui remplace
+dans tous les fichiers texte de tous les commits :
+
+| Remplacé | Par |
+|---|---|
+| le dossier personnel, dans ses trois écritures | `<DOSSIER-PERSONNEL>` |
+| l'adresse de courriel personnelle, si présente dans un contenu | l'adresse de redirection GitHub |
+| toute citation d'identifiant de commit `` `xxxxxxx` `` | `(identifiant antérieur à la réécriture)` |
+| `docs/HISTORIQUE_REECRITURE.md` | **supprimé de tous les commits** |
+
+Le dernier point exécute la consigne « ne pas publier les anciennes
+références de l'historique réécrit » : la table de correspondance n'existe
+plus dans le dépôt suivi, et les identifiants cités par les anciens commits
+sont neutralisés au lieu d'être laissés en place.
+
+### 8.2 Les citations d'identifiants deviennent des étiquettes
+
+Vingt-deux citations d'identifiants de commit ont été converties en **noms
+d'étiquettes** (`lot-16`, `campagne-3`, `ref-avant-lot-13`…). Raison de fond :
+un identifiant ne survit pas à une réécriture, et ce dépôt vient d'en subir
+deux. Dix-sept étiquettes sont posées, dont `v0.4.0`, et un contrôle vérifie
+que **chaque étiquette citée par un document existe**
+(`docs/REPERES_GIT.md`).
+
+### 8.3 Trois défauts de documentation trouvés par le vérificateur de liens
+
+`node scripts/liens.mjs` contrôle 127 liens Markdown et 595 chemins cités. Il
+a trouvé, et ils sont corrigés :
+
+1. trois bilans du lot 11 citaient `src/conditionInformation.ts`, renommé au
+   lot 12 — la mention est **historiquement juste** et le dit désormais sur
+   place ;
+2. le bilan du lot 26 citait un journal `exercice/journal/hote-lot26.txt`
+   **qui n'a jamais existé** ; le résultat réel est dans
+   `exercice/journal/hote.txt` ;
+3. trois renvois pointaient vers la table de correspondance, désormais hors
+   du dépôt.
+
+### 8.4 Ce que la deuxième passe ajoute au dépôt
+
+| Ajout | Pourquoi |
+|---|---|
+| `CHANGELOG.md` | une version publique identifiable, **avec ses limites**, et non une liste de nouveautés |
+| `docs/ETAT_DU_PROJET.md` | la version publique de `CLAUDE.md`, qui reste dans le dépôt **sans rien perdre** |
+| `docs/REPERES_GIT.md` | les étiquettes, et pourquoi pas des hachages |
+| `docs/PUBLICATION.md` | la procédure, les commandes exactes, et le **retour arrière** |
+| `scripts/liens.mjs` | liens internes et chemins cités |
+| `scripts/pre-publication.mjs` | **14 contrôles**, un seul point d'entrée, qui échoue |
+| `.gitattributes` | fins de ligne **LF** imposées dans le dépôt (la règle `text=auto` héritée ne suffisait pas) |
+| remote `public` | la destination proposée est **visible** en configuration locale, sans toucher à `origin`, et n'a jamais servi à pousser |
+
+### 8.5 Nom public
+
+Proposé par le fondateur : **`c-a-french-to-c`**, sous réserve de
+confirmation. Il est écrit dans deux liens d'aide des modèles de tickets et
+dans le remote `public` ; `docs/PUBLICATION.md` §2 donne la commande unique
+pour le changer. Le dépôt distant s'appelle encore `A`.
+
+### 8.6 Ce que cette passe ne fait pas
+
+- **aucun envoi, aucun changement de visibilité, aucune création de dépôt.**
+  Les commandes sont écrites, pas exécutées ;
+- elle ne garantit pas qu'aucun secret n'a **jamais** existé dans
+  l'historique : elle vérifie des motifs connus, sur l'historique tel qu'il
+  sera publié ;
+- elle ne relit pas le **sens** de 84 documents. Un lien valide n'est pas une
+  phrase vraie.
+
+## 9. État de la vérification
+
+Au 17 novembre 2026, après la deuxième passe :
+
+    node scripts/pre-publication.mjs
+
+- **14 contrôles**, dont `npm run check` (**3 834 tests, 0 échec**) et le
+  vérificateur de liens (127 liens, 595 chemins cités, 0 problème) ;
+- aucune donnée personnelle dans les fichiers **ni dans l'historique de
+  `main`** ;
+- aucune citation d'identifiant de commit ; chaque étiquette citée existe ;
+- aucun fichier binaire, volumineux ou non textuel suivi ; aucun dossier de
+  travail de compilation ;
+- licence Apache-2.0 complète et annoncée dans les trois documents publics ;
+- une seule branche, donc un envoi explicite sans surprise ;
+- suite hôte VS Code : **99 / 99**, neuf passages verts consécutifs.
 
 **Ce que cet audit ne garantit pas.** Il a cherché des motifs connus de
 secrets dans les fichiers **suivis à cette date**. Il ne prouve pas qu'aucun

@@ -123,7 +123,7 @@ du moteur courant sur un corpus généré, et compare arbres, diagnostics,
 messages, intervalles, budgets, fragments, avertissements, informations et
 plans de placement.
 
-Contre la référence d'avant la refonte du noyau ((identifiant antérieur à la réécriture)), avec un motif
+Contre la référence d'avant la refonte du noyau (`ref-avant-lot-13`), avec un motif
 d'extensions **universel** :
 
     comparaisons           : 1 334 392

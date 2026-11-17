@@ -5,7 +5,7 @@
 > règle d'inclusion du lot 4 et son message, figés par les instantanés de
 > compatibilité.
 >
-> Référence différentielle : (identifiant antérieur à la réécriture) (lot 27).
+> Référence différentielle : `lot-27` (lot 27).
 
 ---
 

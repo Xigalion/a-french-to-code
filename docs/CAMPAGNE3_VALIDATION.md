@@ -63,7 +63,7 @@ exemples, parce qu'ils démontrent plus que « ça tourne » :
 
 ## 3. Les corrections : lots 30 et 31
 
-Commit (identifiant antérieur à la réécriture).
+Étiquette `lots-30-31`.
 
 ### 3.1 Intentions déclarées mais inaccessibles — audit complet
 
@@ -141,7 +141,7 @@ acceptée **sans un mot**.
 
 ### 3.5 Différentiel
 
-Contre (identifiant antérieur à la réécriture) : **1 334 965 comparaisons**, 415 extensions approuvées,
+Contre `campagne-2` : **1 334 965 comparaisons**, 415 extensions approuvées,
 **0 régression**.
 
 `--no-loss` a signalé 176 entrées. Auditées par la procédure du lot 24 —

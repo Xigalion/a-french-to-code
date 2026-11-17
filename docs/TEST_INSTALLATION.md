@@ -5,7 +5,7 @@ qui doit pouvoir le désinstaller sans laisser de trace.
 
 > Version testable : **C-A 0.4.0**, paquet local `dist/c-a-0.4.0.vsix`.
 > Aucun lot fonctionnel n'a été ajouté pour ce test : le moteur est
-> exactement celui de la campagne 3 (commit (identifiant antérieur à la réécriture)).
+> exactement celui de la campagne 3 (étiquette `campagne-3`).
 >
 > Date : 16 novembre 2026.
 

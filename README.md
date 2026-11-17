@@ -111,10 +111,16 @@ Neuf exercices progressifs :
 | `scripts/` | paquet, différentiel, dictée VS Code, progression |
 
 Documents d'entrée :
+[`docs/ETAT_DU_PROJET.md`](docs/ETAT_DU_PROJET.md) (ce qui est construit, ce
+qui est prouvé, ce qui reste ouvert),
 [`docs/CATALOGUE.md`](docs/CATALOGUE.md) (ce que C-A accepte),
 [`docs/LIMITES_CONNUES.md`](docs/LIMITES_CONNUES.md) (ce qu'il ne fait pas),
+[`CHANGELOG.md`](CHANGELOG.md) (cette version et ses limites),
 [`CONTRIBUTING.md`](CONTRIBUTING.md) (comment contribuer sans casser la
 philosophie).
+
+Les documents citent des **étiquettes** git, jamais des identifiants de
+commit : [`docs/REPERES_GIT.md`](docs/REPERES_GIT.md) dit pourquoi.
 
 ## Vérifier soi-même
 

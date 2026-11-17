@@ -152,6 +152,9 @@ branche `sinon` ne s'y rattache, et C-A ne remonte pas à un `if` voisin.
 | `src/planPlacement.ts` | `isBlock` fondé sur `BLOCK_KINDS` |
 | `src/calculationAdvisories.ts` | condition obtenue par `instructionCondition` |
 | `src/conditionInformation.ts` | `DO_WHILE_POSTTEST` et table des moments de test |
+
+*(`conditionInformation.ts` a été renommé `src/pedagogicalInformation.ts`
+au lot 12 : le nom cité ici est celui qui existait alors.)*
 | `test/doWhile.test.mjs` | **nouveau** — 68 tests |
 | `test/loops.test.mjs` | le cas `do/while` quitte la liste « non livré » |
 | `test/vscode/suite.cjs` | 4 tests hôte ajoutés ; l'ancien refus 11A devient `test finale` |

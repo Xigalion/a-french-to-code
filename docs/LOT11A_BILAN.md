@@ -73,6 +73,9 @@ contrats.
 | `src/planPlacement.ts` | `WHILE` dans la liste des blocs canoniques |
 | `src/calculationAdvisories.ts` | condition `WHILE` incluse dans l'analyse |
 | `src/conditionInformation.ts` | code `WHILE_PRETEST` et son ordonnancement |
+
+*(`conditionInformation.ts` a été renommé `src/pedagogicalInformation.ts`
+au lot 12 : le nom cité ici est celui qui existait alors.)*
 | `extension/src/extension.ts` | exemple de la zone de saisie |
 | `extension/package.json` | description et version `0.4.0` |
 | `test/loops.test.mjs` | **nouveau** — 156 tests |

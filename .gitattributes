@@ -1,2 +1,20 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Les fichiers texte sont stockés en LF dans le dépôt, quelle que soit la
+# plateforme : sans cette règle, un poste Windows peut committer des CRLF et
+# rendre illisible le moindre diff.
+* text=auto eol=lf
+
+# Le C produit par C-A est du texte, et son indentation est significative
+# pour les instantanés de non-régression.
+*.c text eol=lf
+*.h text eol=lf
+*.md text eol=lf
+*.ts text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+
+# Binaires éventuels : jamais de conversion.
+*.vsix binary
+*.exe binary
+*.png binary
