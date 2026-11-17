@@ -20,6 +20,9 @@ process.chdir(racine);
 const rapide = process.argv.includes('--rapide');
 
 const resultats = [];
+/** Les branches de travail declarees, imprimees apres les controles : ce
+ * n'est pas un echec, c'est une information que le publieur doit voir. */
+let branchesDeTravail = [];
 function controle(nom, fn) {
   let detail;
   let ok = false;
@@ -61,9 +64,18 @@ controle('aucun nom d’utilisateur dans l’historique de main', () => {
   const trouve = git('log', 'main', '-S', utilisateur, '--oneline').trim();
   return trouve === '' ? true : trouve.split('\n').length + ' commit(s) : ' + trouve.split('\n')[0];
 });
-controle('une seule branche, donc un envoi explicite sans surprise', () => {
+// Une branche de travail est légitime ; une branche inconnue ne l'est pas.
+// `push.default` n'envoie que la branche courante, mais le contrôle doit
+// rester celui d'un envoi SANS SURPRISE : toute branche autre que `main`
+// porte un nom déclaré, et le publieur sait pourquoi elle existe.
+controle('aucune branche inattendue à côté de main', () => {
+  const DECLAREES = /^(phase|lot|experience)-[a-z0-9-]+$/u;
   const branches = git('branch', '--format=%(refname:short)').split('\n').filter(Boolean);
-  return branches.length === 1 && branches[0] === 'main' ? true : 'branches : ' + branches.join(', ');
+  if (!branches.includes('main')) return 'branche main absente';
+  const inattendues = branches.filter(nom => nom !== 'main' && !DECLAREES.test(nom));
+  if (inattendues.length > 0) return 'branches inattendues : ' + inattendues.join(', ');
+  branchesDeTravail = branches.filter(nom => nom !== 'main');
+  return true;
 });
 controle('aucune adresse personnelle dans l’auteur des commits de main', () => {
   const adresses = new Set(git('log', 'main', '--format=%ae%n%ce').split('\n').filter(Boolean));
@@ -240,6 +252,9 @@ for (const { nom, ok, detail } of resultats) {
 }
 const echecs = resultats.filter(r => !r.ok).length;
 console.log('');
+if (branchesDeTravail.length > 0) {
+  console.log('Branche(s) de travail presente(s), non publiee(s) : ' + branchesDeTravail.join(', '));
+}
 console.log(echecs === 0
   ? 'Dépôt publiable selon ces ' + resultats.length + ' contrôles.'
   : echecs + ' contrôle(s) en échec sur ' + resultats.length + '.');

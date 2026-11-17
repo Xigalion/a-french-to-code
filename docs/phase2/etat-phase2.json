@@ -1,0 +1,55 @@
+{
+  "_lisezMoi": "Etat de la phase 2. Edite a la main. Lu par scripts/progression-phase2.mjs. Chaque indicateur porte la source de sa mesure : une barre sans source n'est qu'une opinion dessinee.",
+  "miseAJour": "2026-11-17",
+  "branche": "phase-2-architecture",
+  "indicateurs": [
+    {
+      "nom": "Phase 1 — modele 1, C17",
+      "fait": 9, "total": 9, "unite": "domaines",
+      "source": "docs/CAMPAGNE3_VALIDATION.md, docs/EXERCICE_CLOTURE.md",
+      "note": "V1 publique, 84 intentions, 3 834 tests, 19 programmes compiles. Reference stable."
+    },
+    {
+      "nom": "Phase 2 — audit architectural",
+      "fait": 4, "total": 4, "unite": "livrables",
+      "source": "scripts/audit-architecture.mjs + docs/phase2/MESURES.md",
+      "note": "Audit, socle, strategie linguistique, risques. Mesure, pas opinion : 5 745 lignes de moteur depouillees."
+    },
+    {
+      "nom": "Phase 2 — hypotheses verifiees par sonde",
+      "fait": 2, "total": 2, "unite": "sondes executees",
+      "source": "experiences/python/sortie/MESURES.md, experiences/souplesse/sortie/MESURES.md",
+      "note": "Python : 37/84 intentions rendues, programme execute conforme. Souplesse : 20/20 cas, 140 phrases du catalogue inchangees."
+    },
+    {
+      "nom": "Phase 2 — decisions d'architecture",
+      "fait": 0, "total": 6, "unite": "decisions du fondateur",
+      "source": "docs/phase2/SOCLE_COMMUN.md section 5",
+      "note": "BLOQUANT : rien ne commence avant. Six decisions, recommandation ecrite pour chacune."
+    },
+    {
+      "nom": "Phase 2 — decisions de contrat Python",
+      "fait": 0, "total": 12, "unite": "decisions du fondateur",
+      "source": "docs/phase2/PLAN_PYTHON.md section 2",
+      "note": "Dix refus recommandes sur douze. A trancher avant le lot P4, pas avant P0."
+    },
+    {
+      "nom": "Phase 2 — souplesse integree au produit",
+      "fait": 0, "total": 1, "unite": "lot",
+      "source": "aucune ligne dans src/",
+      "note": "Le prototype vit dans experiences/. Mode strict intact, par construction."
+    },
+    {
+      "nom": "Phase 2 — second langage Python",
+      "fait": 0, "total": 7, "unite": "lots P0 a P6",
+      "source": "docs/phase2/PLAN_PYTHON.md section 3",
+      "note": "Perimetre mesure : 37 intentions sur 84. P0 est le seul lot qui touche main."
+    },
+    {
+      "nom": "Phase 2 — code livre dans src/",
+      "fait": 0, "total": 1, "unite": "ligne",
+      "source": "git diff main..phase-2-architecture -- src/",
+      "note": "Zero, et c'est voulu : aucune migration avant validation."
+    }
+  ]
+}
