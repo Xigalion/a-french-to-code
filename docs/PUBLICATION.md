@@ -73,10 +73,19 @@ Les trois commandes, dans cet ordre.
 
     git push --force-with-lease origin main
 
-**Pourquoi forcé.** L'historique a été réécrit une fois avant publication,
-pour en retirer des chemins locaux et une adresse personnelle. Le dépôt
-distant contient encore l'ancien « Initial commit », qui n'est plus un
-ancêtre de `main`.
+**Pourquoi forcé.** L'historique a été réécrit trois fois avant publication :
+l'auteur des commits, puis les chemins locaux et les anciennes références,
+puis le retrait des instructions de travail internes. Le dépôt distant
+contient encore son « Initial commit » (`68cb010`), qui n'est pas un ancêtre
+de `main`.
+
+**Ce que l'envoi forcé écrase, vérifié fichier par fichier.** Ce commit
+distant porte `.gitattributes` et trois documents de phase 1 sous
+`langage-assiste-c/docs/`. Leurs successeurs locaux sont bien plus complets
+(VISION 72 lignes contre 19, SPECIFICATIONS 388 contre 35, DECISIONS 237
+contre 22) : rien de substantiel n'est perdu. Le texte exact de ces trois
+fichiers n'existait toutefois que là, et l'étiquette locale
+`avant-publication-distant` le conserve.
 
 `--force-with-lease` et non `--force` : il refuse si quelqu'un a poussé
 entre-temps.
@@ -89,9 +98,9 @@ Seize étiquettes, dont **`v0.4.0`** qui marque la version publiée. Les
 documents citent ces étiquettes et non des identifiants : sans elles, les
 bilans de lots perdent leurs références (`docs/REPERES_GIT.md`).
 
-> **Ne pas écrire `git push origin --tags`.** Trois étiquettes locales,
-> `avant-reecriture-auteur`, `avant-nettoyage-historique` et
-> `avant-retrait-claude`, désignent
+> **Ne pas écrire `git push origin --tags`.** Quatre étiquettes locales,
+> `avant-reecriture-auteur`, `avant-nettoyage-historique`,
+> `avant-retrait-claude` et `avant-publication-distant`, désignent
 > l'historique **d'avant** le nettoyage — celui qui contient encore les
 > chemins personnels. `--tags` les pousserait, et publierait exactement ce
 > que le nettoyage a retiré. C'est le piège le plus coûteux de cette
@@ -115,7 +124,7 @@ copié, forké, mis en cache et indexé dans les minutes qui suivent.
 ### 4.4 Finitions, après vérification du contenu distant
 
     # une fois le contenu distant VÉRIFIÉ, et pas avant :
-    git tag -d avant-reecriture-auteur avant-nettoyage-historique avant-retrait-claude
+    git tag -d avant-reecriture-auteur avant-nettoyage-historique \n      avant-retrait-claude avant-publication-distant
     git update-ref -d refs/original/refs/heads/main
     git reflog expire --expire=now --all && git gc --prune=now
 
