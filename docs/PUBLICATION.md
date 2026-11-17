@@ -15,12 +15,13 @@
 
     node scripts/pre-publication.mjs
 
-Dix-sept contrôles, dont : aucune donnée personnelle dans les fichiers **ni
+Dix-huit contrôles, dont : aucune donnée personnelle dans les fichiers **ni
 dans l'historique de `main`**, aucun octet nul, aucun binaire suivi, aucune
 citation d'identifiant de commit, chaque étiquette citée existe, licence
 Apache-2.0 complète et annoncée partout, versions accordées, liens internes
-valides, les étiquettes de sauvegarde identifiées, et `npm run check` au
-vert.
+valides, les étiquettes de sauvegarde identifiées,
+les instructions de travail internes **hors du dépôt**, et `npm run check`
+au vert.
 
 **S'il échoue, on ne publie pas.** Il imprime ce qui manque, et il dit aussi
 ce qu'il ne prouve pas.
@@ -88,8 +89,9 @@ Seize étiquettes, dont **`v0.4.0`** qui marque la version publiée. Les
 documents citent ces étiquettes et non des identifiants : sans elles, les
 bilans de lots perdent leurs références (`docs/REPERES_GIT.md`).
 
-> **Ne pas écrire `git push origin --tags`.** Deux étiquettes locales,
-> `avant-reecriture-auteur` et `avant-nettoyage-historique`, désignent
+> **Ne pas écrire `git push origin --tags`.** Trois étiquettes locales,
+> `avant-reecriture-auteur`, `avant-nettoyage-historique` et
+> `avant-retrait-claude`, désignent
 > l'historique **d'avant** le nettoyage — celui qui contient encore les
 > chemins personnels. `--tags` les pousserait, et publierait exactement ce
 > que le nettoyage a retiré. C'est le piège le plus coûteux de cette
@@ -113,7 +115,7 @@ copié, forké, mis en cache et indexé dans les minutes qui suivent.
 ### 4.4 Finitions, après vérification du contenu distant
 
     # une fois le contenu distant VÉRIFIÉ, et pas avant :
-    git tag -d avant-reecriture-auteur avant-nettoyage-historique
+    git tag -d avant-reecriture-auteur avant-nettoyage-historique avant-retrait-claude
     git update-ref -d refs/original/refs/heads/main
     git reflog expire --expire=now --all && git gc --prune=now
 

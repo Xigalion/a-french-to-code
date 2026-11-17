@@ -56,8 +56,8 @@
     "etat": "préparée, NON faite — aucun envoi, aucun changement de visibilité",
     "licence": "Apache-2.0",
     "nomPublicPropose": "c-a-french-to-c (à confirmer)",
-    "controlesPasses": 17,
-    "controlesTotal": 17,
+    "controlesPasses": 18,
+    "controlesTotal": 18,
     "etiquettes": 16,
     "versionPublique": "v0.4.0",
     "procedure": "docs/PUBLICATION.md",
@@ -66,6 +66,7 @@
       "renommer le dépôt distant",
       "pousser main et les étiquettes",
       "rendre public"
-    ]
+    ],
+    "documentPublic": "docs/ETAT_DU_PROJET.md ; les instructions de travail internes restent hors du dépôt"
   }
 }
