@@ -114,7 +114,8 @@ C'est utile, et souvent plus utile. Trois formulaires :
   d'écrire.
 
 Dans les trois cas : la **phrase exacte**, le **code du diagnostic**, la
-version de C-A et de VS Code. Une phrase recopiée « au propre » perd
+version de C-A et de VS Code. Ce qu'un mainteneur en fait, et selon quel
+classement, est public aussi : `docs/SUIVI_PUBLIC.md`. Une phrase recopiée « au propre » perd
 l'information qu'elle portait.
 
 ## 8. Licence des contributions
