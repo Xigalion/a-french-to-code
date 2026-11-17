@@ -123,6 +123,53 @@ rmSync(vsix, { force: true });
 // Mesuré : sur cet hôte, `ZipFile::CreateFromDirectory` et
 // `Compress-Archive` écrivent tous deux des « \ », que VS Code ne lit pas —
 // le paquet s'installe alors sans son manifeste, donc pas du tout.
+/** Fige la date et l'heure de chaque entrée du .vsix.
+ *
+ * Pourquoi : deux constructions du **même commit** donnaient un paquet
+ * identique entrée par entrée et de **hachage différent**, parce qu'un ZIP
+ * embarque la date de chaque entrée, et que ces dates sont celles des
+ * fichiers compilés. Un paquet qu'on ne peut pas vérifier par son hachage
+ * n'est pas reproductible : il est seulement « pareil », et le dire autrement
+ * serait une promesse qu'on ne tient pas.
+ *
+ * Comment : en parcourant la **structure** du ZIP — le répertoire central
+ * trouvé depuis sa fin, puis chaque en-tête local à l'offset que le
+ * répertoire indique. Chercher la signature « PK » à l'aveugle dans le
+ * fichier risquerait de tomber sur des octets compressés qui lui ressemblent.
+ *
+ * La date retenue, 2026-01-01 00:00, n'a aucun sens métier et c'est voulu :
+ * une date issue du commit ferait dépendre le paquet de l'historique, et une
+ * date courante ramènerait le problème.
+ */
+function figerHorodatages(chemin) {
+  // Date DOS : ((année - 1980) << 9) | (mois << 5) | jour. Heure : 0.
+  const DATE = ((2026 - 1980) << 9) | (1 << 5) | 1;
+  const HEURE = 0;
+  const octets = readFileSync(chemin);
+  // Fin du répertoire central : signature 0x06054b50, cherchée depuis la fin.
+  let fin = octets.length - 22;
+  while (fin >= 0 && octets.readUInt32LE(fin) !== 0x06054b50) fin--;
+  if (fin < 0) throw new Error('Paquet illisible : fin de répertoire central absente.');
+  const nombre = octets.readUInt16LE(fin + 10);
+  let position = octets.readUInt32LE(fin + 16);
+  for (let index = 0; index < nombre; index++) {
+    if (octets.readUInt32LE(position) !== 0x02014b50) {
+      throw new Error('Paquet illisible : entrée ' + index + ' du répertoire central.');
+    }
+    octets.writeUInt16LE(HEURE, position + 12);
+    octets.writeUInt16LE(DATE, position + 14);
+    const local = octets.readUInt32LE(position + 42);
+    if (octets.readUInt32LE(local) !== 0x04034b50) {
+      throw new Error('Paquet illisible : en-tête local de l’entrée ' + index + '.');
+    }
+    octets.writeUInt16LE(HEURE, local + 10);
+    octets.writeUInt16LE(DATE, local + 12);
+    position += 46 + octets.readUInt16LE(position + 28)
+      + octets.readUInt16LE(position + 30) + octets.readUInt16LE(position + 32);
+  }
+  writeFileSync(chemin, octets);
+}
+
 function lister(repertoire, prefixe) {
   const trouves = [];
   for (const entree of readdirSync(repertoire, { withFileTypes: true })) {
@@ -138,28 +185,18 @@ const fichiers = lister(paquet, '');
 const inventaire = join(dist, 'entrees.txt');
 writeFileSync(inventaire, fichiers.map(([nom, chemin]) => nom + '|' + chemin).join('\n'), 'utf8');
 
-// Les horodatages des entrées sont FIGÉS, et les entrées sont écrites dans
-// l'ordre de l'inventaire. Sans cela, deux constructions du même commit
-// donnaient un .vsix identique entrée par entrée mais de hachage différent,
-// parce qu'un ZIP embarque la date de chaque entrée. Un paquet qu'on ne peut
-// pas vérifier par son hachage n'est pas reproductible, seulement « pareil ».
-//
-// La date retenue — 2026-01-01 00:00 — n'a aucun sens métier, et c'est voulu :
-// une date issue du commit ferait dépendre le paquet de l'historique, et une
-// date courante ramènerait le problème.
 const zip = [
   'Add-Type -AssemblyName System.IO.Compression.FileSystem;',
   "$a = [System.IO.Compression.ZipFile]::Open('" + vsix + "', 'Create');",
-  "$fige = New-Object DateTimeOffset(2026, 1, 1, 0, 0, 0, [TimeSpan]::Zero);",
   "foreach ($l in Get-Content -LiteralPath '" + inventaire + "' -Encoding UTF8) {",
   "  $p = $l -split '\\|', 2;",
-  '  $e = [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($a, $p[1], $p[0],',
-  '    [System.IO.Compression.CompressionLevel]::Optimal);',
-  '  $e.LastWriteTime = $fige; }',
+  '  [void][System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($a, $p[1], $p[0],',
+  '    [System.IO.Compression.CompressionLevel]::Optimal); }',
   '$a.Dispose();',
 ].join(' ');
 execFileSync('powershell', ['-NoProfile', '-NonInteractive', '-Command', zip], { stdio: 'inherit' });
 rmSync(inventaire, { force: true });
+figerHorodatages(vsix);
 
 // Vérification du paquet produit, pas seulement de son existence : un .vsix
 // sans ces trois entrées, nommées exactement ainsi, est refusé à l'installation.
