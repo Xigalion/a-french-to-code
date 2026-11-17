@@ -1,20 +1,32 @@
 import { translate } from '../translate.ts';
 import type { TranslationResult } from '../translate.ts';
+import { reformuler } from './reformulations.ts';
+import type { GenreReformulation } from './reformulations.ts';
 
 /** Souplesse linguistique déterministe — **indépendante du langage cible**.
  *
  * Ce module ne sait rien du C ni de Python : il travaille sur le **français**.
- * Il réécrit une phrase libre en phrases candidates du catalogue, et c'est le
- * moteur strict qui arbitre. Il n'est appelé par personne : la couche est
- * **désactivée par défaut** pendant sa validation, exactement comme la
- * décision 6 du socle le demande.
+ * Il réécrit une phrase libre en phrases candidates du catalogue, et c'est un
+ * **arbitre** — le moteur strict, passé en paramètre — qui tranche. Il n'est
+ * appelé par l'hôte que si l'utilisateur a activé le mode souple.
  *
- * Quatre propriétés, et ce sont elles qui séparent la souplesse linguistique
+ * Deux mécanismes, et ils se composent :
+ *   - le **lexique** (lot S4) : des substitutions de mots et de suites de
+ *     mots. Il couvre les variantes morphologiques — infinitifs, impératifs
+ *     pluriels, synonymes d'un mot ;
+ *   - les **reformulations** (lot S5, `reformulations.ts`) : des motifs ancrés
+ *     sur la phrase entière, qui changent l'ordre et la forme. Ils couvrent ce
+ *     que le lexique ne peut pas atteindre, et le corpus du lot S4 l'avait
+ *     mesuré : 43 phrases claires sur 94 refusées.
+ *
+ * Cinq propriétés, et ce sont elles qui séparent la souplesse linguistique
  * d'un relâchement pédagogique :
- *   - DÉTERMINISME : un lexique est une table, jamais une inférence ;
+ *   - DÉTERMINISME : deux tables, jamais une inférence ;
  *   - AUCUNE COMPLÉTION : une information absente le reste, et le refus le dit ;
  *   - MODE STRICT INTACT : une phrase du catalogue ne traverse pas la couche ;
- *   - TRAÇABILITÉ : la phrase de l'utilisateur est conservée telle quelle.
+ *   - TRAÇABILITÉ : la phrase de l'utilisateur est conservée telle quelle ;
+ *   - AMBIGUÏTÉ REFUSÉE : deux lectures de sens différent ne se choisissent
+ *     pas. Les deux sont montrées.
  */
 
 export type Entree = {
@@ -61,17 +73,46 @@ export const BUDGET = { substitutions: 4, candidates: 64 };
  * lexique. Une variable peut s'appeler « mets ». */
 const AVANT_IDENTIFIANT = ['nommé', 'nommée', 'nommés', 'nommées', 'appelé', 'appelée', 'nom'];
 
-/** A verdict that carries a result carries an ACCEPTED one: the strict engine
- * is the arbiter, so a refused reading never reaches a caller. Saying so in the
- * type spares every caller a status check it cannot fail. */
+/** Ce qu'un arbitre répond d'une phrase candidate.
+ *
+ * `sens` est la clé d'identité de la LECTURE : deux candidates de même `sens`
+ * ne sont pas une ambiguïté, deux de `sens` différents en sont une. `apercu`
+ * et `intention` ne servent qu'au message de refus.
+ */
+export type Jugement<C> =
+  | { accepte: false }
+  | { accepte: true; sens: string; intention: string; apercu: string; resultat: C };
+export type Arbitre<C> = (phrase: string) => Jugement<C>;
+
 type Traduite = Extract<TranslationResult, { status: 'translated' }>;
 
-export type Verdict =
-  | { verdict: 'strict'; source: string; canonique: string; resultat: Traduite }
-  | { verdict: 'normalise' | 'resolu'; source: string; canonique: string; resultat: Traduite;
-    lecturesEssayees: number; lecturesValides: number }
+/** Deux lectures ont le même sens si leur instruction est identique,
+ * paramètres compris. Les intervalles sont exclus : ils désignent des
+ * positions dans des phrases différentes. */
+function sensDe(resultat: TranslationResult): string {
+  return JSON.stringify(resultat, (cle, valeur) =>
+    (cle === 'range' || cle.endsWith('Range') || cle === 'source' || cle === 'fragments'
+      ? undefined : valeur));
+}
+
+/** L'arbitre du catalogue C17 : le moteur strict, et rien d'autre. */
+export const ARBITRE_C17: Arbitre<Traduite> = (phrase) => {
+  const resultat = translate(phrase);
+  if (resultat.status !== 'translated') return { accepte: false };
+  return { accepte: true, sens: sensDe(resultat), intention: resultat.instruction.kind,
+    apercu: (resultat.fragments[0]?.code ?? '').replace(/\n$/u, ''), resultat };
+};
+
+export type Lecture = { phrase: string; intention: string; code: string };
+
+export type Verdict<C = Traduite> =
+  | { verdict: 'strict'; source: string; canonique: string; resultat: C }
+  | { verdict: 'normalise' | 'resolu'; source: string; canonique: string; resultat: C;
+    lecturesEssayees: number; lecturesValides: number;
+    /** Le genre de reformulation employée, quand c'en est une. */
+    genre?: GenreReformulation }
   | { verdict: 'ambigu'; code: 'AMBIGUITE_NON_RESOLUE'; source: string; message: string;
-    lectures: readonly { phrase: string; intention: string; code: string }[] }
+    lectures: readonly Lecture[] }
   | { verdict: 'refus'; code: 'AUCUNE_VARIANTE_CONNUE' | 'TROP_DE_SUBSTITUTIONS' | 'TROP_DE_LECTURES'
     | 'AUCUNE_LECTURE_VALIDE'; source: string; message: string; essais?: readonly string[] };
 
@@ -85,7 +126,17 @@ const minuscule = (texte: string): string => texte.toLowerCase().replace(/'/gu, 
  */
 export function zonesProtegees(phrase: string): { debut: number; fin: number }[] {
   const zones: { debut: number; fin: number }[] = [];
-  for (const motif of [/"[^"]*"?/gu, /'[^']*'?/gu]) {
+  // DÉFAUT CORRIGÉ le 17 novembre 2026, trouvé par le corpus de validation.
+  // Le motif du littéral caractère était `/'[^']*'?/`, avec guillemet
+  // fermant facultatif : une apostrophe DROITE dans un mot français —
+  // « Passe à l'itération suivante. », ce que produit la plupart des
+  // claviers — ouvrait donc une zone protégée qui avalait la fin de la
+  // phrase, et la substitution du lexique était silencieusement annulée.
+  // Un littéral caractère est désormais reconnu par sa forme exacte : un
+  // caractère, ou une échappement, entre deux apostrophes. Une apostrophe
+  // isolée n'est plus un littéral — et le moteur strict refuse de toute
+  // façon un littéral non terminé.
+  for (const motif of [/"[^"]*"?/gu, /'(?:\\[\s\S]|[^'\\])'/gu]) {
     for (const trouve of phrase.matchAll(motif)) {
       zones.push({ debut: trouve.index, fin: trouve.index + trouve[0].length });
     }
@@ -138,8 +189,8 @@ function trouver(phrase: string): { debut: number; fin: number; entree: Entree }
   return trouvees.sort((a, b) => a.debut - b.debut);
 }
 
-/** Les phrases candidates, par substitution, sans rien réordonner. */
-function candidates(phrase: string, trouvees: { debut: number; fin: number; entree: Entree }[]): string[] {
+/** Les phrases candidates du lexique, par substitution, sans rien réordonner. */
+function parLexique(phrase: string, trouvees: { debut: number; fin: number; entree: Entree }[]): string[] {
   let liste = [phrase];
   for (const { debut, fin, entree } of [...trouvees].reverse()) {
     const suivantes: string[] = [];
@@ -151,67 +202,89 @@ function candidates(phrase: string, trouvees: { debut: number; fin: number; entr
   return [...new Set(liste)];
 }
 
-/** Deux lectures ont le même sens si leur instruction est identique,
- * paramètres compris. Les intervalles sont exclus : ils désignent des
- * positions dans des phrases différentes. */
-function sens(resultat: TranslationResult): string {
-  return JSON.stringify(resultat, (cle, valeur) =>
-    (cle === 'range' || cle.endsWith('Range') || cle === 'source' || cle === 'fragments'
-      ? undefined : valeur));
+/** Toutes les candidates : le lexique, les reformulations, et les
+ * reformulations de chaque candidate du lexique — les deux mécanismes se
+ * composent, dans cet ordre, et jamais l'inverse. */
+function toutesLesCandidates(phrase: string, lexicales: string[]):
+{ phrase: string; genre?: GenreReformulation }[] {
+  const liste: { phrase: string; genre?: GenreReformulation }[] = [];
+  const vues = new Set<string>();
+  const ajouter = (candidate: string, genre?: GenreReformulation): void => {
+    if (vues.has(candidate)) return;
+    vues.add(candidate);
+    liste.push(genre === undefined ? { phrase: candidate } : { phrase: candidate, genre });
+  };
+  for (const candidate of lexicales) ajouter(candidate);
+  for (const candidate of [phrase, ...lexicales]) {
+    for (const reformulee of reformuler(candidate)) ajouter(reformulee.phrase, reformulee.genre);
+  }
+  return liste;
 }
 
 /** Le budget est un **paramètre**, pas une constante cachée : la mesure sur
- * corpus (`scripts/mesurer-souplesse.mjs`) doit pouvoir l'explorer sans
- * modifier le module. En usage, il vaut `BUDGET`. */
-export function normaliser(phrase: string, budget: { substitutions: number; candidates: number } = BUDGET): Verdict {
+ * corpus doit pouvoir l'explorer sans modifier le module. En usage, il vaut
+ * `BUDGET`, et l'arbitre vaut `ARBITRE_C17`. */
+export function normaliser<C = Traduite>(phrase: string, options: {
+  budget?: { substitutions: number; candidates: number };
+  arbitre?: Arbitre<C>;
+} = {}): Verdict<C> {
+  const budget = options.budget ?? BUDGET;
+  const arbitre = options.arbitre ?? (ARBITRE_C17 as unknown as Arbitre<C>);
+
   // 1. Le mode strict d'abord. Si la phrase est du catalogue, la couche ne
   //    fait rien du tout — et c'est ce qui la rend inoffensive.
-  const directe = translate(phrase);
-  if (directe.status === 'translated') {
-    return { verdict: 'strict', source: phrase, canonique: phrase, resultat: directe };
+  const directe = arbitre(phrase);
+  if (directe.accepte) {
+    return { verdict: 'strict', source: phrase, canonique: phrase, resultat: directe.resultat };
   }
 
   const trouvees = trouver(phrase);
-  if (trouvees.length === 0) {
-    return { verdict: 'refus', code: 'AUCUNE_VARIANTE_CONNUE', source: phrase,
-      message: 'Cette formulation n’appartient pas au catalogue, et aucun mot du lexique n’y figure '
-        + 'hors des guillemets et des noms : il n’y a rien à normaliser. ' + directe.diagnostics[0].message };
-  }
   if (trouvees.length > budget.substitutions) {
     return { verdict: 'refus', code: 'TROP_DE_SUBSTITUTIONS', source: phrase,
       message: trouvees.length + ' mots du lexique dans une seule phrase, au-delà des '
         + budget.substitutions + ' autorisés. Une phrase aussi éloignée du catalogue se reformule, '
         + 'elle ne se devine pas.' };
   }
-
-  const essais = candidates(phrase, trouvees);
+  const lexicales = parLexique(phrase, trouvees);
+  const essais = toutesLesCandidates(phrase, lexicales).filter(candidate => candidate.phrase !== phrase);
+  if (essais.length === 0) {
+    return { verdict: 'refus', code: 'AUCUNE_VARIANTE_CONNUE', source: phrase,
+      message: 'Cette formulation n’appartient pas au catalogue, et ni le lexique ni les reformulations '
+        + 'connues ne s’y appliquent : il n’y a rien à normaliser.' };
+  }
   if (essais.length > budget.candidates) {
     return { verdict: 'refus', code: 'TROP_DE_LECTURES', source: phrase,
       message: essais.length + ' lectures possibles, au-delà des ' + budget.candidates + ' autorisées.' };
   }
 
-  // 2. Le moteur strict est l'arbitre : une candidate n'est retenue que s'il
-  //    l'accepte. La couche ne décide jamais qu'une phrase est valide.
-  const acceptees: { essai: string; resultat: Traduite; sens: string }[] = [];
-  for (const essai of essais) {
-    const resultat = translate(essai);
-    if (resultat.status === 'translated') acceptees.push({ essai, resultat, sens: sens(resultat) });
+  // 2. L'arbitre tranche : une candidate n'est retenue que s'il l'accepte. La
+  //    couche ne décide jamais qu'une phrase est valide.
+  const acceptees: { essai: string; genre?: GenreReformulation; jugement: Extract<Jugement<C>, { accepte: true }> }[] = [];
+  for (const candidate of essais) {
+    const jugement = arbitre(candidate.phrase);
+    if (!jugement.accepte) continue;
+    acceptees.push(candidate.genre === undefined
+      ? { essai: candidate.phrase, jugement }
+      : { essai: candidate.phrase, genre: candidate.genre, jugement });
   }
 
   if (acceptees.length === 0) {
-    return { verdict: 'refus', code: 'AUCUNE_LECTURE_VALIDE', source: phrase, essais,
-      message: 'Aucune des ' + essais.length + ' lectures du lexique n’appartient au catalogue. '
-        + 'Ce qui manque n’est pas deviné : ' + directe.diagnostics[0].message };
+    return { verdict: 'refus', code: 'AUCUNE_LECTURE_VALIDE', source: phrase,
+      essais: essais.map(candidate => candidate.phrase),
+      message: 'Aucune des ' + essais.length + ' lectures connues n’appartient au catalogue. '
+        + 'Ce qui manque n’est pas deviné.' };
   }
 
-  const distincts = new Map<string, { essai: string; resultat: Traduite }>();
-  for (const candidate of acceptees) if (!distincts.has(candidate.sens)) distincts.set(candidate.sens, candidate);
+  const distincts = new Map<string, typeof acceptees[number]>();
+  for (const candidate of acceptees) {
+    if (!distincts.has(candidate.jugement.sens)) distincts.set(candidate.jugement.sens, candidate);
+  }
   if (distincts.size > 1) {
     return { verdict: 'ambigu', code: 'AMBIGUITE_NON_RESOLUE', source: phrase,
       lectures: [...distincts.values()].map(lecture => ({
         phrase: lecture.essai,
-        intention: lecture.resultat.instruction.kind,
-        code: (lecture.resultat.fragments[0]?.code ?? '').replace(/\n$/u, ''),
+        intention: lecture.jugement.intention,
+        code: lecture.jugement.apercu,
       })),
       message: 'Cette phrase a ' + distincts.size + ' lectures de sens différent. C-A ne choisit pas : '
         + 'reformulez avec l’une des phrases du catalogue.' };
@@ -223,7 +296,8 @@ export function normaliser(phrase: string, budget: { substitutions: number; cand
   if (retenue === undefined) throw new Error('Invariant interne : une lecture unique était attendue.');
   return {
     verdict: essais.length === 1 ? 'normalise' : 'resolu',
-    source: phrase, canonique: retenue.essai, resultat: retenue.resultat,
+    source: phrase, canonique: retenue.essai, resultat: retenue.jugement.resultat,
     lecturesEssayees: essais.length, lecturesValides: acceptees.length,
+    ...(retenue.genre === undefined ? {} : { genre: retenue.genre }),
   };
 }

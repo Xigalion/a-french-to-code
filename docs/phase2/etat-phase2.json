@@ -29,19 +29,27 @@
     },
     {
       "nom": "Phase 2 — lots d'implementation",
-      "fait": 6,
+      "fait": 7,
       "total": 9,
       "unite": "lots P0 a P6, plus P4a et S4",
-      "source": "docs/phase2/LOT_P0_CONTRAT.md, LOT_P3_CONTRAT_ET_BILAN.md, LOT_P4A_CONTRAT_ET_BILAN.md, LOT_P4_CONTRAT_ET_BILAN.md, LOT_S4_CONTRAT_ET_BILAN.md",
-      "note": "P0, P1, P2, P3, P4a et P4 livres. P4 : 14 intentions NATIVES, un programme de 41 instructions ecrit par la session de l'hote et execute. Restent P5, P6, S5."
+      "source": "docs/phase2/LOT_P0_CONTRAT.md, LOT_P3_CONTRAT_ET_BILAN.md, LOT_P4A_CONTRAT_ET_BILAN.md, LOT_P4_CONTRAT_ET_BILAN.md, LOT_S4_CONTRAT_ET_BILAN.md, LOT_S5_CONTRAT_ET_BILAN.md",
+      "note": "P0, P1, P2, P3, P4a, P4 et S5 livres. S5 : 98 reformulations syntaxiques, deux corpus distincts, trois defauts trouves dont un dans sa propre table. Restent P5 et P6."
     },
     {
-      "nom": "Phase 2 — souplesse linguistique",
+      "nom": "Phase 2 — integration TECHNIQUE de la souplesse",
       "fait": 4,
       "total": 4,
       "unite": "etapes",
-      "source": "docs/phase2/LOT_S4_CONTRAT_ET_BILAN.md, MESURES_SOUPLESSE.md, MESURES_CORPUS.md",
-      "note": "Integree a l'hote, desactivee par defaut (reglage c-a.souplesse). 104 tests hote, 9 tests de session, corpus ecrit a la main de 94 phrases : 38/38 au sens exact, 0 acceptee a tort, 0 sens different, 43 phrases claires refusees."
+      "source": "docs/phase2/LOT_S4_CONTRAT_ET_BILAN.md, LOT_S5_CONTRAT_ET_BILAN.md",
+      "note": "Module ecrit, integre aux deux hotes (C17 et Python), active par reglage, arbitre parametrable. Reste a brancher l'arbitre du catalogue natif Python : un parametre."
+    },
+    {
+      "nom": "Phase 2 — couverture LINGUISTIQUE (corpus gele)",
+      "fait": 56,
+      "total": 59,
+      "unite": "phrases du perimetre reconnues",
+      "source": "docs/phase2/MESURES_REFORMULATIONS.md, corpus-validation.json (gele)",
+      "note": "94,9 % sur le corpus de validation GELE, 0 erreur de sens, 0 acceptee a tort. Objectif indicatif de 90 % depasse. LIMITE : le corpus est ecrit par l'auteur du mecanisme — gele et jamais utilise pour enrichir, mais pas independant de sa connaissance. Le francais spontane n'est mesure par personne."
     },
     {
       "nom": "Phase 2 — perimetre pedagogique Python",
@@ -89,7 +97,7 @@
       "total": 1,
       "unite": "verification",
       "source": "git diff main..HEAD -- src/ : non vide, et c'est voulu depuis P0",
-      "note": "main reste la V1 publique a l'etiquette v0.4.0. La branche porte P0 a P4 et S4, et n'est pas fusionnee."
+      "note": "main reste la V1 publique a l'etiquette v0.4.0. La branche porte P0 a P4, S4 et S5, et n'est pas fusionnee."
     },
     {
       "nom": "Phase 2 — usage humain reel, Python",

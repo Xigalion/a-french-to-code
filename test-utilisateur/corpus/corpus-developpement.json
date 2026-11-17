@@ -1,0 +1,83 @@
+{
+  "titre": "Corpus de DÉVELOPPEMENT — il sert à enrichir le mécanisme",
+  "date": "2026-11-17",
+  "methode": [
+    "Écrit à la main, domaine par domaine, en français courant. Aucune phrase n'est dérivée du catalogue ni de la table de reformulations.",
+    "Ce corpus a le droit de servir à ÉTENDRE la table : c'est son rôle. Il ne mesure donc pas la généralisation.",
+    "Le corpus de VALIDATION (corpus-validation.json) est gelé et n'a jamais servi à enrichir quoi que ce soit : c'est lui qui donne le chiffre honnête.",
+    "« perimetre » dit si l'INTENTION existe dans le catalogue C-A, indépendamment de la formulation. Une phrase hors périmètre ne peut pas être reconnue, et la compter dans un taux de reconnaissance serait tricher dans l'autre sens.",
+    "« code » est la sortie C attendue, écrite à la main AVANT toute mesure."
+  ],
+  "entrees": [
+    { "phrase": "Fixe age à 20.", "perimetre": true, "attendu": "accepte", "code": "age = 20;" },
+    { "phrase": "Stocke 20 dans age.", "perimetre": true, "attendu": "accepte", "code": "age = 20;" },
+    { "phrase": "Initialise age à 20.", "perimetre": true, "attendu": "accepte", "code": "age = 20;" },
+    { "phrase": "Affecte 20 à age.", "perimetre": true, "attendu": "accepte", "code": "age = 20;" },
+    { "phrase": "Range 20 dans age.", "perimetre": true, "attendu": "accepte", "code": "age = 20;" },
+    { "phrase": "Change age en 20.", "perimetre": true, "attendu": "accepte", "code": "age = 20;" },
+    { "phrase": "age prend la valeur 20.", "perimetre": true, "attendu": "accepte", "code": "age = 20;" },
+    { "phrase": "age devient 20.", "perimetre": true, "attendu": "accepte", "code": "age = 20;" },
+
+    { "phrase": "Déclare un entier appelé compteur.", "perimetre": true, "attendu": "accepte", "code": "int compteur;" },
+    { "phrase": "Crée une variable entière nommée compteur.", "perimetre": true, "attendu": "accepte", "code": "int compteur;" },
+    { "phrase": "Réserve un entier nommé compteur.", "perimetre": true, "attendu": "accepte", "code": "int compteur;" },
+    { "phrase": "Crée un entier nommé total valant 0.", "perimetre": true, "attendu": "accepte", "code": "int total = 0;" },
+    { "phrase": "Crée un entier nommé total initialisé à 0.", "perimetre": true, "attendu": "accepte", "code": "int total = 0;" },
+    { "phrase": "Crée un caractère nommé lettre valant 'A'.", "perimetre": true, "attendu": "accepte", "code": "char lettre = 'A';" },
+    { "phrase": "Déclare le caractère lettre.", "perimetre": true, "attendu": "accepte", "code": "char lettre;" },
+
+    { "phrase": "Calcule \"a * b\" dans produit.", "perimetre": true, "attendu": "accepte", "code": "produit = (a * b);" },
+    { "phrase": "produit reçoit le résultat de \"a * b\".", "perimetre": true, "attendu": "accepte", "code": "produit = (a * b);" },
+    { "phrase": "Évalue \"a * b\" dans produit.", "perimetre": true, "attendu": "accepte", "code": "produit = (a * b);" },
+    { "phrase": "Ajoute 5 à total.", "perimetre": true, "attendu": "accepte", "code": "total = (total + 5);" },
+    { "phrase": "Retire 3 de total.", "perimetre": true, "attendu": "accepte", "code": "total = (total - 3);" },
+    { "phrase": "Double total.", "perimetre": true, "attendu": "refuse", "raison": "le facteur 2 n'est pas écrit dans la phrase" },
+    { "phrase": "Incrémente compteur.", "perimetre": true, "attendu": "refuse", "raison": "le pas n'est pas écrit dans la phrase" },
+
+    { "phrase": "Montre total.", "perimetre": true, "attendu": "ambigu", "raison": "%d ou %c : deux lectures" },
+    { "phrase": "Écris total à l'écran.", "perimetre": true, "attendu": "accepte", "code": "printf(\"%d\", total);" },
+    { "phrase": "Affiche total à l'écran.", "perimetre": true, "attendu": "accepte", "code": "printf(\"%d\", total);" },
+    { "phrase": "Affiche le contenu de total.", "perimetre": true, "attendu": "accepte", "code": "printf(\"%d\", total);" },
+    { "phrase": "Affiche total en hexadécimal.", "perimetre": true, "attendu": "accepte", "code": "printf(\"%x\", total);" },
+    { "phrase": "Écris le texte \"Bonjour\".", "perimetre": true, "attendu": "accepte", "code": "printf(\"%s\", \"Bonjour\");" },
+    { "phrase": "Affiche une ligne vide.", "perimetre": true, "attendu": "accepte", "code": "printf(\"\\n\");" },
+    { "phrase": "Va à la ligne.", "perimetre": true, "attendu": "accepte", "code": "printf(\"\\n\");" },
+
+    { "phrase": "Si \"age >= 18\" alors.", "perimetre": true, "attendu": "accepte", "code": "if (age >= 18) {\n    \n}" },
+    { "phrase": "Teste si \"age >= 18\".", "perimetre": true, "attendu": "accepte", "code": "if (age >= 18) {\n    \n}" },
+    { "phrase": "Ouvre un bloc si \"age >= 18\".", "perimetre": true, "attendu": "accepte", "code": "if (age >= 18) {\n    \n}" },
+    { "phrase": "Sinon.", "perimetre": true, "attendu": "accepte", "code": "else {\n    \n}" },
+    { "phrase": "Sinon si \"age >= 12\".", "perimetre": true, "attendu": "accepte", "code": "else if (age >= 12) {\n    \n}" },
+    { "phrase": "Autrement.", "perimetre": true, "attendu": "accepte", "code": "else {\n    \n}" },
+
+    { "phrase": "Boucle tant que \"i < 10\".", "perimetre": true, "attendu": "accepte", "code": "while (i < 10) {\n    \n}" },
+    { "phrase": "Tant que \"i < 10\".", "perimetre": true, "attendu": "accepte", "code": "while (i < 10) {\n    \n}" },
+    { "phrase": "Recommence tant que \"i < 10\".", "perimetre": true, "attendu": "accepte", "code": "while (i < 10) {\n    \n}" },
+    { "phrase": "Arrête la boucle.", "perimetre": true, "attendu": "accepte", "code": "break;" },
+    { "phrase": "Interrompt la boucle.", "perimetre": true, "attendu": "accepte", "code": "break;" },
+    { "phrase": "Saute à l'itération suivante.", "perimetre": true, "attendu": "accepte", "code": "continue;" },
+
+    { "phrase": "Renvoie le résultat de \"a + b\".", "perimetre": true, "attendu": "accepte", "code": "return (a + b);" },
+    { "phrase": "Rends la valeur 1.", "perimetre": true, "attendu": "accepte", "code": "return 1;" },
+    { "phrase": "Sors de la fonction.", "perimetre": true, "attendu": "accepte", "code": "return;" },
+    { "phrase": "Appelle la fonction somme avec \"1\" et \"2\".", "perimetre": true, "attendu": "accepte", "code": "somme(1, 2);" },
+
+    { "phrase": "Déclare un tableau d'entiers nommé notes de dimension 10.", "perimetre": true, "attendu": "accepte", "code": "int notes[10];" },
+    { "phrase": "Mets 5 dans l'élément \"0\" de notes.", "perimetre": true, "attendu": "accepte", "code": "notes[0] = 5;" },
+    { "phrase": "Affiche l'élément \"0\" du tableau notes.", "perimetre": true, "attendu": "accepte", "code": "printf(\"%d\", notes[0]);" },
+
+    { "phrase": "Ferme le fichier journal.", "perimetre": true, "attendu": "accepte", "code": "fclose(journal);" },
+    { "phrase": "Inclure la bibliothèque stdlib.h.", "perimetre": true, "attendu": "accepte", "code": "#include <stdlib.h>" },
+    { "phrase": "Libérer la mémoire de tampon.", "perimetre": true, "attendu": "accepte", "code": "free(tampon);" },
+    { "phrase": "Vérifier que \"n > 0\".", "perimetre": true, "attendu": "accepte", "code": "assert(n > 0);" },
+
+    { "phrase": "Crée un pointeur p vers un int.", "perimetre": true, "attendu": "refuse", "raison": "l'ordre type/nom n'est pas reformulé : le catalogue dit « de type int nommé p »" },
+    { "phrase": "Déclarer un réel nommé moyenne.", "perimetre": true, "attendu": "refuse", "raison": "« réel » ne dit pas si c'est float ou double" },
+    { "phrase": "Trie le tableau notes.", "perimetre": false, "attendu": "refuse", "raison": "aucune intention de tri n'existe, et n'existera pas : le tri s'écrit" },
+    { "phrase": "Calcule la moyenne de notes.", "perimetre": false, "attendu": "refuse", "raison": "aucune intention de moyenne : c'est un programme, pas une instruction" },
+    { "phrase": "Crée une liste vide nommée notes.", "perimetre": false, "attendu": "refuse", "raison": "intention Python, hors du catalogue C17" },
+    { "phrase": "Affiche age et total.", "perimetre": false, "attendu": "refuse", "raison": "deux instructions dans une phrase" },
+    { "phrase": "Crée un entier nommé age de valeur vingt.", "perimetre": true, "attendu": "refuse", "raison": "« vingt » n'est pas un entier écrit en chiffres" },
+    { "phrase": "Fais quelque chose avec age.", "perimetre": false, "attendu": "refuse", "raison": "aucune intention identifiable" }
+  ]
+}

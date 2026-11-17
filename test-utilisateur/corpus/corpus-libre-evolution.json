@@ -1,0 +1,44 @@
+{
+  "titre": "Corpus libre — les gains du lot S5, vérifiés un par un",
+  "date": "2026-11-17",
+  "methode": [
+    "Le corpus historique test-utilisateur/corpus/corpus-libre.json n'est PAS modifié : il reste la référence du lot S4, avec ses attentes de l'époque.",
+    "Ce fichier-ci enregistre les phrases que ce corpus classait « claires mais refusées » et que le lot S5 reconnaît désormais.",
+    "Pour chacune, le C produit a été LU et vérifié à la main avant d'être écrit ici. Un gain dont on ne vérifie pas le sens n'est pas un gain.",
+    "Le champ « canonique » dit par quelle phrase du catalogue la reformulation est passée : c'est ce que l'utilisateur voit avant l'aperçu.",
+    "Un test exige que chacune reste acceptée AVEC CE CODE EXACT : une reformulation qui changerait de sens serait une régression."
+  ],
+  "gains": [
+    { "phrase": "Mettre 20 dans age.", "canonique": "Affecte la valeur 20 à age.", "code": "age = 20;" },
+    { "phrase": "age vaut 20.", "canonique": "Affecte la valeur 20 à age.", "code": "age = 20;",
+      "note": "Classée « toujours refusée pour ambiguïté » dans une première version de ce fichier, et c’était faux. La lecture « créer » inventerait le type « entier », que la phrase ne donne pas : elle est donc impossible, pas concurrente. Une seule lecture reste, l’affectation, et la reformulation fautive a été retirée de la table." },
+    { "phrase": "Donne à age la valeur 20.", "canonique": "Affecte la valeur 20 à age.", "code": "age = 20;" },
+    { "phrase": "Ajouter 1 à compteur.", "canonique": "Affecte à compteur le résultat de \"compteur + 1\".", "code": "compteur = (compteur + 1);",
+      "note": "La seule reformulation qui COMPOSE : la cible apparaît deux fois dans la phrase canonique, alors qu'elle n'apparaît qu'une fois dans la phrase libre. Les deux opérandes et la cible sont écrits ; rien n'est ajouté. « Incrémente compteur. » reste refusée, parce que le pas, lui, n'est pas écrit." },
+    { "phrase": "Écrire la valeur de age.", "canonique": "Affiche la valeur de age.", "code": "printf(\"%d\", age);" },
+    { "phrase": "Imprimer la valeur de age.", "canonique": "Affiche la valeur de age.", "code": "printf(\"%d\", age);" },
+    { "phrase": "Montrer la valeur de age.", "canonique": "Affiche la valeur de age.", "code": "printf(\"%d\", age);" },
+    { "phrase": "Affiche la variable age.", "canonique": "Affiche la valeur de age.", "code": "printf(\"%d\", age);" },
+    { "phrase": "Répéter tant que \"i < 3\".", "canonique": "Crée une boucle tant que \"i < 3\".", "code": "while (i < 3) {\n    \n}" },
+    { "phrase": "Sortir de la boucle.", "canonique": "Sors de la boucle la plus intérieure.", "code": "break;" },
+    { "phrase": "Quitter la boucle.", "canonique": "Sors de la boucle la plus intérieure.", "code": "break;" },
+    { "phrase": "Continuer la boucle.", "canonique": "Passe à l’itération suivante de la boucle la plus intérieure.", "code": "continue;" },
+    { "phrase": "Renvoyer 0.", "canonique": "Retourne la valeur 0.", "code": "return 0;" },
+    { "phrase": "Renvoyer la valeur 0.", "canonique": "Retourne la valeur 0.", "code": "return 0;" },
+    { "phrase": "Retourner 0.", "canonique": "Retourne la valeur 0.", "code": "return 0;" },
+    { "phrase": "Fermer le fichier f.", "canonique": "Ferme le fichier f.", "code": "fclose(f);" },
+    { "phrase": "Libérer la mémoire de p.", "canonique": "Libère la mémoire pointée par p.", "code": "free(p);",
+      "note": "Gain obtenu en CORRIGEANT un défaut de ma table : le gabarit écrivait « Libère la mémoire de p. », phrase qui n’existe pas — le catalogue dit « pointée par ». Le corpus de développement l’a trouvé." },
+    { "phrase": "Créer un flottant nommé prix de valeur 1.5.", "canonique": "Crée une variable de type float nommée prix avec le résultat de \"1.5\".", "code": "float prix = 1.5;",
+      "note": "« flottant » est un synonyme SÛR de float. « réel » ne l'est pas — il ne dit pas si c'est float ou double —, et « Déclarer un réel nommé moyenne. » reste donc refusée." }
+  ],
+  "toujoursRefusees": [
+    { "phrase": "Affiche age.", "raison": "AMBIGUITE_NON_RESOLUE : trois lectures, %d, %c et %s. La différence est une leçon, pas un détail." },
+    { "phrase": "Incrémenter compteur.", "raison": "Le pas n'est pas dans la phrase. Écrire « + 1 » serait deviner une information absente, et la règle 3 l'interdit." },
+    { "phrase": "Déclarer un réel nommé moyenne.", "raison": "« réel » ne dit pas si c'est float ou double. Choisir serait décider à la place de l'étudiant." },
+    { "phrase": "Afficher la valeur de age et de total.", "raison": "Deux instructions dans une phrase. C-A pose une instruction par ligne, et découper serait restructurer." },
+    { "phrase": "Boucler sur i de 0 à 10.", "raison": "« de 0 à 10 » ne dit pas si 10 est inclus. En C17, la boucle du catalogue demande une condition écrite." },
+    { "phrase": "Pour chaque note du tableau, afficher la note.", "raison": "Le C17 n'a pas de parcours de collection : le composer demanderait d'écrire l'indice, la condition et la progression, qui ne sont pas dans la phrase." },
+    { "phrase": "Créer une structure Point avec deux entiers x et y.", "raison": "Trois instructions dans une phrase : la structure, puis chaque champ." }
+  ]
+}

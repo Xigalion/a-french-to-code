@@ -19,10 +19,18 @@ import { normaliser } from '../src/langue/variantes.ts';
 
 const racine = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const corpus = JSON.parse(readFileSync(join(racine, 'test-utilisateur', 'corpus', 'corpus-libre.json'), 'utf8'));
+// Lot S5 : les gains enregistrés, avec leur sens vérifié à la main. Une
+// phrase « claire mais refusée » devenue reconnue est un GAIN, pas une
+// acceptation à tort — et elle ne compte comme gain que si son sens a été
+// vérifié, c'est-à-dire si elle figure ici.
+const evolution = JSON.parse(readFileSync(join(racine, 'test-utilisateur', 'corpus', 'corpus-libre-evolution.json'), 'utf8'));
+const GAINS = new Map(evolution.gains.map(gain => [gain.phrase, gain]));
 const tout = process.argv.includes('--tout');
 
 const CLASSES = {
   reconnue: 'formulations naturelles reconnues, au sens attendu',
+  gain: 'formulations claires GAGNÉES par le lot S5, sens vérifié',
+  gain_non_verifie: 'formulations claires devenues reconnues SANS vérification de sens',
   refusee: 'formulations compréhensibles mais refusées',
   incompleteRefusee: 'formulations incomplètes, refusées — refus correct',
   ambiguite: 'ambiguïtés correctement détectées',
@@ -44,8 +52,16 @@ for (const entree of corpus.entrees) {
   } else if (entree.attendu === 'ambigu') {
     classe = accepte ? 'acceptee_a_tort' : verdict.verdict === 'ambigu' ? 'ambiguite' : 'autre';
   } else if (entree.attendu === 'refuse') {
-    classe = accepte ? 'acceptee_a_tort'
-      : entree.humain === 'incomplete' ? 'incompleteRefusee' : 'refusee';
+    if (!accepte) classe = entree.humain === 'incomplete' ? 'incompleteRefusee' : 'refusee';
+    // Une phrase INCOMPLÈTE acceptée est et reste un défaut : c'est une
+    // information devinée. Une phrase CLAIRE acceptée est un gain de
+    // périmètre, à condition que son sens ait été vérifié.
+    else if (entree.humain === 'incomplete') classe = 'acceptee_a_tort';
+    else {
+      const gain = GAINS.get(entree.phrase);
+      classe = gain === undefined ? 'gain_non_verifie'
+        : code === gain.code ? 'gain' : 'sens_different';
+    }
   } else {
     classe = 'autre';
   }
@@ -82,6 +98,7 @@ dire(`- **${compte.reconnue.length} / ${attendues}** des phrases que l’auteur 
 dire(`- **${compte.sens_different.length}** différence(s) de sens : une phrase acceptée dont le C produit n’est pas celui attendu. C’est la classe la plus grave, et elle doit rester à zéro.`);
 dire(`- **${compte.acceptee_a_tort.length}** instruction(s) acceptée(s) à tort : une phrase que l’attente écrite voulait refusée.`);
 dire(`- **${compte.ambiguite.length}** ambiguïté(s) correctement détectée(s) sur ${corpus.entrees.filter(e => e.attendu === 'ambigu').length} attendue(s).`);
+dire(`- **${compte.gain.length}** phrase(s) claires **gagnées** par les reformulations du lot S5, chacune avec son sens vérifié à la main.`);
 dire(`- **${compte.refusee.length}** phrase(s) claires pour un lecteur humain et refusées par C-A : c’est la mesure de l’écart, et c’est le chiffre qui dit où la souplesse s’arrête aujourd’hui.`);
 dire(`- **${compte.incompleteRefusee.length}** phrase(s) incomplètes refusées : refus correct, aucune information inventée.`);
 dire('');
@@ -89,10 +106,11 @@ dire('Une phrase refusée n’est pas un défaut : c’est une capacité absente
 dire('dire ainsi est la seule façon de décider si elle vaut d’être ajoutée.');
 dire('');
 
-if (compte.sens_different.length || compte.acceptee_a_tort.length || compte.autre.length) {
+if (compte.sens_different.length || compte.acceptee_a_tort.length
+  || compte.gain_non_verifie.length || compte.autre.length) {
   dire('## À instruire');
   dire('');
-  for (const cle of ['sens_different', 'acceptee_a_tort', 'autre']) {
+  for (const cle of ['sens_different', 'acceptee_a_tort', 'gain_non_verifie', 'autre']) {
     for (const item of compte[cle]) {
       dire(`- \`${cle}\` « ${item.phrase} » → verdict ${item.verdict}`
         + (item.code === undefined ? '' : `, code \`${item.code.replace(/\n/gu, '⏎')}\``)
@@ -102,6 +120,13 @@ if (compte.sens_different.length || compte.acceptee_a_tort.length || compte.autr
   dire('');
 }
 
+dire('## Les phrases claires GAGNÉES par le lot S5');
+dire('');
+for (const item of compte.gain) {
+  const gain = GAINS.get(item.phrase);
+  dire(`- « ${item.phrase} » → \`${gain.canonique}\` → \`${gain.code.replace(/\n/gu, '⏎')}\``);
+}
+dire('');
 dire('## Les phrases claires que C-A refuse');
 dire('');
 for (const item of compte.refusee) dire(`- « ${item.phrase} » — ${item.verdict}`);
@@ -120,8 +145,9 @@ if (tout) {
 // Le script est un OUTIL de mesure, pas un test : il ne décide pas si un
 // chiffre est bon. Il échoue sur les deux seules classes qui sont des défauts
 // du mécanisme, pas des limites de périmètre.
-if (compte.sens_different.length || compte.acceptee_a_tort.length) {
+if (compte.sens_different.length || compte.acceptee_a_tort.length || compte.gain_non_verifie.length) {
   console.error('ÉCHEC : ' + (compte.sens_different.length + compte.acceptee_a_tort.length)
-    + ' entrée(s) acceptée(s) à tort ou de sens différent.');
+    + ' entrée(s) acceptée(s) à tort ou de sens différent, et '
+    + compte.gain_non_verifie.length + ' gain(s) dont le sens n’a pas été vérifié.');
   process.exitCode = 1;
 }
