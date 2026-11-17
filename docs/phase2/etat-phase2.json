@@ -5,51 +5,75 @@
   "indicateurs": [
     {
       "nom": "Phase 1 — modele 1, C17",
-      "fait": 9, "total": 9, "unite": "domaines",
+      "fait": 9,
+      "total": 9,
+      "unite": "domaines",
       "source": "docs/CAMPAGNE3_VALIDATION.md, docs/EXERCICE_CLOTURE.md",
       "note": "V1 publique, 84 intentions, 3 834 tests, 19 programmes compiles. Reference stable."
     },
     {
-      "nom": "Phase 2 — audit architectural",
-      "fait": 4, "total": 4, "unite": "livrables",
+      "nom": "Phase 2 — audit, socle, strategie, risques",
+      "fait": 4,
+      "total": 4,
+      "unite": "livrables",
       "source": "scripts/audit-architecture.mjs + docs/phase2/MESURES.md",
-      "note": "Audit, socle, strategie linguistique, risques. Mesure, pas opinion : 5 745 lignes de moteur depouillees."
-    },
-    {
-      "nom": "Phase 2 — hypotheses verifiees par sonde",
-      "fait": 2, "total": 2, "unite": "sondes executees",
-      "source": "experiences/python/sortie/MESURES.md, experiences/souplesse/sortie/MESURES.md",
-      "note": "Python : 37/84 intentions rendues, programme execute conforme. Souplesse : 20/20 cas, 140 phrases du catalogue inchangees."
+      "note": "Mesure, pas opinion : 5 745 lignes depouillees, et P0 a confirme l'estimation a 4 % pres."
     },
     {
       "nom": "Phase 2 — decisions d'architecture",
-      "fait": 0, "total": 6, "unite": "decisions du fondateur",
-      "source": "docs/phase2/SOCLE_COMMUN.md section 5",
-      "note": "BLOQUANT : rien ne commence avant. Six decisions, recommandation ecrite pour chacune."
+      "fait": 6,
+      "total": 6,
+      "unite": "decisions",
+      "source": "message du fondateur du 17 novembre 2026",
+      "note": "Les six validees, dont la coexistence des deux representations de litteraux."
+    },
+    {
+      "nom": "Phase 2 — lots d'implementation",
+      "fait": 3,
+      "total": 7,
+      "unite": "lots P0 a P6",
+      "source": "docs/phase2/LOT_P0_CONTRAT.md, test/registre.test.mjs, test/placementPython.test.mjs",
+      "note": "P0 livre (0 regression sur 1 335 559 comparaisons), P1 livre (6 tests), P2 livre (18 tests). Restent P3 a P6."
+    },
+    {
+      "nom": "Phase 2 — souplesse linguistique",
+      "fait": 3,
+      "total": 4,
+      "unite": "etapes",
+      "source": "src/langue/variantes.ts, test/variantes.test.mjs, docs/phase2/MESURES_SOUPLESSE.md",
+      "note": "Module ecrit, 16 tests, borne mesuree sur un corpus de 235 phrases. Reste l'integration a l'hote, desactivee par defaut."
+    },
+    {
+      "nom": "Phase 2 — perimetre pedagogique Python",
+      "fait": 1,
+      "total": 2,
+      "unite": "etapes",
+      "source": "docs/phase2/INVENTAIRE_PYTHON.md, docs/phase2/DECISIONS_PYTHON.md",
+      "note": "Inventaire des 9 domaines livre : 39 reutilisables + 31 intentions neuves, soit ~70. Restent les 12 decisions de contrat."
     },
     {
       "nom": "Phase 2 — decisions de contrat Python",
-      "fait": 0, "total": 12, "unite": "decisions du fondateur",
-      "source": "docs/phase2/PLAN_PYTHON.md section 2",
-      "note": "Dix refus recommandes sur douze. A trancher avant le lot P4, pas avant P0."
+      "fait": 0,
+      "total": 12,
+      "unite": "decisions du fondateur",
+      "source": "docs/phase2/DECISIONS_PYTHON.md",
+      "note": "Formulations exactes, consequences et recommandations ecrites : dix refus, deux portages. N'ouvrent que P3 et P4."
     },
     {
-      "nom": "Phase 2 — souplesse integree au produit",
-      "fait": 0, "total": 1, "unite": "lot",
-      "source": "aucune ligne dans src/",
-      "note": "Le prototype vit dans experiences/. Mode strict intact, par construction."
+      "nom": "Phase 2 — intentions Python rendues et executees",
+      "fait": 0,
+      "total": 70,
+      "unite": "intentions",
+      "source": "experiences/python/sortie/MESURES.md (sonde) et docs/phase2/INVENTAIRE_PYTHON.md",
+      "note": "La sonde en rend 37 hors produit ; aucune n'est encore livree dans src/. Cible V1 : ~70, dont 31 neuves."
     },
     {
-      "nom": "Phase 2 — second langage Python",
-      "fait": 0, "total": 7, "unite": "lots P0 a P6",
-      "source": "docs/phase2/PLAN_PYTHON.md section 3",
-      "note": "Perimetre mesure : 37 intentions sur 84. P0 est le seul lot qui touche main."
-    },
-    {
-      "nom": "Phase 2 — code livre dans src/",
-      "fait": 0, "total": 1, "unite": "ligne",
-      "source": "git diff main..phase-2-architecture -- src/",
-      "note": "Zero, et c'est voulu : aucune migration avant validation."
+      "nom": "Phase 2 — main intact",
+      "fait": 1,
+      "total": 1,
+      "unite": "verification",
+      "source": "git diff main..HEAD -- src/ : non vide, et c'est voulu depuis P0",
+      "note": "main reste la V1 publique a l'etiquette v0.4.0. La branche porte P0 a P2 et n'est pas fusionnee."
     }
   ]
 }

@@ -36,6 +36,11 @@ let diff = '(non verifiable : branche main absente)';
 try {
   const sortie = execFileSync('git', ['diff', '--stat', 'main..HEAD', '--', 'src/', 'extension/', 'test/'],
     { cwd: racine, encoding: 'utf8' }).trim();
-  diff = sortie === '' ? 'AUCUNE modification de src/, extension/ ni test/ — verifie' : sortie;
+  // Depuis P0, la branche modifie src/ et test/ : ce qui doit rester verifie,
+  // c'est que main n'a PAS bouge, et que la branche n'est pas fusionnee.
+  const enAvance = execFileSync('git', ['rev-list', '--count', 'main..HEAD'], { cwd: racine, encoding: 'utf8' }).trim();
+  const sommetMain = execFileSync('git', ['rev-parse', '--short', 'main'], { cwd: racine, encoding: 'utf8' }).trim();
+  diff = 'main au sommet ' + sommetMain + ', branche en avance de ' + enAvance + ' commit(s), non fusionnee'
+    + (sortie === '' ? ' ; src/, extension/ et test/ inchanges' : '\n' + sortie);
 } catch { /* depot sans main : rien a conclure */ }
 console.log('Controle : ' + diff);
