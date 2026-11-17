@@ -13,12 +13,22 @@ Python V1 — qui n'est pas le périmètre de réutilisation de C-A.
 
 ---
 
+> **Deux corrections apportées par le lot P3, le 17 novembre 2026.** Les
+> adaptables sont **37**, pas 22, et 6 intentions de plus forment la classe
+> « structure de blocs » : la somme exacte est `17 + 37 + 6 + 24 = 84`. Et
+> `NUMERIC_CONVERT` n'existe pas : la conversion explicite est un nœud
+> `cast` dans une expression, pas une intention. Le nom venait de la table
+> de `scripts/audit-architecture.mjs`, qui signalait les classes
+> orphelines sans échouer ; elle échoue désormais.
+> Voir `docs/phase2/LOT_P3_CONTRAT_ET_BILAN.md` §7.
+
 ## 1. Les quatre catégories, et ce qu'elles décident
 
 | Catégorie | Nombre | Ce qu'on en fait |
 |---|---|---|
 | **communes** | 17 | réutilisées telles quelles : la phrase et le code changent à peine |
-| **adaptables** | 22 | réutilisées, autre forme produite ; la phrase française reste |
+| **adaptables** | 37 | réutilisées, autre forme produite ; la phrase française reste |
+| **structure de blocs** | 6 | réutilisées, mais leur POSE change : `if`, `elif`, `else`, `while`, `for`, `def` |
 | **propres à C** | 24 | **non portées**, et chacune nomme la construction Python qui enseigne la même compétence |
 | **nouvelles, propres à Python** | **31 proposées** | à concevoir : c'est là qu'est le vrai travail pédagogique |
 
@@ -56,7 +66,7 @@ passive le dira, au lieu d'un refus muet.
 | Catégorie | Intentions |
 |---|---|
 | communes | `NUMERIC_ASSIGN` |
-| adaptables | conversions explicites (`NUMERIC_CONVERT` → `int()`, `float()`, `str()`) |
+| adaptables | les conversions explicites — **pas une intention** mais un nœud `cast` dans une expression : `(int) x` devient `int(x)`, et `(unsigned int) x` est refusé |
 | propres à C | `CONST_DECL` — Python n'a pas de constante ; `SIZEOF_PRINT`, `SIZEOF_ASSIGN` |
 | **nouvelles Python** | `PY_DIV_ENTIERE` (`//`), `PY_DIV_REELLE` (`/`), `PY_PUISSANCE` (`**`), `PY_LONGUEUR` (`len`), `PY_TYPE_DE` (`type`), `PY_CONVERSION` (explicite, nommée) |
 

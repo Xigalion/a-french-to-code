@@ -12,10 +12,10 @@ point-virgule terminal, étoile de pointeur.
 
 | Module | Lignes | C | Syntaxe | Importe | Importé par |
 |---|---|---|---|---|---|
-| `src/translate.ts` | 857 | 91 | 102 | 15 | 29 |
+| `src/translate.ts` | 677 | 15 | 0 | 15 | 29 |
 | `src/pedagogicalInformation.ts` | 659 | 26 | 0 | 2 | — |
 | `src/expressionCore.ts` | 564 | 25 | 0 | 2 | 3 |
-| `src/planPlacement.ts` | 312 | 2 | 0 | 9 | — |
+| `src/planPlacement.ts` | 333 | 2 | 0 | 9 | — |
 | `src/structInstructions.ts` | 298 | 15 | 0 | 4 | 1 |
 | `src/functionInstructions.ts` | 279 | 26 | 0 | 3 | 1 |
 | `src/arrayInstructions.ts` | 253 | 14 | 0 | 5 | 1 |
@@ -43,18 +43,16 @@ point-virgule terminal, étoile de pointeur.
 | `src/structTarget.ts` | 46 | 5 | 0 | 2 | 1 |
 | `src/expression.ts` | 35 | 0 | 0 | 2 | 4 |
 
-**Total moteur : 5745 lignes** sur 30 modules.
+**Total moteur : 5586 lignes** sur 30 modules.
 
 | Partage | Modules | Lignes |
 |---|---|---|
 | **aucun marqueur de C** | 11 | 964 |
-| au moins un marqueur | 19 | 4781 |
+| au moins un marqueur | 19 | 4622 |
 
 Modules sans aucun marqueur de C : `branchTarget`, `calculationAdvisories`, `characterInstructions`, `characterLiteral`, `condition`, `elementDesignation`, `expression`, `loopTarget`, `stringLiteral`, `switchInstructions`, `switchTarget`.
 
 ## 2. Les 84 intentions, par portabilité
-
-*Classes posées pour des genres absents du catalogue : NUMERIC_CONVERT.*
 
 | Classe | Nombre | Part |
 |---|---|---|
@@ -96,7 +94,7 @@ autre langage ; leur **canal** et leur mécanique, eux, le sont.
 | | |
 |---|---|
 | modules de placement | 9 |
-| lignes | **1154** (20,1 % du moteur) |
+| lignes | **1175** (21,0 % du moteur) |
 | occurrences d’accolades dans le balayage partagé | 6 |
 
 Le placement est **le point le plus couplé** : toute la reconnaissance de
@@ -107,9 +105,9 @@ indentés n’a pas ces jetons.
 
 | Module | Lignes | importe `vscode` |
 |---|---|---|
-| `extension/src/extension.ts` | 401 | oui |
+| `extension/src/extension.ts` | 448 | oui |
 | `extension/src/preview.ts` | 54 | oui |
-| `extension/src/session.ts` | 182 | non |
+| `extension/src/session.ts` | 245 | non |
 
 Modules du **moteur** important `vscode` : **0**.
 

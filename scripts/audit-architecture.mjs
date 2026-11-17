@@ -17,6 +17,7 @@
 import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { translate } from '../src/translate.ts';
+import { GENRES } from '../src/langages/registre.ts';
 
 const racine = new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/u, '$1');
 const sortie = join(racine, 'docs', 'phase2');
@@ -87,7 +88,7 @@ const CLASSES = {
   GUARD_OPEN: 'specifique', GUARD_CLOSE: 'specifique',
   DECL_INT: 'adaptable', INIT_INT: 'commune', ASSIGN_INT: 'commune',
   ASSIGN_EXPRESSION: 'commune', NUMERIC_DECL: 'adaptable', NUMERIC_INIT: 'commune',
-  NUMERIC_ASSIGN: 'commune', NUMERIC_CONVERT: 'adaptable',
+  NUMERIC_ASSIGN: 'commune',
   PRINT_INT: 'adaptable', PRINT_FORMATTED: 'adaptable', PRINT_TEXT: 'adaptable',
   NUMERIC_PRINT: 'adaptable', PRINT_NEWLINE: 'adaptable',
   IF: 'structure', ELSE_IF: 'structure', ELSE: 'structure',
@@ -128,6 +129,11 @@ for (const phrase of phrases) {
 }
 const inclassees = [...genres.keys()].filter(g => !(g in CLASSES));
 const orphelines = Object.keys(CLASSES).filter(g => !genres.has(g));
+// Lot P3 : une classe posee pour un nom qui N'EST PAS un genre est un
+// FANTOME, pas un trou de catalogue. Le script le signalait sans echouer,
+// et NUMERIC_CONVERT a donc vecu dans deux documents : la conversion n'est
+// pas une intention, c'est un noeud `cast` dans une expression.
+const fantomes = Object.keys(CLASSES).filter(g => !GENRES.has(g));
 
 const parClasse = { commune: [], adaptable: [], structure: [], specifique: [] };
 for (const genre of [...genres.keys()].sort()) {
@@ -198,6 +204,7 @@ L('', 'Modules sans aucun marqueur de C : ' + sansC.map(m => '`' + m.court + '`'
 L('## 2. Les ' + genres.size + ' intentions, par portabilité', '');
 if (inclassees.length) L('**Intentions non classées : ' + inclassees.join(', ') + '** — le script échoue.', '');
 if (orphelines.length) L('*Classes posées pour des genres absents du catalogue : ' + orphelines.join(', ') + '.*', '');
+if (fantomes.length) L('**Classes posées pour des noms qui ne sont pas des genres : ' + fantomes.join(', ') + '** — le script échoue.', '');
 L('| Classe | Nombre | Part |', '|---|---|---|');
 for (const [classe, liste] of Object.entries(parClasse)) {
   L('| ' + classe + ' | **' + liste.length + '** | '
@@ -251,3 +258,4 @@ console.log('placement         :', lignesPlacement, 'lignes');
 console.log('moteur -> vscode  :', moteurVscode.length);
 console.log('rapport           : docs/phase2/MESURES.md');
 if (inclassees.length) { console.error('INTENTIONS NON CLASSÉES :', inclassees.join(', ')); process.exit(1); }
+if (fantomes.length) { console.error('CLASSES POSÉES POUR DES NOMS QUI NE SONT PAS DES GENRES :', fantomes.join(', ')); process.exit(1); }

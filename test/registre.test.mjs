@@ -77,13 +77,26 @@ test('P1 : le langage se choisit par extension, sans repli par défaut', () => {
   assert.equal(langagePour('.c'), C17);
   assert.equal(langagePour('.h'), C17);
   assert.equal(langagePour('.C'), C17, 'la casse de l’extension ne doit pas décider');
-  assert.equal(langagePour('.py'), undefined, 'Python n’est pas encore inscrit');
+  // Adapte au lot P3 : Python existe, mais il n’est inscrit QUE si son module
+  // est importe. Ce fichier ne l’importe pas, et le registre ne doit donc
+  // connaitre que C17 : un langage ne s’inscrit pas tout seul.
+  assert.equal(langagePour('.py'), undefined, 'Python n’est inscrit que par son module');
   assert.equal(langagePour('.txt'), undefined);
   assert.equal(langagePour(''), undefined);
 });
 
 test('P1 : C17 déclare des accolades, et le registre expose les langages inscrits', () => {
   assert.equal(C17.blocs, 'accolades');
-  assert.deepEqual([...LANGAGES.keys()], ['c17']);
+  assert.deepEqual([...LANGAGES.keys()], ['c17'], 'sans importer son module, Python est absent');
   assert.equal(C17.raisons.size, 0, 'C17 ne refuse aucune intention : il n’a donc aucune raison à écrire');
+});
+
+test('P3 : importer le module Python l’inscrit, et seulement alors', async () => {
+  assert.equal(langagePour('.py'), undefined);
+  const { PYTHON } = await import('../src/langages/python/langage.ts');
+  assert.equal(langagePour('.py'), PYTHON);
+  assert.equal(PYTHON.blocs, 'indentation');
+  // C17 n’est pas deplace par l’arrivee d’un second langage.
+  assert.equal(langagePour('.c'), C17);
+  assert.deepEqual([...LANGAGES.keys()], ['c17', 'python']);
 });

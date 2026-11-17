@@ -12,13 +12,22 @@ export type Blocs = 'accolades' | 'indentation';
  * concept du C dans un langage qui ne l'a pas. */
 export type RenduResultat =
   | { status: 'rendu'; code: string }
-  | { status: 'refus'; code: 'INTENTION_NON_PORTEE'; raison: string };
+  // INTENTION_NON_PORTEE : le langage ne porte pas cette intention du tout.
+  // CONSTRUCTION_NON_PORTEE (lot P3) : il la porte, mais ce qu'elle CONTIENT
+  // n'a pas de sens dans ce langage — une division dont le sens change, un
+  // pointeur dans une expression, un nom qui y est reserve. Les deux sont des
+  // refus nommes ; les confondre cacherait laquelle des deux il faut traiter.
+  | { status: 'refus'; code: 'INTENTION_NON_PORTEE' | 'CONSTRUCTION_NON_PORTEE'; raison: string };
 
 export type Langage = {
   readonly nom: string;
   /** Extensions de fichier que ce langage reconnaît, point compris. */
   readonly extensions: readonly string[];
   readonly blocs: Blocs;
+  /** Le commentaire de tracabilite, dans la syntaxe de CE langage. La regle 2
+   * exige la phrase exacte au-dessus du fragment ; la facon de l'ecrire est
+   * une propriete du langage, et l'hote n'a pas a la connaitre. */
+  readonly commentaire: (phrase: string) => string;
   /** Les intentions que ce langage porte. Toute autre est refusée. */
   readonly portees: ReadonlySet<string>;
   /** Pourquoi une intention n'est pas portée. Une raison par intention
@@ -41,6 +50,7 @@ export const C17: Langage = {
   nom: 'c17',
   extensions: ['.c', '.h'],
   blocs: 'accolades',
+  commentaire: (phrase) => '// ' + phrase,
   portees: GENRES,
   raisons: new Map(),
   rendre: (instruction) => ({ status: 'rendu', code: renderC17(instruction) }),

@@ -29,11 +29,11 @@
     },
     {
       "nom": "Phase 2 — lots d'implementation",
-      "fait": 3,
+      "fait": 4,
       "total": 7,
       "unite": "lots P0 a P6",
-      "source": "docs/phase2/LOT_P0_CONTRAT.md, test/registre.test.mjs, test/placementPython.test.mjs",
-      "note": "P0 livre (0 regression sur 1 335 559 comparaisons), P1 livre (6 tests), P2 livre (18 tests). Restent P3 a P6."
+      "source": "docs/phase2/LOT_P0_CONTRAT.md, LOT_P3_CONTRAT_ET_BILAN.md, test/registre.test.mjs, test/placementPython.test.mjs, test/python.test.mjs",
+      "note": "P0, P1, P2 et P3 livres. P3 : 32 intentions Python, 52 refus nommes, un programme de 16 instructions execute et conforme. Restent P4, P5, P6."
     },
     {
       "nom": "Phase 2 — souplesse linguistique",
@@ -49,23 +49,31 @@
       "total": 2,
       "unite": "etapes",
       "source": "docs/phase2/INVENTAIRE_PYTHON.md, docs/phase2/DECISIONS_PYTHON.md",
-      "note": "Inventaire des 9 domaines livre : 39 reutilisables + 31 intentions neuves, soit ~70. Restent les 12 decisions de contrat."
+      "note": "Inventaire des 9 domaines livre : 39 reutilisables + 31 intentions neuves, soit ~70. Reste a ecrire le contrat des intentions natives, qui depend des decisions ouvertes."
     },
     {
       "nom": "Phase 2 — decisions de contrat Python",
-      "fait": 0,
-      "total": 12,
+      "fait": 4,
+      "total": 13,
       "unite": "decisions du fondateur",
       "source": "docs/phase2/DECISIONS_PYTHON.md",
-      "note": "Formulations exactes, consequences et recommandations ecrites : dix refus, deux portages. N'ouvrent que P3 et P4."
+      "note": "D8 caractere, D9 annotations, D10 aucun separateur, et le respect des differences semantiques : validees le 17 novembre et IMPLEMENTEES au lot P3. Restent D1 a D7, D11, D12, et D13 (le modulo) ouverte par le lot P3."
     },
     {
-      "nom": "Phase 2 — intentions Python rendues et executees",
-      "fait": 0,
-      "total": 70,
+      "nom": "Phase 2 — intentions du catalogue C rendues en Python",
+      "fait": 32,
+      "total": 84,
       "unite": "intentions",
-      "source": "experiences/python/sortie/MESURES.md (sonde) et docs/phase2/INVENTAIRE_PYTHON.md",
-      "note": "La sonde en rend 37 hors produit ; aucune n'est encore livree dans src/. Cible V1 : ~70, dont 31 neuves."
+      "source": "test/python.test.mjs, exercice/python/journal/execution.md",
+      "note": "32 rendues et testees, 52 refusees avec une raison ecrite : la partition des 84 est verifiee par un test. Le denominateur est 84 parce qu'il est MESURABLE ; le 39 de la sonde venait d'une experience jetable, avec d'autres criteres. Ce chiffre ne dit rien du catalogue natif : voir la barre suivante."
+    },
+    {
+      "nom": "Phase 2 — intentions Python NATIVES concues",
+      "fait": 0,
+      "total": 31,
+      "unite": "intentions",
+      "source": "docs/phase2/INVENTAIRE_PYTHON.md §2",
+      "note": "Zero. C'est la ou est le travail pedagogique : range, for each, enumerate, dictionnaires, ensembles, methodes de chaines, with, match. Aucune n'est portee depuis C : elles sont a concevoir, et la plupart dependent d'une decision ouverte."
     },
     {
       "nom": "Phase 2 — main intact",
@@ -73,7 +81,7 @@
       "total": 1,
       "unite": "verification",
       "source": "git diff main..HEAD -- src/ : non vide, et c'est voulu depuis P0",
-      "note": "main reste la V1 publique a l'etiquette v0.4.0. La branche porte P0 a P2 et n'est pas fusionnee."
+      "note": "main reste la V1 publique a l'etiquette v0.4.0. La branche porte P0, P1, P2, P3 et S4, et n'est pas fusionnee."
     }
   ]
 }
