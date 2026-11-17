@@ -57,21 +57,37 @@ mkdirSync(join(paquet, 'extension'), { recursive: true });
 cpSync(join(source, 'package.json'), join(paquet, 'extension', 'package.json'));
 cpSync(join(source, 'out'), join(paquet, 'extension', 'out'), { recursive: true });
 
+// Le README embarqué dans le paquet : c'est la seule chose que l'utilisateur
+// lit dans l'onglet de l'extension. Il disait « une instruction C17 » et
+// « ne s'active que dans un fichier .c » longtemps après que Python soit
+// livré : une description périmée dans le paquet est pire qu'absente, parce
+// qu'elle a l'air à jour.
 const lisezMoi = [
-  '# C-A — ' + displayName,
+  '# ' + displayName,
   '',
   'Prototype pédagogique. Version ' + version + ', paquet local, non publié.',
   '',
-  'C-A traduit une phrase française **du catalogue** en une instruction C17,',
-  'montre un aperçu, et n’insère **qu’après confirmation**.',
+  'A traduit une phrase française **du catalogue** en **une** instruction,',
+  'montre un aperçu, et n’insère **qu’après confirmation**. La phrase est',
+  'conservée exactement en commentaire au-dessus du code produit.',
   '',
-  'Il ne vérifie **ni** les symboles, **ni** les types, **ni** les bornes :',
-  'un fragment accepté n’est pas un programme correct.',
+  'Deux déclinaisons : **C-A** vers C17 dans un `.c`, **Python-A** vers Python',
+  'dans un `.py`. Python n’est pas un portage du C : il a son propre',
+  'catalogue, et ce que le C sait dire mais que Python ne connaît pas est',
+  'refusé **avec sa raison**.',
   '',
-  '- commande : « C-A : Saisir une instruction » (`Ctrl+K` puis `A`)',
-  '- ne s’active que dans un fichier `.c` enregistré sur le disque',
+  'Il ne vérifie **ni** les symboles, **ni** les types, **ni** les bornes, et',
+  'cela vaut pour les deux langages : un fragment accepté n’est pas un',
+  'programme correct, et ne garantit pas qu’il compile ou qu’il s’exécute.',
+  '',
+  '- commande : « A : Saisir une instruction » (`Ctrl+K` puis `A`)',
+  '- ne s’active que dans un fichier `.c` ou `.py` enregistré sur le disque',
+  '- `c-a.souplesse` à `false` restaure le **mode strict** : seules les',
+  '  phrases exactes du catalogue y sont acceptées',
+  '- `c-a.python` à `false` n’ouvre que les fichiers `.c`',
   '- parcours de découverte : `docs/TEST_PARCOURS_DECOUVERTE.md`',
   '- installation et retour arrière : `docs/TEST_INSTALLATION.md`',
+  '- ce que A ne fait pas : `docs/LIMITES_CONNUES.md`',
   '',
 ].join('\n');
 writeFileSync(join(paquet, 'extension', 'README.md'), lisezMoi, 'utf8');

@@ -113,7 +113,7 @@
       "total": 6,
       "unite": "livrables",
       "source": "CHANGELOG.md, README.md, docs/ETAT_DU_PROJET.md, docs/LIMITES_CONNUES.md, docs/PUBLICATION_0_5_0.md, docs/NOTES_PUBLICATION_0_5_0.md, dist/c-a-0.5.0.vsix",
-      "note": "Version, journal, README, etat public, limites, notes de publication et paquet : faits. Le .vsix est reproductible AU BIT depuis un clone neuf, sha256 a2e830e1. La suite hote passe a 114/114 sur vscode 1.96.4. RIEN n'est fusionne ni publie."
+      "note": "Version, journal, README, etat public, limites, notes de publication et paquet : faits. Le .vsix est reproductible AU BIT depuis un clone neuf, sha256 1567c46a. La suite hote passe a 114/114 sur vscode 1.96.4. RIEN n'est fusionne ni publie."
     },
     {
       "nom": "Phase 2 — tests hote sur la version INSTALLEE",

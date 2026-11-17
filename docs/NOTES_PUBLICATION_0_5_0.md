@@ -109,8 +109,8 @@ Le paquet est **reproductible au bit** : deux constructions du même commit
 donnent le même fichier.
 
 ```
-sha256  a2e830e1a2358aaac70fe8f211e707def575726df977f8e965173fbbf3912aed
-taille  163 508 octets, 51 entrées
+sha256  1567c46ac7251011388dab82c8b91c7bddb5f801785116960fcd947d4bef909f
+taille  163 843 octets, 51 entrées
 ```
 
 Pour le vérifier vous-même :
@@ -135,8 +135,10 @@ cd verification && npm ci && npm run build:extension && node scripts/paquet.mjs
   sur la machine de développement refuse de démarrer un hôte de test tant que
   deux processus d'installateur orphelins détiennent son mutex de mise à jour.
 
-Tout cela est détaillé dans [`docs/LIMITES_CONNUES.md`](docs/LIMITES_CONNUES.md),
-à lire **avant** de conclure à un défaut.
+Tout cela est détaillé dans `docs/LIMITES_CONNUES.md`, à lire **avant** de
+conclure à un défaut. *(Chemin écrit en clair et non en lien : ce document est
+un gabarit à coller dans une release, où un lien relatif se résout contre la
+racine du dépôt et non contre `docs/`.)*
 
 ## Licence
 

@@ -23,12 +23,12 @@
     "commands": [
       {
         "command": "c-a.translate",
-        "title": "C-A : Saisir une instruction",
+        "title": "A : Saisir une instruction",
         "enablement": "editorLangId == c && resourceScheme == file && resourceExtname == .c || editorLangId == python && resourceScheme == file && resourceExtname == .py"
       },
       {
         "command": "c-a.souplesse",
-        "title": "C-A : Basculer entre français strict et français souple"
+        "title": "A : Basculer entre français strict et français souple"
       }
     ],
     "keybindings": [

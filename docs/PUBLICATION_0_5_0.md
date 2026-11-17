@@ -22,16 +22,20 @@ avance sur `main`.
 | corpus de validation gelé | 95,1 %, 0 erreur de sens | `node scripts/mesurer-reformulations.mjs` |
 | paquet reproductible **au bit** | depuis un clone neuf | §2 |
 
-**La fusion est une avance rapide** : `main` est un ancêtre de `HEAD`, et
-`git merge-tree` ne signale aucun conflit. `main` n'a pas bougé depuis
-`955205d`.
+**La fusion est une avance rapide** : `main` est un ancêtre de la branche, et
+`git merge-tree` ne signale aucun conflit.
+
+À noter, parce que c'est un piège : **l'étiquette `v0.4.0` n'est pas le sommet
+de `main`**. Quatre commits documentaires l'ont suivie, et un retour arrière
+vers cette étiquette les perdrait. La §3 n'utilise donc **ni étiquette ni
+hachage** pour le retour, mais `ORIG_HEAD`, que `git merge` pose lui-même.
 
 ## 2. Le paquet, et comment le vérifier
 
 ```
 dist/c-a-0.5.0.vsix
-sha256  a2e830e1a2358aaac70fe8f211e707def575726df977f8e965173fbbf3912aed
-taille  163 508 octets
+sha256  1567c46ac7251011388dab82c8b91c7bddb5f801785116960fcd947d4bef909f
+taille  163 843 octets
 entrées 51
 ```
 
@@ -51,15 +55,18 @@ cd verification && npm ci && npm run build:extension && node scripts/paquet.mjs
 ## 3. La fusion — commandes exactes
 
 ```bash
-# 1. s'assurer que main est bien à jour et propre
+# 1. l'avance rapide est-elle possible ? Cette commande ne modifie rien, et
+#    elle échoue si main a divergé.
+git merge-base --is-ancestor main phase-2-architecture && echo "avance rapide possible"
+
+# 2. passer sur main, et vérifier qu'il n'y a rien en cours
 git checkout main
 git status --short            # doit être vide
-git log -1 --format=%h        # doit afficher 955205d
 
-# 2. avance rapide, sans commit de fusion : l'historique reste linéaire
+# 3. avance rapide, sans commit de fusion : l'historique reste linéaire
 git merge --ff-only phase-2-architecture
 
-# 3. vérifier que l'arbre est bien celui de la branche
+# 4. vérifier que l'arbre est bien celui de la branche
 git diff --stat phase-2-architecture   # doit être vide
 ```
 
@@ -70,11 +77,18 @@ décider.
 
 ### Retour arrière
 
-Avant toute poussée, le retour est immédiat :
+Avant toute poussée, le retour est immédiat, et il ne demande **ni étiquette
+ni hachage** : `git merge` pose `ORIG_HEAD` sur le sommet d'avant la fusion.
 
 ```bash
-git checkout main && git reset --hard 955205d
+git reset --hard ORIG_HEAD
+git log -1 --oneline          # doit afficher le dernier commit documentaire de main
 ```
+
+**Ne pas utiliser `v0.4.0`** pour revenir. Cette étiquette est **quatre
+commits avant** le sommet de `main` — la vérification du dépôt public, le
+suivi des tickets, le renvoi de `CONTRIBUTING` et l'alignement du compte de
+contrôles l'ont suivie —, et un retour vers elle les perdrait.
 
 Après une poussée, il faudrait une poussée forcée, qui réécrit un historique
 public : **ne pas pousser avant d'être sûr**.

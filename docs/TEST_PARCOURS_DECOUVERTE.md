@@ -41,7 +41,7 @@ Trois choses que C-A **ne fait pas**, et qu'il ne fera pas :
 
 1. Ouvre un fichier `.c` enregistré (par exemple `bonjour.c`).
 2. Place le curseur sur une **ligne blanche**.
-3. `Ctrl+K` puis `A` (ou `Ctrl+Maj+P` → « C-A : Saisir une instruction »).
+3. `Ctrl+K` puis `A` (ou `Ctrl+Maj+P` → « A : Saisir une instruction »).
 4. Tape ta phrase, `Entrée`.
 5. Un **aperçu** s'ouvre : à gauche ton fichier, à droite ce qu'il
    deviendrait. **Rien n'est encore écrit.**

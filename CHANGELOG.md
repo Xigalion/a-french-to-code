@@ -81,8 +81,8 @@ depuis deux clones différents, donnent le même fichier et donc le même
 hachage. Les horodatages des entrées de l'archive sont normalisés pour cela.
 
 ```
-sha256  a2e830e1a2358aaac70fe8f211e707def575726df977f8e965173fbbf3912aed
-taille  163 508 octets, 51 entrées
+sha256  1567c46ac7251011388dab82c8b91c7bddb5f801785116960fcd947d4bef909f
+taille  163 843 octets, 51 entrées
 ```
 
 ---

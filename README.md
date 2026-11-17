@@ -123,7 +123,7 @@ Procédure complète, prérequis, vérifications et désinstallation :
 
 1. ouvrir un fichier `.c` **enregistré sur le disque**, curseur sur une
    **ligne blanche** ;
-2. **« C-A : Saisir une instruction »** (`Ctrl+K` puis `A`) ;
+2. **« A : Saisir une instruction »** (`Ctrl+K` puis `A`) ;
 3. saisir la phrase, `Entrée` → un **aperçu diff en lecture seule** s'ouvre,
    et **rien n'est inséré** ;
 4. confirmer « Insérer », modifier la phrase, ou annuler ;

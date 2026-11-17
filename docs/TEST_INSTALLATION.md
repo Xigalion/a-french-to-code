@@ -82,7 +82,7 @@ Trois contrôles, dans cet ordre. Si l'un échoue, ne pas commencer la séance.
 1. Ouvrir un fichier **`.c` enregistré sur le disque** (pas un onglet « sans
    titre » : la commande est volontairement désactivée ailleurs).
 2. `Ctrl+Maj+P` → taper `C-A`. La commande
-   **« C-A : Saisir une instruction »** doit apparaître.
+   **« A : Saisir une instruction »** doit apparaître.
 3. L'exécuter, saisir `Crée un entier nommé age de valeur 20.`, `Entrée`.
    Un **aperçu en lecture seule** doit s'ouvrir, et **rien ne doit être
    inséré** avant le choix « Insérer ».
