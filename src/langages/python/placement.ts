@@ -46,9 +46,19 @@ export type DemandePython = {
   readonly code: string;
   /** L'intention, pour les règles qui dépendent du genre. */
   readonly kind: string;
+  /** La fin de ligne du document. Trouvée par l'intégration à l'éditeur : le
+   * module écrivait LF sans regarder, ce qui mélange les fins de ligne dans un
+   * fichier CRLF. Par défaut LF, qui est ce que Python écrit. */
+  readonly eol?: '\n' | '\r\n';
+  /** Le pas d'indentation de l'éditeur. Python n'en impose aucun — PEP 8
+   * recommande 4 — et refuser une indentation de 2 au nom d'un 4 code en dur
+   * serait refuser un réglage légitime. */
+  readonly pas?: number;
 };
 
-const PAS = 4;
+/** Valeur par défaut, et seulement par défaut : c'est la recommandation de
+ * PEP 8, pas une règle du langage. */
+const PAS_DEFAUT = 4;
 
 /** Les genres qui ouvrent un bloc en Python : leur en-tête finit par « : ». */
 const EN_TETES = new Set(['IF', 'ELSE_IF', 'ELSE', 'WHILE', 'FUNC_DEF']);
@@ -78,11 +88,14 @@ function decouper(texte: string): Ligne[] {
   const lignes: Ligne[] = [];
   let debut = 0;
   for (const brut of texte.split('\n')) {
-    const sansIndentation = brut.replace(/^[ \t]*/u, '');
+    // Un CR final appartient a la fin de ligne, pas au contenu : le laisser
+    // ferait echouer le test de ligne blanche dans un fichier CRLF.
+    const contenu = brut.endsWith('\r') ? brut.slice(0, -1) : brut;
+    const sansIndentation = contenu.replace(/^[ \t]*/u, '');
     const blanche = sansIndentation.trim() === '';
     lignes.push({
-      debut, fin: debut + brut.length, texte: brut, blanche,
-      indentation: brut.length - sansIndentation.length,
+      debut, fin: debut + contenu.length, texte: contenu, blanche,
+      indentation: contenu.length - sansIndentation.length,
       mot: /^([A-Za-z_]+)/u.exec(sansIndentation)?.[1] ?? '',
       enTete: /:\s*(#.*)?$/u.test(sansIndentation) && sansIndentation !== '',
     });
@@ -101,6 +114,13 @@ function refus(code: DiagnosticPython['code'], message: string, range: Intervall
  */
 export function planifierPython(demande: DemandePython): PlanPython {
   const { text } = demande.document;
+  const PAS = demande.pas === undefined ? PAS_DEFAUT : demande.pas;
+  if (!Number.isSafeInteger(PAS) || PAS < 1) {
+    return refus('INDENTATION_INCONNUE',
+      'Le pas d’indentation doit être un nombre entier d’espaces supérieur à zéro.',
+      { start: demande.cursorOffset, end: demande.cursorOffset });
+  }
+  const eol = demande.eol === undefined ? '\n' : demande.eol;
   if (demande.code.trim() === '') {
     return refus('CODE_VIDE', 'Aucun code à placer : le langage n’a rien rendu.',
       { start: demande.cursorOffset, end: demande.cursorOffset });
@@ -201,7 +221,7 @@ export function planifierPython(demande: DemandePython): PlanPython {
   const corps = demande.code.replace(/\n$/u, '').split('\n')
     .map(ligne => (ligne.trim() === '' ? '' : marge + ligne));
   const inserees = [marge + demande.comment, ...corps];
-  const newText = inserees.join('\n');
+  const newText = inserees.join(eol);
 
   const plan: PlanPython = {
     status: 'planifie',
@@ -211,7 +231,7 @@ export function planifierPython(demande: DemandePython): PlanPython {
   // 9. Un en-tête laisse le curseur DANS le bloc, un cran plus loin : le
   //    corps est à écrire, et C-A n'en écrit aucune ligne.
   if (EN_TETES.has(demande.kind)) {
-    return { ...plan, cursor: { offset: courante.debut + newText.length + 1 + cible + PAS } };
+    return { ...plan, cursor: { offset: courante.debut + newText.length + eol.length + cible + PAS } };
   }
   return plan;
 }

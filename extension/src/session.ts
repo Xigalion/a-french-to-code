@@ -18,7 +18,7 @@ export type TargetState = {
   open: boolean;
 };
 export type SessionDiagnostic = {
-  stage: 'translation' | 'placement' | 'integration' | 'variantes';
+  stage: 'translation' | 'placement' | 'integration' | 'variantes' | 'rendu';
   code: string;
   message: string;
   range?: SourceRange;
@@ -31,6 +31,36 @@ export type Normalisation = { source: string; canonique: string; lectures: numbe
 /** Strict mode is the default. The flexible mode is opt-in, and it only ever
  * runs on a sentence the strict engine has already refused. */
 export type SessionOptions = { souple?: boolean };
+/** Une information passive, quel que soit le langage cible. Les codes ne sont
+ * pas les memes d'un langage a l'autre, et les reunir dans une seule union
+ * serait precisement forcer un langage dans le moule de l'autre. */
+export type InformationAffichable = { code: string; severity: 'information'; range: SourceRange; message: string };
+/** Ce que l'IHM appelle sur une session, et rien de plus. Les deux sessions —
+ * C17 et Python — satisfont ce contrat sans se connaitre : c'est la decision 2
+ * du socle, les placements ne sont pas unifies, donc les sessions non plus. */
+export type SessionControleur = {
+  readonly phase: string;
+  readonly draft: string;
+  readonly flexible: boolean;
+  readonly normalisation: Normalisation | undefined;
+  readonly information: InformationAffichable[];
+  readonly advisories: CalculationAdvisory[];
+  readonly attachmentLabel: string | undefined;
+  updateText(text: string): void;
+  observe(target: TargetState): void;
+  invalidate(message: string): void;
+  diagnose(target: TargetState): SessionDiagnostic | undefined;
+  prepare(target: TargetState): { status: 'preview'; preview: Preview } | { status: 'error'; diagnostic: SessionDiagnostic };
+  reviewReady(token: number, target: TargetState): boolean;
+  editAgain(): void;
+  beginApply(token: number, target: TargetState): {
+    status: 'apply';
+    plan: { edits: ReadonlyArray<{ range: SourceRange; newText: string }>; eol: '\n' | '\r\n'; cursorAfter: number };
+    expectedAfter: string;
+  } | { status: 'error'; diagnostic: SessionDiagnostic };
+  finishApply(success: boolean): void;
+  cancel(): void;
+};
 type Lecture = {
   /** What the strict engine answered on the user's own sentence. */
   strict: TranslationResult;

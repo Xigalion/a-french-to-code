@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
 import { TranslationSession } from './session.ts';
-import type { SessionDiagnostic, TargetState } from './session.ts';
+import { PythonTranslationSession } from './sessionPython.ts';
+import type { InformationAffichable, SessionControleur, SessionDiagnostic, TargetState } from './session.ts';
 import { PreviewStore } from './preview.ts';
 import type { PreviewPair } from './preview.ts';
 import type { CalculationAdvisory } from '../../src/calculationAdvisories.ts';
-import type { PedagogicalInformation } from '../../src/pedagogicalInformation.ts';
+
 
 type Choice = vscode.QuickPickItem & { action: 'insert' | 'edit' | 'return' | 'cancel' };
 export type SessionInspection = {
@@ -12,9 +13,10 @@ export type SessionInspection = {
   targetUri: string; choices: string[]; diagnostic: SessionDiagnostic | undefined;
   preview: { before: string; after: string } | undefined;
   advisories: CalculationAdvisory[];
-  information: PedagogicalInformation[];
+  information: InformationAffichable[];
   attachmentLabel: string | undefined;
   souple: boolean;
+  langage: 'c17' | 'python';
   normalisation: { source: string; canonique: string; lectures: number } | undefined;
   validation: string | vscode.InputBoxValidationMessage | undefined;
   confirmationTitle: string | undefined;
@@ -35,7 +37,8 @@ function indentation(editor: vscode.TextEditor): { unit: string; signature: stri
 function message(diagnostic: SessionDiagnostic): string {
   const label = diagnostic.stage === 'translation' ? 'Traduction'
     : diagnostic.stage === 'placement' ? 'Placement refusé'
-      : diagnostic.stage === 'variantes' ? 'Ambiguïté' : 'Intégration';
+      : diagnostic.stage === 'variantes' ? 'Ambiguïté'
+        : diagnostic.stage === 'rendu' ? 'Langage cible' : 'Intégration';
   return `${label} : ${diagnostic.message}`;
 }
 
@@ -45,8 +48,27 @@ function souplesseActive(): boolean {
   return vscode.workspace.getConfiguration('c-a').get<boolean>('souplesse') === true;
 }
 
+/** Python est derriere un reglage, desactive par defaut, et ce n'est pas de la
+ * prudence de facade : son catalogue compte 32 intentions portees et aucune
+ * intention native, donc il ne sait pas encore creer une liste. L'exposer par
+ * defaut enseignerait un Python infirme. Le reglage existe pour qu'il soit
+ * essayable, pas pour qu'il soit rencontre par accident. */
+function pythonActif(): boolean {
+  return vscode.workspace.getConfiguration('c-a').get<boolean>('python') === true;
+}
+
+/** Les langages que la commande accepte, par extension et identifiant VS Code.
+ * Aucun repli : un fichier qui n'est ni l'un ni l'autre est refuse. */
+type Cible = { langage: 'c17' | 'python'; extension: string; languageId: string };
+const CIBLES: readonly Cible[] = [
+  { langage: 'c17', extension: '.c', languageId: 'c' },
+  { langage: 'python', extension: '.py', languageId: 'python' },
+];
+
 class NativeSession {
-  readonly controller: TranslationSession;
+  readonly controller: SessionControleur;
+  private readonly langage: 'c17' | 'python';
+  private readonly languageId: string;
   private readonly document: vscode.TextDocument;
   private readonly column: vscode.ViewColumn;
   private readonly initial: TargetState;
@@ -77,13 +99,18 @@ class NativeSession {
     finished: (draft: string) => void,
     pedagogy: vscode.OutputChannel,
     souple = false,
+    cible: Cible = CIBLES[0]!,
   ) {
     this.editor = editor; this.store = store; this.id = id; this.finished = finished;
     this.pedagogy = pedagogy;
     this.document = editor.document;
     this.column = editor.viewColumn ?? vscode.ViewColumn.One;
     this.initial = initial;
-    this.controller = new TranslationSession(initial, draft, { souple });
+    this.langage = cible.langage;
+    this.languageId = cible.languageId;
+    this.controller = cible.langage === 'python'
+      ? new PythonTranslationSession(initial, draft, { souple })
+      : new TranslationSession(initial, draft, { souple });
     const observe = () => {
       if (this.disposed || this.finishing) return;
       this.controller.observe(this.capture());
@@ -116,7 +143,7 @@ class NativeSession {
 
   private capture(): TargetState {
     const open = !this.document.isClosed && this.editor.document === this.document
-      && this.document.languageId === 'c' && vscode.window.visibleTextEditors.includes(this.editor);
+      && this.document.languageId === this.languageId && vscode.window.visibleTextEditors.includes(this.editor);
     const settings = indentation(this.editor);
     return {
       document: open ? { id: this.document.uri.toString(), revision: this.document.version, text: this.document.getText() } : { ...this.initial.document },
@@ -168,7 +195,8 @@ class NativeSession {
       if (this.input === input) this.input = undefined;
       input.dispose();
     };
-    input.title = this.controller.flexible ? 'C-A : instruction française — mode souple' : 'C-A : instruction française';
+    const langue = this.langage === 'python' ? ' — Python' : '';
+    input.title = (this.controller.flexible ? 'C-A : instruction française — mode souple' : 'C-A : instruction française') + langue;
     input.prompt = this.prompt();
     input.placeholder = 'Exemples : Crée un bloc si "actif && age >= 18". / Ajoute une branche sinon. / Crée une boucle tant que "i < limite".';
     input.ignoreFocusOut = true;
@@ -383,6 +411,7 @@ class NativeSession {
       information: this.diagnostic ? [] : this.controller.information,
       attachmentLabel: this.controller.attachmentLabel,
       souple: this.controller.flexible,
+      langage: this.langage,
       normalisation: this.controller.normalisation,
       validation: this.input?.validationMessage,
       confirmationTitle: this.picker?.title,
@@ -404,9 +433,14 @@ export function activate(context: vscode.ExtensionContext): ExtensionApi {
     if (active) { active.focus(); return; }
     const editor = vscode.window.activeTextEditor;
     const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
-    if (!editor || editor.document.uri.scheme !== 'file' || !editor.document.uri.path.endsWith('.c')
-      || editor.document.languageId !== 'c' || editor.viewColumn === undefined || !(tab?.input instanceof vscode.TabInputText)) {
-      void vscode.window.showWarningMessage('C-A : ouvrez un fichier .c ordinaire en mode C avant de saisir une instruction.');
+    const disponibles = CIBLES.filter(c => c.langage === 'c17' || pythonActif());
+    const cible = editor === undefined ? undefined : disponibles.find(candidat =>
+      editor.document.uri.path.endsWith(candidat.extension) && editor.document.languageId === candidat.languageId);
+    if (!editor || editor.document.uri.scheme !== 'file' || cible === undefined
+      || editor.viewColumn === undefined || !(tab?.input instanceof vscode.TabInputText)) {
+      void vscode.window.showWarningMessage(pythonActif()
+        ? 'C-A : ouvrez un fichier .c en mode C, ou un fichier .py en mode Python, avant de saisir une instruction.'
+        : 'C-A : ouvrez un fichier .c ordinaire en mode C avant de saisir une instruction.');
       return;
     }
     if (editor.selections.length !== 1 || !editor.selection.isEmpty) {
@@ -423,7 +457,7 @@ export function activate(context: vscode.ExtensionContext): ExtensionApi {
     };
     const session = new NativeSession(editor, store, ++nextId, target, typeof draft === 'string' ? draft : rememberedDraft, value => {
       if (active === session) { rememberedDraft = value; active = undefined; }
-    }, pedagogy, souplesseActive());
+    }, pedagogy, souplesseActive(), cible);
     active = session;
     session.showInput();
   }));

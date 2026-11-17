@@ -29,11 +29,11 @@
     },
     {
       "nom": "Phase 2 — lots d'implementation",
-      "fait": 4,
-      "total": 7,
-      "unite": "lots P0 a P6",
-      "source": "docs/phase2/LOT_P0_CONTRAT.md, LOT_P3_CONTRAT_ET_BILAN.md, test/registre.test.mjs, test/placementPython.test.mjs, test/python.test.mjs",
-      "note": "P0, P1, P2 et P3 livres. P3 : 32 intentions Python, 52 refus nommes, un programme de 16 instructions execute et conforme. Restent P4, P5, P6."
+      "fait": 5,
+      "total": 8,
+      "unite": "lots P0 a P6, plus P4a",
+      "source": "docs/phase2/LOT_P0_CONTRAT.md, LOT_P3_CONTRAT_ET_BILAN.md, LOT_P4A_CONTRAT_ET_BILAN.md, test/python.test.mjs, test/sessionPython.test.mjs",
+      "note": "P0, P1, P2, P3 et P4a livres. P4a : Python dans l'editeur, derriere un reglage desactive par defaut ; il a trouve deux defauts reels du placement indente (fins de ligne, pas d'indentation). Restent P4, P5, P6."
     },
     {
       "nom": "Phase 2 — souplesse linguistique",
@@ -81,7 +81,7 @@
       "total": 1,
       "unite": "verification",
       "source": "git diff main..HEAD -- src/ : non vide, et c'est voulu depuis P0",
-      "note": "main reste la V1 publique a l'etiquette v0.4.0. La branche porte P0, P1, P2, P3 et S4, et n'est pas fusionnee."
+      "note": "main reste la V1 publique a l'etiquette v0.4.0. La branche porte P0, P1, P2, P3, P4a et S4, et n'est pas fusionnee."
     }
   ]
 }

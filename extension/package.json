@@ -24,7 +24,7 @@
       {
         "command": "c-a.translate",
         "title": "C-A : Saisir une instruction",
-        "enablement": "editorLangId == c && resourceScheme == file && resourceExtname == .c"
+        "enablement": "editorLangId == c && resourceScheme == file && resourceExtname == .c || editorLangId == python && resourceScheme == file && resourceExtname == .py"
       },
       {
         "command": "c-a.souplesse",
@@ -36,7 +36,7 @@
         "command": "c-a.translate",
         "key": "ctrl+k a",
         "mac": "cmd+k a",
-        "when": "editorTextFocus && editorLangId == c && resourceScheme == file && resourceExtname == .c && !editorReadonly"
+        "when": "editorTextFocus && resourceScheme == file && !editorReadonly && ((editorLangId == c && resourceExtname == .c) || (editorLangId == python && resourceExtname == .py))"
       }
     ],
     "configuration": {
@@ -46,6 +46,11 @@
           "type": "boolean",
           "default": false,
           "description": "Mode souple : si une phrase est refusée par le catalogue, C-A essaie un lexique fini de synonymes et de variantes grammaticales, et n’insère que si une seule lecture du catalogue en sort. Le commentaire de traçabilité conserve votre phrase. Désactivé par défaut : le mode strict est la référence."
+        },
+        "c-a.python": {
+          "type": "boolean",
+          "default": false,
+          "description": "Python (experimental, hors version publique) : permet d'utiliser C-A dans un fichier .py. Le catalogue Python compte 32 intentions portees depuis C17 et AUCUNE intention native : il ne sait notamment pas creer une liste, et un bloc y reste sans corps tant que vous ne l'ecrivez pas. Desactive par defaut, pour ne pas enseigner un Python infirme par accident."
         }
       }
     }

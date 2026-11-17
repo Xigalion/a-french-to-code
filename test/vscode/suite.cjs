@@ -1159,6 +1159,88 @@ exports.run = async function run() {
         await cancel();
       });
     });
+    // Lot P4a — Python dans l'editeur reel. Le reglage c-a.python est remis a
+    // false apres chaque scenario : il est desactive par defaut, et un
+    // scenario qui le laisserait actif contaminerait les suivants.
+    async function fixturePython(text = '', cursor = text.length) {
+      const file = path.join(workspace, `scenario-${++fixtureNumber}.py`);
+      fs.writeFileSync(file, text, 'utf8');
+      const document = await vscode.workspace.openTextDocument(vscode.Uri.file(file));
+      const editor = await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.One });
+      editor.options = { insertSpaces: true, tabSize: 4, indentSize: 'tabSize' };
+      const position = document.positionAt(cursor);
+      editor.selection = new vscode.Selection(position, position);
+      documents.push(document);
+      await delay(100);
+      return { file, document, editor };
+    }
+    async function avecPython(body) {
+      try {
+        await vscode.workspace.getConfiguration('c-a').update('python', true, vscode.ConfigurationTarget.Global);
+        await waitFor(() => vscode.workspace.getConfiguration('c-a').get('python') === true, 'reglage python actif');
+        await body();
+      } finally {
+        await vscode.workspace.getConfiguration('c-a').update('python', false, vscode.ConfigurationTarget.Global);
+      }
+    }
+    await test('lot P4a : sans le reglage, un fichier .py est refuse', async () => {
+      assert.equal(vscode.workspace.getConfiguration('c-a').get('python'), false);
+      const state = await fixturePython('');
+      await vscode.commands.executeCommand('c-a.translate', 'Cree un entier nomme age de valeur 20.');
+      // Aucune session ne s'ouvre : la commande a refuse la cible.
+      await delay(300);
+      assert.equal(api.inspect(), undefined);
+      assert.equal(state.document.getText(), '');
+    });
+    await test('lot P4a : avec le reglage, une instruction Python est inseree', async () => {
+      await avecPython(async () => {
+        const state = await fixturePython('');
+        await preview('Cr\u00e9e un entier nomm\u00e9 age de valeur 20.');
+        assert.equal(api.inspect().langage, 'python');
+        await inserted();
+        // La fin de ligne est celle du DOCUMENT : sur Windows, un fichier vide
+        // ouvre en CRLF, et le lot P4a a justement corrige le placement qui
+        // ecrivait LF sans regarder.
+        const fin = state.document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+        assert.equal(state.document.getText(),
+          '# Cr\u00e9e un entier nomm\u00e9 age de valeur 20.' + fin + 'age = 20');
+        // Une seule modification annulable.
+        await vscode.commands.executeCommand('undo');
+        await waitFor(() => state.document.getText() === '', 'annulation en une fois');
+      });
+    });
+    await test('lot P4a : un bloc Python laisse le curseur dans le corps', async () => {
+      await avecPython(async () => {
+        const state = await fixturePython('');
+        await preview('Cr\u00e9e un bloc si "x > 0".');
+        await inserted();
+        const texte = state.document.getText();
+        const fin = state.document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+        assert.equal(texte, '# Cr\u00e9e un bloc si "x > 0".' + fin + 'if x > 0:');
+        // Aucun `pass` n'a ete ecrit : le corps est a l'etudiant.
+        assert.ok(!texte.includes('pass'));
+      });
+    });
+    await test('lot P4a : une intention que Python ne porte pas est refusee, et nommee', async () => {
+      await avecPython(async () => {
+        const state = await fixturePython('');
+        await start('D\u00e9clare un entier nomm\u00e9 n.');
+        await accept();
+        const diagnostic = api.inspect().diagnostic;
+        assert.equal(diagnostic.stage, 'rendu');
+        assert.match(String(api.inspect().validation), /Langage cible/);
+        assert.equal(state.document.getText(), '');
+      });
+    });
+    await test('lot P4a : le .c continue de fonctionner quand Python est actif', async () => {
+      await avecPython(async () => {
+        const state = await fixture(CORPS);
+        await preview('Affiche la valeur de age.');
+        assert.equal(api.inspect().langage, 'c17');
+        await inserted();
+        assert.ok(state.document.getText().includes('printf("%d", age);'));
+      });
+    });
     await test('changer indentSize seul invalide le plan', async () => {
       const { editor } = await fixture();
       await preview('Crée la fonction principale');
