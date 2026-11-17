@@ -45,11 +45,11 @@
     },
     {
       "nom": "Phase 2 — couverture LINGUISTIQUE (corpus gele)",
-      "fait": 56,
-      "total": 59,
+      "fait": 58,
+      "total": 61,
       "unite": "phrases du perimetre reconnues",
       "source": "docs/phase2/MESURES_REFORMULATIONS.md, corpus-validation.json (gele)",
-      "note": "94,9 % sur le corpus de validation GELE, 0 erreur de sens, 0 acceptee a tort. Objectif indicatif de 90 % depasse. LIMITE : le corpus est ecrit par l'auteur du mecanisme — gele et jamais utilise pour enrichir, mais pas independant de sa connaissance. Le francais spontane n'est mesure par personne."
+      "note": "95,1 % sur le corpus de validation GELE, 0 erreur de sens, 0 acceptee a tort. Objectif indicatif de 90 % depasse. LIMITE : le corpus est ecrit par l'auteur du mecanisme — gele et jamais utilise pour enrichir, mais pas independant de sa connaissance. Le francais spontane n'est mesure par personne."
     },
     {
       "nom": "Phase 2 — perimetre pedagogique Python",
