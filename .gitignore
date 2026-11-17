@@ -14,6 +14,10 @@ test-utilisateur/journal/build/
 exercice/promotion/journal/build/
 exercice/promotion/journal-complements/build/
 
+# Fichiers ECRITS par les programmes de l'exercice Python : ils sont une
+# sortie, pas une source, et le script les reecrit a chaque execution.
+exercice/python/journal/*.txt
+
 # Notes locales non publiees (table de correspondance des identifiants reecrits)
 local/
 

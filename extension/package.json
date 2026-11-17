@@ -1,8 +1,8 @@
 {
   "name": "c-a",
-  "displayName": "C-A — Français contrôlé vers C17",
-  "description": "Prototype pédagogique : traduction, aperçu et insertion explicite d’instructions C17 du catalogue C-A.",
-  "version": "0.4.0",
+  "displayName": "C-A — Français contrôlé vers C17 et Python",
+  "description": "Prototype pédagogique : traduction, aperçu et insertion explicite d’instructions depuis des phrases françaises contrôlées, vers C17 et Python.",
+  "version": "0.5.0",
   "publisher": "projet-a-local",
   "private": true,
   "type": "commonjs",
@@ -28,7 +28,7 @@
       },
       {
         "command": "c-a.souplesse",
-        "title": "C-A : Activer ou désactiver le mode souple"
+        "title": "C-A : Basculer entre français strict et français souple"
       }
     ],
     "keybindings": [
@@ -45,12 +45,12 @@
         "c-a.souplesse": {
           "type": "boolean",
           "default": false,
-          "description": "Mode souple : si une phrase est refusée par le catalogue, C-A essaie un lexique fini de synonymes et de variantes grammaticales, et n’insère que si une seule lecture du catalogue en sort. Le commentaire de traçabilité conserve votre phrase. Désactivé par défaut : le mode strict est la référence."
+          "description": "Français souple : si une phrase est refusée par le catalogue, C-A essaie un lexique fini de synonymes, de variantes grammaticales et de reformulations, et n’insère que si une seule lecture en sort. Une phrase ambiguë reste refusée, et le commentaire de traçabilité conserve votre phrase. ÉTAT : désactivé par défaut pendant la validation — le mode strict est la référence. Après validation finale, ce réglage passera à true par défaut, et le mode strict restera accessible en le mettant à false."
         },
         "c-a.python": {
           "type": "boolean",
           "default": false,
-          "description": "Python (experimental, hors version publique) : permet d'utiliser C-A dans un fichier .py. Le catalogue Python compte 32 intentions portees depuis C17 et AUCUNE intention native : il ne sait notamment pas creer une liste, et un bloc y reste sans corps tant que vous ne l'ecrivez pas. Desactive par defaut, pour ne pas enseigner un Python infirme par accident."
+          "description": "Python : permet d’utiliser C-A dans un fichier .py. Le catalogue Python compte 97 intentions — 33 portées depuis C17 et 64 natives — et 49 informations pédagogiques. Les classes, le « else » de boucle et la boucle à test final n’y sont pas. ÉTAT : désactivé par défaut pendant la validation."
         }
       }
     }

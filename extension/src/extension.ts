@@ -42,10 +42,25 @@ function message(diagnostic: SessionDiagnostic): string {
   return `${label} : ${diagnostic.message}`;
 }
 
+/** The default for the flexible mode, and the ONLY line to change when it
+ * becomes the default mode.
+ *
+ * The founder asked on 17 November 2026 to prepare flexible French as the
+ * default AFTER final validation, keeping strict mode reachable. This is that
+ * preparation: one constant, one setting, and a test that checks the manifest
+ * default says the same thing.
+ *
+ * To switch: set this to `true` AND the `default` of the `c-a.souplesse`
+ * setting in `extension/package.json`. Strict mode then stays reachable by
+ * setting that to `false`, and the toggle command works both ways. */
+export const SOUPLESSE_PAR_DEFAUT = false;
+
 /** The flexible mode is a user setting, read once per session so it cannot
- * change under a prepared preview. Absent or malformed, it is off. */
+ * change under a prepared preview. Absent or malformed, it takes the default
+ * above. */
 function souplesseActive(): boolean {
-  return vscode.workspace.getConfiguration('c-a').get<boolean>('souplesse') === true;
+  const reglage = vscode.workspace.getConfiguration('c-a').get<boolean>('souplesse');
+  return typeof reglage === 'boolean' ? reglage : SOUPLESSE_PAR_DEFAUT;
 }
 
 /** Python est derriere un reglage, desactive par defaut, et ce n'est pas de la

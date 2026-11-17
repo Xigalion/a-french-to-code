@@ -377,3 +377,27 @@ test('lot 7 changer une précision invalide le jeton précédent', () => {
   assert.equal(session.beginApply(preview.token, current).status, 'error');
   assert.equal(current.document.text, CORPS);
 });
+
+test('tache 4 : le mode souple est pret a devenir le defaut, en UN endroit', async () => {
+  // Le fondateur a demande de preparer le francais souple comme mode par
+  // defaut apres validation finale, en gardant le mode strict accessible.
+  // La preparation est une constante et un reglage, et ce test exige que les
+  // deux disent la MEME chose — sinon la bascule en oublierait une.
+  const manifest = JSON.parse(readFileSync(new URL('../extension/package.json', import.meta.url), 'utf8'));
+  const reglage = manifest.contributes.configuration.properties['c-a.souplesse'];
+  // Pendant la validation : strict. Apres : il suffira de passer les deux a true.
+  assert.equal(reglage.default, false);
+  const source = readFileSync(new URL('../extension/src/extension.ts', import.meta.url), 'utf8');
+  const constante = /export const SOUPLESSE_PAR_DEFAUT = (true|false);/u.exec(source);
+  assert.ok(constante, 'la constante de bascule a disparu');
+  assert.equal(constante[1], String(reglage.default),
+    'la constante et le reglage ne disent pas la meme chose : la bascule en oublierait un');
+  // Le reglage DIT le plan : une description qui ne l'annonce pas laisserait
+  // la bascule arriver sans prevenir.
+  assert.match(reglage.description, /apr[èe]s validation finale/iu);
+  assert.match(reglage.description, /mode strict/iu);
+  // Et la commande de bascule nomme les DEUX modes.
+  const bascule = manifest.contributes.commands.find(commande => commande.command === 'c-a.souplesse');
+  assert.match(bascule.title, /strict/iu);
+  assert.match(bascule.title, /souple/iu);
+});

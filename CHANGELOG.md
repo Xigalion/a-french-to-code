@@ -6,6 +6,62 @@ des 32 lots est dans `docs/LOT*.md`.
 
 ---
 
+## 0.5.0 — 17 novembre 2026 — deux langages cibles
+
+**Toujours un prototype pédagogique.** Pas un produit, et les deux
+nouveautés sont désactivées par défaut.
+
+### Ce que cette version ajoute
+
+**Python comme second langage cible**, avec son **propre catalogue
+pédagogique** — et non un portage du C :
+
+- **97 intentions** : 33 reprises du catalogue partagé, **64 natives** ;
+- **51 refus nommés**, chacun désignant la construction Python qui enseigne
+  la même compétence — l'aliasing d'une liste pour les pointeurs, `len` pour
+  `sizeof` (en disant que c'est une autre notion), `import` pour `#include` ;
+- **49 informations pédagogiques passives** propres à Python, dont trois qui
+  **corrigent** une règle apprise en C : `match` ne traverse pas, `with` ferme
+  tout seul, un indice négatif compte depuis la fin ;
+- placement par **indentation**, module séparé de celui des accolades ;
+- les différences sémantiques sont **refusées, pas lissées** : `/` et `%`
+  n'ont pas le même sens dans les deux langages, et chacun a sa phrase.
+
+**Français souple**, désactivé par défaut : un lexique fini de synonymes et de
+variantes, et **98 reformulations** syntaxiques déterministes — changements
+d'ordre, formes courtes, verbes synonymes. Une phrase ambiguë reste
+**refusée**, avec ses lectures nommées, et le commentaire de traçabilité
+conserve **votre** phrase, pas celle que C-A a lue.
+
+### Preuves livrées avec cette version
+
+| | |
+|---|---|
+| programmes Python écrits par C-A et **exécutés** | **9**, dont six pour l'exercice de clôture |
+| instructions de l'exercice de clôture | **238**, **0 retouche manuelle** |
+| intentions Python employées par un programme exécuté | **97 / 97** |
+| informations Python rencontrées | **49 / 49** |
+| reconnaissance du français souple, corpus **gelé** | 95,1 % (58/61), **0 erreur de sens** |
+| tests | **4 375** Node, **109** hôte VS Code |
+
+### Ce que cette version ne fait pas
+
+- **les classes Python**, le `else` de boucle et la boucle à test final n'y
+  sont pas, et c'est délibéré ;
+- **aucune vérification de symboles, de types ni de portées**, pas plus en
+  Python qu'en C17 ;
+- **aucun essai hors Windows**, et **aucun essai par un utilisateur** : les
+  neuf programmes Python sont écrits par un script qui dicte des phrases.
+
+### Comment activer
+
+| Réglage | Par défaut | Ce qu'il ouvre |
+|---|---|---|
+| `c-a.python` | désactivé | la commande C-A dans un fichier `.py` |
+| `c-a.souplesse` | désactivé | le français souple ; **passera à activé après validation finale**, le mode strict restant accessible |
+
+---
+
 ## 0.4.0 — 17 novembre 2026 — première version publique
 
 **Prototype pédagogique en test utilisateur supervisé.** Pas un produit.

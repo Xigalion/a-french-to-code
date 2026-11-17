@@ -97,7 +97,7 @@
       "total": 1,
       "unite": "verification",
       "source": "git diff main..HEAD -- src/ : non vide, et c'est voulu depuis P0",
-      "note": "main reste la V1 publique a l'etiquette v0.4.0. La branche porte P0 a P5, S4 et S5, et n'est pas fusionnee."
+      "note": "main reste la V1 publique a l'etiquette v0.4.0. La branche porte P0 a P6, S4 et S5, et n'est pas fusionnee. Le paquet 0.5.0 est fabrique et NON publie."
     },
     {
       "nom": "Phase 2 — usage humain reel, Python",
@@ -106,6 +106,14 @@
       "unite": "seances",
       "source": "aucune : rien n est mesure",
       "note": "Zero. Personne n a essaye Python, et le reglage c-a.python est desactive par defaut. Ce chiffre ne doit jamais etre confondu avec les precedents : les quatre autres barres mesurent ce qui est CONSTRUIT, celle-ci ce qui est VECU."
+    },
+    {
+      "nom": "Phase 2 — version publique 0.5.0 preparee",
+      "fait": 5,
+      "total": 6,
+      "unite": "livrables",
+      "source": "CHANGELOG.md, README.md, docs/ETAT_DU_PROJET.md, docs/LIMITES_CONNUES.md, dist/c-a-0.5.0.vsix",
+      "note": "Version, journal, README, etat public, limites connues et paquet .vsix (51 entrees, 163 445 octets) : faits. Reste la suite hote, bloquee par le mutex de mise a jour de VS Code. RIEN n'est publie, et main n'est pas fusionnee."
     }
   ]
 }

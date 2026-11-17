@@ -3,11 +3,14 @@
 **Pour qui :** quiconque s'apprête à utiliser C-A, ou à ouvrir un ticket.
 À lire **avant** de conclure à un défaut.
 
-> Ce document liste ce que C-A **ne fait pas**. Le miroir — ce qu'il fait,
-> avec la sortie C exacte — est `docs/CATALOGUE.md`. **Tout ce qui ne figure
-> pas au catalogue est refusé**, et c'est le périmètre, pas une panne.
+> Ce document liste ce que C-A **ne fait pas**. Les miroirs — ce qu'il fait,
+> avec la sortie exacte — sont `docs/CATALOGUE.md` pour C17 et
+> `docs/CATALOGUE_PYTHON.md` pour Python. **Tout ce qui ne figure pas à un
+> catalogue est refusé**, et c'est le périmètre, pas une panne.
 >
-> État au 16 novembre 2026, C-A 0.4.0.
+> État au 17 novembre 2026, C-A 0.5.0. Les limites ci-dessous valent pour les
+> **deux** langages, sauf mention contraire ; celles qui sont propres à Python
+> sont regroupées à la fin.
 
 ---
 
@@ -155,3 +158,62 @@ longuement.
   jamais été validé par un tiers ;
 - qu'une suite verte démontre la stabilité : huit passages hôte verts
   consécutifs montrent qu'un site identifié est corrigé, rien de plus.
+
+---
+
+## Limites propres à Python
+
+### Ce qui n'existe pas, et ne viendra pas dans cette version
+
+| Notion | Pourquoi |
+|---|---|
+| les **classes** | elles méritent un domaine entier, avec leur propre contrat. Le regroupement de données nommées s'enseigne d'abord par un dictionnaire |
+| le `else` d'une boucle | il s'exécute si la boucle n'a pas été interrompue par `break`, et il surprend plus qu'il n'aide un débutant |
+| la boucle à **test final** | l'écrire demanderait de restructurer le corps, ce que C-A n'a pas le droit de faire |
+| `except` nu | il attrape tout, interruption au clavier comprise, et ne se diagnostique pas. **Jamais écrit**, à aucun palier |
+| `dict.get(clé)` | il rendrait `None` en silence sur une clé absente. C-A écrit l'accès direct, qui lève une erreur, et l'information le dit |
+| une lecture de clé **par un nom de variable** | aucune formulation ne l'exprime. Mesuré par l'exercice de clôture, et consigné |
+| insérer un **texte** ailleurs que dans une liste | les guillemets délimitent une expression ; le mot « texte » lève l'ambiguïté là où une formulation existe, pas partout |
+
+### Ce que Python refuse là où C17 acceptait
+
+C'est le point qui surprend le plus : **une phrase du catalogue C17 peut être
+refusée dans un fichier `.py`**, et c'est voulu.
+
+| Phrase | En C17 | En Python |
+|---|---|---|
+| `Déclare un entier nommé n.` | `int n;` | **refusée** : Python ne sépare pas déclaration et initialisation, et `n = 0` inventerait une valeur |
+| `… le résultat de "a / b".` | `a / b` | **refusée** : `7 / 2` vaut 3 en C17 et 3.5 en Python. Deux phrases distinctes les remplacent |
+| `… le résultat de "a % b".` | `a % b` | **refusée** : `-7 % 2` vaut -1 en C17 et 1 en Python |
+| `Crée la fonction principale.` | `int main(void) {…}` | **refusée** : une phrase native écrit `if __name__ == "__main__":`, et dit que c'est une convention |
+| `Déclare un tableau … de dimension 10.` | `int t[10];` | **refusée** : `[0] * 10` inventerait le zéro |
+| `Crée un aiguillage sur "jour".` | `switch` | **refusée** : `match` ne traverse pas les cas, et porter la phrase rendrait fausses deux informations |
+| `Écris la valeur de x dans le fichier f.` | `fprintf(f, "%d", x)` | **refusée** : la méthode d'écriture n'accepte qu'une chaîne, et convertir à votre place serait un ajout |
+| tout ce qui touche aux **pointeurs** | `int *p`, `&x`, `*p` | **refusé** : Python n'en a pas. La compétence s'enseigne par l'aliasing d'une liste |
+
+Chacun de ces refus **nomme** la construction native qui enseigne la même
+compétence. Un refus de portage n'est pas une interdiction d'apprendre la
+notion.
+
+### Un nom valide en C17 peut être refusé en Python
+
+`lambda`, `None`, `pass`, `class` sont des identifiants **C17 parfaitement
+légaux** : le moteur les accepte, et c'est le langage cible qui les refuse,
+parce que Python les réserve.
+
+### Ce qui n'est pas vérifié, en Python non plus
+
+Ni les symboles, ni les types, ni les bornes, ni les clés. Un programme Python
+écrit par C-A peut lever une erreur à la première ligne — une liste parcourue
+avant d'exister, une clé absente, une conversion impossible. **Les
+annotations de type écrites ne sont pas vérifiées** : Python les enregistre et
+les laisse aux outils de lecture.
+
+### Ce qui n'a jamais été essayé
+
+- **aucun utilisateur** n'a écrit un programme Python avec C-A : les neuf
+  programmes de preuve sont dictés par un script ;
+- **un seul interpréteur**, `python3`, sur **Windows** uniquement ;
+- la sortie des programmes de preuve est comparée avec
+  `PYTHONIOENCODING=utf-8` imposé — sans quoi la console réécrit les accents.
+  C'est un réglage de la mesure, pas une retouche du code produit.

@@ -1,7 +1,8 @@
-# C-A — du français contrôlé vers du C17
+# C-A — du français contrôlé vers du C17 et du Python
 
-**C-A traduit une phrase française en une instruction C17, montre un aperçu,
-et n'insère rien sans confirmation.**
+**C-A traduit une phrase française en une instruction, montre un aperçu, et
+n'insère rien sans confirmation.** Deux langages cibles : **C17** et
+**Python**.
 
 ```
 Crée un entier nommé age de valeur 20.
@@ -10,6 +11,24 @@ Crée un entier nommé age de valeur 20.
 ```c
 // Crée un entier nommé age de valeur 20.
 int age = 20;
+```
+
+La même phrase, dans un fichier `.py` :
+
+```python
+# Crée un entier nommé age de valeur 20.
+age = 20
+```
+
+Et Python a **son propre catalogue**, pour ses notions propres :
+
+```
+Crée un dictionnaire nommé notes avec la clé "ada" valant "15".
+```
+
+```python
+# Crée un dictionnaire nommé notes avec la clé "ada" valant "15".
+notes: dict = {"ada": 15}
 ```
 
 Le commentaire conserve **exactement** la phrase saisie, sans normalisation
@@ -22,8 +41,15 @@ l'on modifie et que l'on compile.
 
 **A** est un projet de programmation assistée : traduire une intention
 exprimée en **langue naturelle contrôlée** vers du code d'un langage
-**réel et existant**. **C-A** en est la première incarnation —
-**français → C17**, intégrée à **VS Code**, moteur en TypeScript.
+**réel et existant**. **C-A** en est la première incarnation — **français →
+C17 et Python**, intégrée à **VS Code**, moteur en TypeScript.
+
+Python n'est pas un portage du C : il a son **propre catalogue pédagogique**,
+adapté à ses notions — listes, dictionnaires, ensembles, `with`, `match`,
+exceptions. Et ce que le C sait dire mais que Python ne connaît pas est
+**refusé avec sa raison**, qui nomme la construction native équivalente :
+les pointeurs renvoient à l'aliasing d'une liste, `sizeof` à `len`, et
+`#include` à `import`.
 
 L'idée tient en une phrase : *l'assistance doit réduire les difficultés
 inutiles sans supprimer la nécessité de comprendre ce que l'on programme.*
@@ -45,16 +71,24 @@ correcte à recopier.
 
 | | |
 |---|---|
-| version | 0.4.0 |
+| version | 0.5.0 |
 | domaines du parcours C17 couverts | **9 / 9** |
-| formulations reconnues | voir [`docs/CATALOGUE.md`](docs/CATALOGUE.md) — **tout ce qui n'y figure pas est refusé** |
-| tests | **3 834** tests Node, **99** tests hôte VS Code |
+| domaines Python couverts | **9 / 9** |
+| formulations C17 reconnues | voir [`docs/CATALOGUE.md`](docs/CATALOGUE.md) — **tout ce qui n'y figure pas est refusé** |
+| formulations Python reconnues | voir [`docs/CATALOGUE_PYTHON.md`](docs/CATALOGUE_PYTHON.md) — 33 portées, 64 natives, 51 refus nommés |
+| tests | **4 375** tests Node, **109** tests hôte VS Code |
 | dépendances d'exécution | **aucune** |
-| preuves de compilation | 10 programmes écrits par C-A, compilés en C17 `-Wall -Wextra -pedantic`, exécutés |
+| preuves d'exécution | 10 programmes C compilés en C17 `-Wall -Wextra -pedantic`, et **9 programmes Python exécutés** |
+
+**Python et le français souple sont désactivés par défaut** dans cette
+version : ils s'activent par les réglages `c-a.python` et `c-a.souplesse`.
+Le mode strict — seules les phrases exactes du catalogue — reste la référence,
+et le restera accessible même quand le français souple deviendra le mode par
+défaut.
 
 **C-A ne vérifie ni les symboles, ni les types, ni les bornes, ni les
 inclusions, ni les dépassements.** Une insertion acceptée n'est pas un
-programme correct, et ne garantit même pas qu'il compile. C'est une limite
+programme correct, et ne garantit même pas qu'il compile ou qu'il s'exécute. C'est une limite
 assumée, documentée et testée : voir
 [`docs/LIMITES_CONNUES.md`](docs/LIMITES_CONNUES.md).
 
@@ -68,7 +102,7 @@ npm install
 npm run check            # 3 834 tests ; ne rien installer si un seul échoue
 npm run build:extension
 node scripts/paquet.mjs  # écrit dist/c-a-<version>.vsix
-code --install-extension dist/c-a-0.4.0.vsix
+code --install-extension dist/c-a-0.5.0.vsix
 code --list-extensions --show-versions   # doit lister projet-a-local.c-a
 ```
 

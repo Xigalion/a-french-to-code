@@ -14,7 +14,8 @@ qui est prouvé, comment le projet travaille, et ce qu'il ne faut pas croire.
 > fichiers touchés : c'est un **fait historique** — le lot l'avait bien mis
 > à jour — et non un fichier manquant du dépôt.
 >
-> État au 17 novembre 2026, version **0.4.0**.
+> État au 17 novembre 2026, version **0.5.0** — deux langages cibles, C17
+> et Python. Python et le français souple sont **désactivés par défaut**.
 
 ---
 
@@ -22,7 +23,8 @@ qui est prouvé, comment le projet travaille, et ce qu'il ne faut pas croire.
 
 **A** est un projet de programmation assistée : traduire une intention
 exprimée en **langue naturelle contrôlée** vers du code d'un langage **réel
-et existant**. **C-A** en est la première incarnation : **français → C17**,
+et existant**. **C-A** en est la première incarnation : **français → C17 et
+Python**,
 intégrée à VS Code, moteur en TypeScript.
 
     Crée un entier nommé age de valeur 20.
@@ -115,7 +117,7 @@ Deux principes de mesure, appris à leurs dépens :
 
 | Preuve | Chiffre |
 |---|---|
-| tests Node | **3 834**, 0 échec |
+| tests Node | **4 375**, 0 échec |
 | tests hôte VS Code | **99 / 99**, neuf passages verts consécutifs |
 | programmes écrits par C-A, **compilés** en C17 `-Wall -Wextra -pedantic` | **19** |
 | programmes **exécutés**, sortie vérifiée contre un calcul fait à la main | **18** |
@@ -214,3 +216,64 @@ langages. Le schéma de données les anticipe ; le code ne les contient pas.
 | [`TEST_PARCOURS_DECOUVERTE.md`](TEST_PARCOURS_DECOUVERTE.md) | première séance d'un débutant |
 | [`REPERES_GIT.md`](REPERES_GIT.md) | les étiquettes du dépôt, et pourquoi pas des hachages |
 | [`REPERES_GIT.md`](REPERES_GIT.md) | les étiquettes du dépôt, et pourquoi pas des hachages |
+
+---
+
+## Python — second langage cible, version 0.5.0
+
+Python n'est **pas un portage du C**. Il a son propre catalogue pédagogique,
+et ce que le C sait dire mais que Python ne connaît pas est refusé **avec sa
+raison**, qui nomme la construction native équivalente.
+
+| | |
+|---|---|
+| intentions que Python écrit | **97** — 33 reprises du catalogue partagé, **64 natives** |
+| refus nommés | **51**, chacun désignant la construction Python qui enseigne la même compétence |
+| informations pédagogiques passives | **49**, dont trois qui **corrigent** une règle apprise en C |
+| placement | par **indentation**, module séparé de celui des accolades |
+| catalogue publié | [`docs/CATALOGUE_PYTHON.md`](CATALOGUE_PYTHON.md), engendré depuis le moteur |
+| programmes écrits par C-A et **exécutés** | **9**, dont six pour l'exercice de clôture |
+| exercice de clôture | **238 instructions**, **0 retouche**, **97/97** intentions employées, **49/49** informations |
+
+Les différences sémantiques entre les deux langages sont **refusées, pas
+lissées** : `/` ne donne pas le même résultat en C17 et en Python, `%` non
+plus sur un opérande négatif, et chacune a sa phrase française distincte.
+Trois informations disent explicitement ce qui **change** par rapport au C :
+`match` ne traverse pas les cas, `with` ferme le fichier tout seul, et un
+indice négatif compte depuis la fin au lieu de lire hors du tableau.
+
+**Ce que Python ne fait pas** : les classes, le `else` de boucle, la boucle à
+test final. Les trois sont délibérés, et les raisons sont dans
+`docs/phase2/LOT_P5_CONTRAT_ET_BILAN.md`.
+
+## Français souple — version 0.5.0, désactivé par défaut
+
+Si une phrase est refusée par le catalogue, et **seulement** dans ce cas, C-A
+essaie un lexique fini de synonymes et **98 reformulations** syntaxiques
+déterministes : changements d'ordre, formes courtes, verbes synonymes.
+
+Quatre garanties, chacune testée :
+
+- le **mode strict est intact** — une phrase du catalogue ne traverse rien, et
+  les 138 formulations publiées le vérifient une par une ;
+- rien n'est **inventé** : une reformulation n'a pas le droit d'introduire un
+  mot de type ou un nombre absent de la phrase, et l'exemption des quatre
+  formes qui portent un pas de 1 est **déclarée et vérifiée** ;
+- une phrase **ambiguë** est refusée, avec ses lectures nommées : « Affiche
+  x. » a trois lectures — `%d`, `%c`, `%s` — et C-A n'en choisit aucune ;
+- le commentaire de traçabilité conserve **votre** phrase, pas celle que C-A
+  a lue.
+
+| Mesure | Résultat |
+|---|---|
+| corpus de validation **gelé** | 95,1 % (58/61) des phrases du périmètre |
+| erreurs de sens | **0** |
+| phrases acceptées à tort | **0** |
+
+**Ce que ce chiffre ne prouve pas :** le corpus est gelé et n'a jamais servi à
+enrichir le mécanisme, mais il a été écrit par l'auteur de ce mécanisme. Le
+français spontané n'est mesuré par personne, et aucune mesure interne ne peut
+remplacer un utilisateur.
+
+Le français souple **deviendra le mode par défaut après validation finale**.
+Le mode strict restera accessible par le réglage `c-a.souplesse`.
