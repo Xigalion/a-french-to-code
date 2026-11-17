@@ -97,6 +97,28 @@ controle('chaque étiquette citée existe', () => {
 });
 
 // 5. Hygiène des fichiers suivis.
+// Les étiquettes de sauvegarde désignent l'historique d'AVANT le nettoyage,
+// celui qui contient encore les chemins personnels. `git push --tags` les
+// pousserait et publierait exactement ce que le nettoyage a retiré : le
+// contrôle vérifie qu'elles sont identifiables et que la procédure ne dit
+// nulle part de pousser toutes les étiquettes.
+controle('les étiquettes hors de main sont des sauvegardes nommées', () => {
+  const etiquettes = git('for-each-ref', '--format=%(refname:short) %(objectname)', 'refs/tags')
+    .split('\n').filter(Boolean).map(ligne => ligne.split(' '));
+  const horsMain = etiquettes.filter(([, objet]) => {
+    const essai = spawnSync('git', ['merge-base', '--is-ancestor', objet, 'main']);
+    return essai.status !== 0;
+  }).map(([nom]) => nom);
+  const inattendues = horsMain.filter(nom => !nom.startsWith('avant-'));
+  return inattendues.length === 0 ? true : 'hors de main et non nommées « avant-… » : ' + inattendues.join(', ');
+});
+controle('la procédure n’envoie pas toutes les étiquettes d’un coup', () => {
+  const procedure = readFileSync('docs/PUBLICATION.md', 'utf8');
+  const dangereuse = /git push [^\n]*--tags(?![^\n]*jamais)/u.test(procedure)
+    && !/\*\*jamais\*\* `--tags`/u.test(procedure);
+  return dangereuse ? 'docs/PUBLICATION.md contient « git push --tags »' : true;
+});
+
 controle('aucun fichier binaire ni volumineux suivi', () => {
   const mauvais = [];
   for (const chemin of suivis) {

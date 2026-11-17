@@ -15,11 +15,12 @@
 
     node scripts/pre-publication.mjs
 
-Quatorze contrôles, dont : aucune donnée personnelle dans les fichiers **ni
+Dix-sept contrôles, dont : aucune donnée personnelle dans les fichiers **ni
 dans l'historique de `main`**, aucun octet nul, aucun binaire suivi, aucune
 citation d'identifiant de commit, chaque étiquette citée existe, licence
 Apache-2.0 complète et annoncée partout, versions accordées, liens internes
-valides, et `npm run check` au vert.
+valides, les étiquettes de sauvegarde identifiées, et `npm run check` au
+vert.
 
 **S'il échoue, on ne publie pas.** Il imprime ce qui manque, et il dit aussi
 ce qu'il ne prouve pas.
@@ -79,13 +80,27 @@ ancêtre de `main`.
 `--force-with-lease` et non `--force` : il refuse si quelqu'un a poussé
 entre-temps.
 
-### 4.2 Envoyer les étiquettes
+### 4.2 Envoyer les étiquettes — énumérées, **jamais** `--tags`
 
-    git push origin --tags
+    git push origin v0.4.0 ref-avant-lot-13 lot-11a lot-11d lot-16 lot-17       lot-19 lot-23 lot-26 lot-27 lot-28 lots-30-31 evaluation-modele-1       campagne-2 campagne-3 kit-test-utilisateur
 
 Seize étiquettes, dont **`v0.4.0`** qui marque la version publiée. Les
 documents citent ces étiquettes et non des identifiants : sans elles, les
 bilans de lots perdent leurs références (`docs/REPERES_GIT.md`).
+
+> **Ne pas écrire `git push origin --tags`.** Deux étiquettes locales,
+> `avant-reecriture-auteur` et `avant-nettoyage-historique`, désignent
+> l'historique **d'avant** le nettoyage — celui qui contient encore les
+> chemins personnels. `--tags` les pousserait, et publierait exactement ce
+> que le nettoyage a retiré. C'est le piège le plus coûteux de cette
+> procédure ; un contrôle de `scripts/pre-publication.mjs` vérifie que ce
+> document ne contient pas cette commande.
+
+Pour vérifier, avant d'envoyer, quelles étiquettes appartiennent à `main` :
+
+    git for-each-ref --format='%(refname:short) %(objectname:short)' refs/tags |
+      while read t h; do git merge-base --is-ancestor "$h" main &&
+        echo "publiable  $t" || echo "SAUVEGARDE $t"; done
 
 ### 4.3 Rendre public
 
@@ -98,7 +113,7 @@ copié, forké, mis en cache et indexé dans les minutes qui suivent.
 ### 4.4 Finitions, après vérification du contenu distant
 
     # une fois le contenu distant VÉRIFIÉ, et pas avant :
-    git tag -d avant-reecriture-auteur
+    git tag -d avant-reecriture-auteur avant-nettoyage-historique
     git update-ref -d refs/original/refs/heads/main
     git reflog expire --expire=now --all && git gc --prune=now
 
