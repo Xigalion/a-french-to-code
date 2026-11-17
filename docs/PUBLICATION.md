@@ -24,7 +24,7 @@
 
     node scripts/pre-publication.mjs
 
-Dix-huit contrôles, dont : aucune donnée personnelle dans les fichiers **ni
+Dix-neuf contrôles, dont : aucune donnée personnelle dans les fichiers **ni
 dans l'historique de `main`**, aucun octet nul, aucun binaire suivi, aucune
 citation d'identifiant de commit, chaque étiquette citée existe, licence
 Apache-2.0 complète et annoncée partout, versions accordées, liens internes

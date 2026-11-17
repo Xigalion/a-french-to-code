@@ -243,7 +243,7 @@ a trouvé, et ils sont corrigés :
 | `docs/REPERES_GIT.md` | les étiquettes, et pourquoi pas des hachages |
 | `docs/PUBLICATION.md` | la procédure, les commandes exactes, et le **retour arrière** |
 | `scripts/liens.mjs` | liens internes et chemins cités |
-| `scripts/pre-publication.mjs` | **18 contrôles**, un seul point d'entrée, qui échoue |
+| `scripts/pre-publication.mjs` | **19 contrôles**, un seul point d'entrée, qui échoue |
 | `.gitattributes` | fins de ligne **LF** imposées dans le dépôt (la règle `text=auto` héritée ne suffisait pas) |
 | remote `public` | la destination proposée est **visible** en configuration locale, sans toucher à `origin`, et n'a jamais servi à pousser |
 
@@ -270,7 +270,7 @@ Au 17 novembre 2026, après la deuxième passe :
 
     node scripts/pre-publication.mjs
 
-- **18 contrôles**, dont `npm run check` (**3 834 tests, 0 échec**) et le
+- **19 contrôles**, dont `npm run check` (**3 834 tests, 0 échec**) et le
   vérificateur de liens (127 liens, 595 chemins cités, 0 problème) ;
 - aucune donnée personnelle dans les fichiers **ni dans l'historique de
   `main`** ;

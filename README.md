@@ -145,7 +145,7 @@ npm run check                        # typecheck + tests Node
 npm run test:vscode                  # suite hôte dans une instance isolée
 node scripts/dictee-vscode.mjs cloture   # rejoue un exercice dans l'IHM réelle
 node scripts/progression.mjs             # les indicateurs d'avancement
-node scripts/pre-publication.mjs         # 18 contrôles avant toute publication
+node scripts/pre-publication.mjs         # 19 contrôles avant toute publication
 node scripts/suivi-public.mjs            # tickets et contributions en attente
 ```
 

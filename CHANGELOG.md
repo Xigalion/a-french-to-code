@@ -68,7 +68,7 @@ Liste complète : `docs/LIMITES_CONNUES.md`.
   des chemins locaux et une adresse personnelle : les documents citent des
   **étiquettes**, jamais des identifiants de commit
   (`docs/REPERES_GIT.md`) ;
-- `node scripts/pre-publication.mjs` revérifie l'ensemble en **18 contrôles**,
+- `node scripts/pre-publication.mjs` revérifie l'ensemble en **19 contrôles**,
   et échoue si le dépôt n'est pas publiable.
 
 ### Derniers changements fonctionnels
