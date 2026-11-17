@@ -76,8 +76,8 @@ Les trois commandes, dans cet ordre.
 **Pourquoi forcé.** L'historique a été réécrit trois fois avant publication :
 l'auteur des commits, puis les chemins locaux et les anciennes références,
 puis le retrait des instructions de travail internes. Le dépôt distant
-contient encore son « Initial commit » (`68cb010`), qui n'est pas un ancêtre
-de `main`.
+contient encore son « Initial commit » du 22 octobre 2026 — étiqueté en local
+`avant-publication-distant` — qui n'est pas un ancêtre de `main`.
 
 **Ce que l'envoi forcé écrase, vérifié fichier par fichier.** Ce commit
 distant porte `.gitattributes` et trois documents de phase 1 sous
