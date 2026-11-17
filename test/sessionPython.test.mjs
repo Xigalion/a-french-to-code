@@ -190,3 +190,52 @@ test('P4a : un bloc sans corps est refusé par le placement, comme Python l’ex
   assert.equal(diagnostic?.stage, 'placement');
   assert.equal(diagnostic.code, 'CORPS_ATTENDU');
 });
+
+// --------------------------------------------------------------------------
+// Lot S5 — la souplesse arbitre AUSSI le catalogue natif
+// --------------------------------------------------------------------------
+test('S5 Python : une phrase native à l’infinitif est reconnue', () => {
+  const courante = cible('');
+  // Lacune annoncée au lot P4, et elle ne demandait qu'un paramètre : la
+  // couche de variantes ne connaissait que le catalogue partagé.
+  const stricte = session(courante, 'Créer une liste vide nommée notes.');
+  assert.equal(stricte.diagnose(courante)?.stage, 'translation');
+  const souple = session(courante, 'Créer une liste vide nommée notes.', { souple: true });
+  assert.equal(souple.diagnose(courante), undefined);
+  assert.equal(souple.normalisation.canonique, 'Crée une liste vide nommée notes.');
+  const vue = apercu(souple, courante);
+  // Le commentaire porte LA PHRASE DE L'UTILISATEUR, en syntaxe Python.
+  assert.equal(vue.after, '# Créer une liste vide nommée notes.\nnotes: list = []');
+});
+
+test('S5 Python : les informations passives natives survivent à la normalisation', () => {
+  const courante = cible('');
+  const souple = session(courante, 'Créez une liste vide nommée notes.', { souple: true });
+  const codes = souple.information.map(information => information.code);
+  assert.ok(codes.includes('PY_LIST_GROWS'), codes.join(', '));
+});
+
+test('S5 Python : un refus INSTRUIT remplace le « formulation inconnue »', () => {
+  const courante = cible('');
+  // « Créer une liste nommée notes. » n'est pas du catalogue partagé ; sa
+  // forme canonique est reconnue par le catalogue natif ET refusée, avec une
+  // raison précise. C'est cette raison qu'il faut lire.
+  const souple = session(courante, 'Créer une liste nommée notes.', { souple: true });
+  const diagnostic = souple.diagnose(courante);
+  assert.equal(diagnostic?.code, 'MISSING_LIST_CONTENT');
+  assert.match(diagnostic.message, /n’en invente ni le contenu ni la taille/u);
+  // Et sans le mode souple, le diagnostic reste celui du catalogue partagé.
+  const stricte = session(courante, 'Créer une liste nommée notes.');
+  assert.equal(stricte.diagnose(courante)?.code, 'UNKNOWN_FORMULATION');
+});
+
+test('S5 Python : une intention que Python ne porte PAS n’est pas une lecture valide', () => {
+  const courante = cible('');
+  // « Déclarer l'entier n. » se reformule en « Déclare un entier nommé n. »,
+  // que le catalogue partagé accepte et que Python REFUSE (décision D1). La
+  // couche ne doit pas retenir une candidate que le langage refusera.
+  const souple = session(courante, 'Déclarer l\'entier n.', { souple: true });
+  const diagnostic = souple.diagnose(courante);
+  assert.ok(diagnostic !== undefined, 'acceptée alors que Python ne porte pas la déclaration sans valeur');
+  assert.equal(courante.document.text, '');
+});

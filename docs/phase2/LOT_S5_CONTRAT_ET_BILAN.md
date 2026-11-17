@@ -179,16 +179,31 @@ Deux conséquences :
 - la couche ne dépend plus de `TranslationResult` dans sa logique : elle
   travaille sur des phrases et des clés de sens. C'est ce que « indépendante du
   langage cible » veut dire ;
-- un second arbitre — catalogue partagé **puis** catalogue natif Python —
-  rendra les reformulations utilisables en Python. **Ce n'est pas fait** : la
-  lacune annoncée au lot P4 reste ouverte, et elle est maintenant à un
-  paramètre près.
+- un second arbitre — catalogue partagé **puis** catalogue natif Python — rend
+  les reformulations utilisables en Python. **C'est fait** : la lacune annoncée
+  au lot P4 est refermée, et elle ne demandait effectivement qu'un paramètre.
+  `Créer une liste vide nommée notes.` — à l'infinitif — est désormais
+  reconnue dans un `.py`, et le commentaire garde la phrase de l'utilisateur.
+
+Et l'arbitre Python fait **deux** choses que celui du C17 n'avait pas à faire :
+
+1. il **écarte** une candidate que le catalogue partagé accepte mais que
+   Python ne porte pas. `Déclarer l'entier n.` se reformule en `Déclare un
+   entier nommé n.`, que le moteur accepte et que Python refuse par la
+   décision D1 : la couche ne doit pas retenir une lecture que le langage
+   refusera ensuite ;
+2. il fait remonter un **refus instruit**. `Créer une liste nommée notes.`
+   n'est pas du catalogue partagé ; sa forme canonique est reconnue par le
+   catalogue natif **et refusée**, avec la raison « une liste se crée vide ou
+   avec ses valeurs écrites ». C'est cette raison qu'il faut lire, pas le
+   « formulation inconnue » du départ. La règle de choix est déterministe : la
+   première candidate, dans l'ordre de la table, qui porte un refus instruit.
 
 ## 8. Mesures
 
 | Mesure | Résultat |
 |---|---|
-| tests Node | **4 269**, dont 154 nouveaux pour les reformulations |
+| tests Node | **4 273**, dont 154 nouveaux pour les reformulations et 4 pour l'arbitre Python |
 | différentiel contre le lot P4 | **1 335 559 comparaisons, 0 régression, 0 extension, 0 capacité perdue** |
 | typecheck | vert, moteur et extension |
 | reformulations | **98**, aucune morte, aucune au gabarit faux |

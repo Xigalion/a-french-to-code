@@ -41,7 +41,7 @@
       "total": 4,
       "unite": "etapes",
       "source": "docs/phase2/LOT_S4_CONTRAT_ET_BILAN.md, LOT_S5_CONTRAT_ET_BILAN.md",
-      "note": "Module ecrit, integre aux deux hotes (C17 et Python), active par reglage, arbitre parametrable. Reste a brancher l'arbitre du catalogue natif Python : un parametre."
+      "note": "Module ecrit, integre aux deux hotes (C17 et Python), active par reglage, arbitre parametrable ET branche sur le catalogue natif Python. Un refus instruit remonte a la place du « formulation inconnue »."
     },
     {
       "nom": "Phase 2 — couverture LINGUISTIQUE (corpus gele)",

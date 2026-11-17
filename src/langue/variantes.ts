@@ -80,7 +80,11 @@ const AVANT_IDENTIFIANT = ['nommé', 'nommée', 'nommés', 'nommées', 'appelé'
  * et `intention` ne servent qu'au message de refus.
  */
 export type Jugement<C> =
-  | { accepte: false }
+  /** Refusée. `diagnostic` est renseigné quand l'arbitre a RECONNU la phrase
+   * et l'a refusée pour une raison précise — par exemple « une liste se crée
+   * vide ou avec ses valeurs écrites ». Ce diagnostic en apprend plus que le
+   * « formulation inconnue » du départ, et la couche le fait remonter. */
+  | { accepte: false; diagnostic?: { code: string; message: string } }
   | { accepte: true; sens: string; intention: string; apercu: string; resultat: C };
 export type Arbitre<C> = (phrase: string) => Jugement<C>;
 
@@ -114,7 +118,9 @@ export type Verdict<C = Traduite> =
   | { verdict: 'ambigu'; code: 'AMBIGUITE_NON_RESOLUE'; source: string; message: string;
     lectures: readonly Lecture[] }
   | { verdict: 'refus'; code: 'AUCUNE_VARIANTE_CONNUE' | 'TROP_DE_SUBSTITUTIONS' | 'TROP_DE_LECTURES'
-    | 'AUCUNE_LECTURE_VALIDE'; source: string; message: string; essais?: readonly string[] };
+    | 'AUCUNE_LECTURE_VALIDE'; source: string; message: string; essais?: readonly string[];
+    /** Le refus PRÉCIS d'une candidate reconnue, quand il y en a un. */
+    diagnostic?: { code: string; message: string } };
 
 const minuscule = (texte: string): string => texte.toLowerCase().replace(/'/gu, '’');
 
@@ -260,19 +266,30 @@ export function normaliser<C = Traduite>(phrase: string, options: {
   // 2. L'arbitre tranche : une candidate n'est retenue que s'il l'accepte. La
   //    couche ne décide jamais qu'une phrase est valide.
   const acceptees: { essai: string; genre?: GenreReformulation; jugement: Extract<Jugement<C>, { accepte: true }> }[] = [];
+  const refusInstruits: { code: string; message: string }[] = [];
   for (const candidate of essais) {
     const jugement = arbitre(candidate.phrase);
-    if (!jugement.accepte) continue;
+    if (!jugement.accepte) {
+      if (jugement.diagnostic !== undefined) refusInstruits.push(jugement.diagnostic);
+      continue;
+    }
     acceptees.push(candidate.genre === undefined
       ? { essai: candidate.phrase, jugement }
       : { essai: candidate.phrase, genre: candidate.genre, jugement });
   }
 
   if (acceptees.length === 0) {
+    // Si une candidate a été reconnue et refusée pour une raison précise, c'est
+    // CETTE raison qu'il faut lire : « formulation inconnue » n'apprend rien.
+    // La règle est déterministe : la première dans l'ordre de la table.
+    const instruit = refusInstruits[0];
     return { verdict: 'refus', code: 'AUCUNE_LECTURE_VALIDE', source: phrase,
       essais: essais.map(candidate => candidate.phrase),
-      message: 'Aucune des ' + essais.length + ' lectures connues n’appartient au catalogue. '
-        + 'Ce qui manque n’est pas deviné.' };
+      ...(instruit === undefined ? {} : { diagnostic: instruit }),
+      message: instruit === undefined
+        ? 'Aucune des ' + essais.length + ' lectures connues n’appartient au catalogue. '
+          + 'Ce qui manque n’est pas deviné.'
+        : instruit.message };
   }
 
   const distincts = new Map<string, typeof acceptees[number]>();

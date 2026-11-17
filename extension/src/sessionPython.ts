@@ -20,6 +20,7 @@
 import { translate } from '../../src/translate.ts';
 import type { SourceRange, TranslationResult } from '../../src/translate.ts';
 import { normaliser } from '../../src/langue/variantes.ts';
+import type { Arbitre } from '../../src/langue/variantes.ts';
 import { rendre } from '../../src/langages/registre.ts';
 import { PYTHON } from '../../src/langages/python/langage.ts';
 import { expliquerPython } from '../../src/langages/python/informations.ts';
@@ -53,6 +54,48 @@ type Resolution =
   | { via: 'natif'; kind: string; code: string; informations: readonly InformationAffichable[] }
   | { via: 'refus'; diagnostic: SessionDiagnostic };
 
+/** Ce qu'une phrase candidate peut valoir, pour la couche de variantes. */
+type Comprise =
+  | { via: 'porte'; translation: Extract<TranslationResult, { status: 'translated' }> }
+  | { via: 'natif'; kind: string; code: string; informations: readonly InformationAffichable[] };
+
+/** L'arbitre de la couche de variantes **en Python** : le catalogue partagé,
+ * puis le catalogue natif. Sans lui, une reformulation ou un infinitif d'une
+ * phrase native — « Créer une liste vide nommée notes. » — n'était pas
+ * reconnu, alors que la phrase canonique l'est. C'est la lacune que le lot P4
+ * avait annoncée, et elle ne demandait qu'un paramètre.
+ *
+ * `sens` est la clé d'identité de la lecture. Pour une intention portée, c'est
+ * l'instruction entière, intervalles exclus ; pour une native, le genre et le
+ * code produit — les deux représentations ne se comparent jamais entre elles,
+ * et elles n'ont pas à le faire. */
+const ARBITRE_PYTHON: Arbitre<Comprise> = (phrase) => {
+  const strict = translate(phrase);
+  if (strict.status === 'translated') {
+    const rendu = rendre(PYTHON, strict.instruction);
+    // Une intention que Python ne porte pas n'est pas une lecture valide :
+    // la couche ne doit pas retenir une candidate que le langage refusera.
+    if (rendu.status !== 'rendu') return { accepte: false };
+    return { accepte: true,
+      sens: 'porte:' + JSON.stringify(strict.instruction),
+      intention: strict.instruction.kind,
+      apercu: rendu.code.replace(/\n$/u, ''),
+      resultat: { via: 'porte', translation: strict } };
+  }
+  const natif = PYTHON.natif?.(phrase);
+  if (natif === undefined) return { accepte: false };
+  if (natif.status !== 'rendu') {
+    // Reconnue par le catalogue natif, et refusée pour une raison précise :
+    // elle vaut mieux que le « formulation inconnue » du départ.
+    return { accepte: false, diagnostic: { code: natif.code, message: natif.message } };
+  }
+  return { accepte: true,
+    sens: 'natif:' + natif.kind + ':' + natif.code,
+    intention: natif.kind,
+    apercu: natif.code.replace(/\n$/u, ''),
+    resultat: { via: 'natif', kind: natif.kind, code: natif.code, informations: natif.informations } };
+};
+
 export class PythonTranslationSession {
   private readonly initial: TargetState;
   private pending: { token: number; plan: PlanApplicable; after: string;
@@ -62,6 +105,9 @@ export class PythonTranslationSession {
   private currentPhase: 'editing' | 'preparing' | 'review' | 'stale' | 'applying' | 'done' | 'cancelled' = 'editing';
   private text = '';
   private readonly souple: boolean;
+  /** La normalisation d'une phrase reconnue par le catalogue NATIF : la voie
+   * « natif » ne la transporte pas, et l'IHM doit pourtant la montrer. */
+  private normalisationNative: Normalisation | undefined;
 
   constructor(target: TargetState, draft = '', options: SessionOptions = {}) {
     this.initial = { ...target, document: { ...target.document } };
@@ -83,7 +129,8 @@ export class PythonTranslationSession {
     if (!['editing', 'preparing', 'review'].includes(this.currentPhase)) return undefined;
     const resolution = this.resoudre();
     const valeur = this.pending?.normalisation
-      ?? (resolution.via === 'porte' ? resolution.normalisation : undefined);
+      ?? (resolution.via === 'porte' ? resolution.normalisation
+        : resolution.via === 'natif' ? this.normalisationNative : undefined);
     return valeur === undefined ? undefined : { ...valeur };
   }
 
@@ -125,15 +172,29 @@ export class PythonTranslationSession {
     const refusStrict: SessionDiagnostic = { stage: 'translation', ...strict.diagnostics[0] };
     // 3. La couche de variantes, et seulement si l'utilisateur l'a activée.
     if (!this.souple) return { via: 'refus', diagnostic: refusStrict };
-    const verdict = normaliser(this.text);
+    const verdict = normaliser<Comprise>(this.text, { arbitre: ARBITRE_PYTHON });
     if (verdict.verdict === 'normalise' || verdict.verdict === 'resolu') {
-      return { via: 'porte', translation: verdict.resultat,
-        normalisation: { source: verdict.source, canonique: verdict.canonique, lectures: verdict.lecturesEssayees } };
+      const normalisation: Normalisation = { source: verdict.source, canonique: verdict.canonique,
+        lectures: verdict.lecturesEssayees };
+      // La normalisation est portée par la voie « porte » ; pour une intention
+      // native, l'appelant la relit par `this.normalisation`.
+      if (verdict.resultat.via === 'natif') {
+        this.normalisationNative = normalisation;
+        return { via: 'natif', kind: verdict.resultat.kind, code: verdict.resultat.code,
+          informations: verdict.resultat.informations };
+      }
+      this.normalisationNative = undefined;
+      return { via: 'porte', translation: verdict.resultat.translation, normalisation };
     }
+    this.normalisationNative = undefined;
     if (verdict.verdict === 'ambigu') {
       return { via: 'refus', diagnostic: { stage: 'variantes', code: verdict.code,
         message: verdict.message + ' Lectures possibles : '
           + verdict.lectures.map(lecture => `« ${lecture.phrase} » (${lecture.intention})`).join(' ; ') + '.' } };
+    }
+    // Un refus instruit remonté par la couche remplace le diagnostic de départ.
+    if (verdict.verdict === 'refus' && verdict.diagnostic !== undefined) {
+      return { via: 'refus', diagnostic: { stage: 'translation', ...verdict.diagnostic } };
     }
     return { via: 'refus', diagnostic: refusStrict };
   }
@@ -226,7 +287,9 @@ export class PythonTranslationSession {
       after,
       information: [...this.informationsDe(resolution)],
       ...(resolution.via === 'porte' && resolution.normalisation
-        ? { normalisation: resolution.normalisation } : {}),
+        ? { normalisation: resolution.normalisation }
+        : resolution.via === 'natif' && this.normalisationNative
+          ? { normalisation: this.normalisationNative } : {}),
     };
   }
 
