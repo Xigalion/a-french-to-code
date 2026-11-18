@@ -4,12 +4,13 @@ Ouverte le **18 novembre 2026**, branche `phase-3-java`.
 
 > **La phase 3 est close depuis le 18 novembre 2026.** Java-A V1 est livré, et
 > la version **0.6.0** est fusionnée dans `main`, étiquetée `v0.6.0` et
-> **poussée**. Le bilan, les quatorze défauts trouvés et ce qui reste ouvert :
+> **poussée**. Le bilan, les quinze défauts trouvés et ce qui reste ouvert :
 > [CLOTURE.md](CLOTURE.md) et [BILAN_JAVA_V1.md](BILAN_JAVA_V1.md).
 >
-> Reste **un seul geste**, manuel : créer la release GitHub, **en
-> *pre-release*** tant que la validation humaine n'a pas eu lieu. Lien, fichier
-> et texte exact : [`../PUBLICATION_0_6_0.md`](../PUBLICATION_0_6_0.md) §7.
+> La release GitHub est **publiée**, en ***pre-release*** tant que la
+> validation humaine n'a pas eu lieu, et vérifiée **anonymement** jusqu'au
+> `sha256` du `.vsix` téléchargé :
+> [`../PUBLICATION_0_6_0.md`](../PUBLICATION_0_6_0.md) §10.
 
 *Les documents ci-dessous gardent leur formulation d'origine, qui dit souvent
 « rien n'est implémenté ». C'était vrai à leur date : un compte rendu daté ne

@@ -1,8 +1,8 @@
 # Publication 0.6.0 — ce qui est fait, ce qui reste
 
-> **Fusionné, étiqueté, poussé le 18 novembre 2026.** La **release GitHub**
-> reste à créer : aucun outil de la session ne la crée. Le lien, le fichier et
-> le texte exact sont au §7.
+> **Publiée le 18 novembre 2026**, en ***pre-release***, et vérifiée
+> anonymement : §10. La release a été créée **à la main** par le fondateur,
+> aucun outil de la session ne sachant la créer.
 
 Dépôt : **`Xigalion/a-french-to-code`**. L'ancien nom répond **301**.
 
@@ -17,7 +17,8 @@ annoncé comme faites des opérations qui attendaient encore.
 | poussée de `main` | **FAIT** |
 | poussée de `v0.6.0`, **par son nom** | **FAIT** |
 | vérifications anonymes du dépôt, de l'étiquette et du paquet | **FAIT** — §8 |
-| **release GitHub 0.6.0, en *pre-release*, avec le `.vsix`** | **À FAIRE à la main** — §7 |
+| **release GitHub 0.6.0, en *pre-release*, avec le `.vsix`** | **FAITE à la main** par le fondateur — §7 |
+| vérification après publication : release, téléchargement, intégrité | **FAITE** — §10 |
 | éléments secondaires du dépôt (étiquettes de tickets, Projects, brouillon de la 0.5.0) | **écartés** sur consigne — §9 |
 
 ---
@@ -211,3 +212,60 @@ sha256sum verif.vsix   # doit donner 49e56b55…
   brouillon de release en double de la 0.5.0 et l'en-tête de gabarit dans son
   corps — sont **écartés sur consigne du fondateur** du 18 novembre 2026. Ils
   restent vrais et restent écrits ici : écartés n'est pas réglé.
+
+## 10. Vérification après publication — 18 novembre 2026
+
+La release **est publiée**, en *pre-release*, et vérifiée **anonymement**,
+sans jeton, avec un client générique.
+
+| Vérification | Résultat |
+|---|---|
+| `api.github.com/.../releases/tags/v0.6.0` | **200** |
+| page `releases/tag/v0.6.0` | **200** |
+| statut | **`prerelease: true`**, `draft: false` — conforme à la consigne |
+| titre | *A 0.6.0 — trois langages cibles* |
+| corps | 175 lignes, **sans** l'en-tête de gabarit qui avait abîmé la 0.5.0 |
+| corps, trois langages | C17 **7**, Python **13**, Java 21 **4** occurrences |
+| corps, empreinte et identifiant | les deux présents, vérifiables par le lecteur |
+| fichier joint | `c-a-0.6.0.vsix`, **210 661 octets** |
+| **téléchargement anonyme** | **sha256 `49e56b55…`** |
+
+**La chaîne de confiance est complète et close :**
+
+```
+commit étiqueté v0.6.0
+  → clone ANONYME de l'étiquette, reconstruit
+    → paquet du poste de développement
+      → paquet TÉLÉCHARGÉ depuis la release
+```
+
+Les quatre fichiers sont **identiques octet pour octet** (`cmp` au vert entre
+chacun). Le paquet publié contient ses 62 entrées, les 4 requises comprises,
+et aucun séparateur `\`.
+
+**Et il s'installe** : `projet-a-local.c-a@0.6.0`, dans un dossier
+d'extensions isolé, depuis le fichier **téléchargé** — pas depuis le local.
+
+### Un défaut trouvé par cette vérification, et il est dans le harnais
+
+En lançant la suite hôte **contre le paquet téléchargé**, le résultat a été
+instable : **1 échec**, puis **26**, puis **0** sur 121, avec le **même**
+binaire. Les échecs n'étaient pas des refus du moteur mais des assertions sur
+le **contenu du document** — du résidu.
+
+Cause : le lanceur **réutilisait** le dossier de travail et le profil d'un
+passage à l'autre. Un passage laissait **≈130 fichiers** derrière lui, et
+`files.hotExit` n'était pas désarmé — un éditeur non enregistré pouvait donc
+porter le texte d'un passage dans le suivant.
+
+**La causalité n'est pas prouvée, et la correction ne prétend pas l'être** :
+c'est de l'hygiène, pas une théorie. Chaque passage repart de rien, et
+`files.hotExit` est à `off`. Mesuré après correction : **trois passages
+consécutifs à 121/121** contre le paquet publié, et **121/121** depuis les
+sources.
+
+Ce que cela change pour la lecture des chiffres antérieurs : les quatre
+combinaisons annoncées à 121/121 restent exactes — chacune a bien été
+observée — mais elles ont été obtenues sur un harnais qui pouvait échouer au
+passage suivant. **Un chiffre juste obtenu sur un harnais instable n'est pas
+une garantie de reproductibilité**, et c'est désormais dit.

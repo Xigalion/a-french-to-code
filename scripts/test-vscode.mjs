@@ -11,13 +11,22 @@ const profile = path.join(isolated, 'profile');
 const executable = process.env.VSCODE_EXECUTABLE ?? (process.platform === 'win32'
   ? path.join(process.env.LOCALAPPDATA ?? '', 'Programs', 'Microsoft VS Code', 'Code.exe') : undefined);
 if (!executable || !existsSync(executable)) throw new Error('Définissez VSCODE_EXECUTABLE vers l’exécutable VS Code bureau installé.');
+// The workspace and the profile were REUSED between runs: a pass left ~130
+// fixture files behind, and running the suite twice in a row produced
+// failures that a single run never showed (1, then 26, then 0 of 121). With
+// both folders removed first, two consecutive runs passed 121/121. The cause
+// was not proven, so the cure is hygiene, not a theory: every run starts from
+// nothing. `files.hotExit` is disarmed below for the same reason — a restored
+// unsaved editor would carry one run's text into the next.
+rmSync(workspace, { recursive: true, force: true });
+rmSync(profile, { recursive: true, force: true });
 mkdirSync(workspace, { recursive: true });
 mkdirSync(path.join(profile, 'User'), { recursive: true });
 rmSync(report, { force: true });
 writeFileSync(path.join(profile, 'User', 'settings.json'), JSON.stringify({
   'files.autoSave': 'off', 'editor.formatOnSave': false, 'editor.formatOnType': false,
   'workbench.startupEditor': 'none', 'window.restoreWindows': 'none', 'extensions.autoUpdate': false,
-  'update.mode': 'none', 'telemetry.telemetryLevel': 'off',
+  'update.mode': 'none', 'telemetry.telemetryLevel': 'off', 'files.hotExit': 'off',
   // Depuis la 0.5.0, le francais souple et Python sont ACTIFS par defaut. Les
   // scenarios hote qui portent sur le mode strict, ou sur le refus d'un .py,
   // doivent partir d'un etat connu : le profil les epingle a false, et chaque

@@ -9,11 +9,13 @@ supérieurs non plus.
 
 > **Clôture définitive, 18 novembre 2026.** `phase-3-java` est fusionnée dans
 > `main` en **avance rapide**, l'étiquette **`v0.6.0`** est posée et poussée, et
-> les vérifications anonymes sont faites — dont la plus exigeante : le paquet
-> reconstruit depuis un clone **anonyme de l'étiquette** est **identique octet
-> pour octet**. Reste un geste manuel, la **release GitHub**, à créer en
-> ***pre-release*** tant que la validation humaine n'a pas eu lieu :
-> [`../PUBLICATION_0_6_0.md`](../PUBLICATION_0_6_0.md) §7.
+> la **release est publiée** en ***pre-release*** — statut voulu, qui tombera
+> avec la validation humaine.
+>
+> La chaîne de confiance est **close** : commit étiqueté → clone **anonyme** de
+> l'étiquette reconstruit → paquet du poste → paquet **téléchargé depuis la
+> release**, les quatre **identiques octet pour octet**. Détail et défaut trouvé
+> au passage : [`../PUBLICATION_0_6_0.md`](../PUBLICATION_0_6_0.md) §10.
 
 ---
 
@@ -78,7 +80,7 @@ reformulation, mais il a été écrit par l'auteur du mécanisme. Le corpus
 **gelé** de la phase 2 reste à 95,1 %, inchangé — c'est lui qui donne
 l'ordre de grandeur honnête.
 
-## 4. Les quatorze défauts trouvés, et par quoi
+## 4. Les quinze défauts trouvés, et par quoi
 
 Ils comptent plus que les chiffres.
 
@@ -99,6 +101,15 @@ Ils comptent plus que les chiffres.
 | **une erreur de SENS** : `Appelle la méthode afficher de e.` produisait `e.Affiche();` | la mesure du français souple |
 | la correction de cette erreur **sur-protégeait** à son tour | la même mesure, relancée |
 | des artefacts de compilation suivis par git — **la troisième fois** | le contrôle de pré-publication |
+| la **suite hôte instable d'un passage à l'autre** : 1, puis 26, puis 0 échecs sur 121, à binaire identique | la vérification **après** publication |
+
+Le **quinzième** est arrivé après la publication, et il mérite sa place : la
+suite hôte réutilisait son dossier de travail et son profil, laissait ≈130
+fichiers derrière elle, et pouvait donc **échouer au passage suivant** avec le
+*même* binaire. Les 121/121 annoncés étaient exacts — chacun a été observé —
+mais **un chiffre juste obtenu sur un harnais instable ne garantit pas la
+reproductibilité**. Corrigé par du nettoyage déterministe, puis trois passages
+consécutifs à 121/121 contre le paquet **publié**.
 
 **Cinq d'entre eux n'étaient visibles pour aucun test unitaire.** Il fallait un
 programme entier, plusieurs fichiers, un vrai compilateur, ou une mesure sur
