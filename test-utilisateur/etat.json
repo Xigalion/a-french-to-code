@@ -1,6 +1,6 @@
 {
   "_lisezMoi": "État du test utilisateur. Édité à la main après chaque séance, lu par scripts/progression.mjs. Les scores des campagnes 1 à 3 sont historiques et ne se recalculent jamais.",
-  "version": "C-A 0.4.0 + lot 32",
+  "version": "A 0.5.0 — C-A (C17) et Python-A (Python)",
   "miseAJour": "2026-11-17",
   "couverture": {
     "domaines": 9,
@@ -53,22 +53,33 @@
     }
   },
   "publication": {
-    "etat": "PUBLIÉ le 17 novembre 2026 — dépôt public, 16 étiquettes, licence Apache-2.0",
+    "etat": "POUSSE le 18 novembre 2026 — main fusionne (avance rapide), etiquette v0.5.0 posee et poussee, 17 etiquettes au distant, aucune sauvegarde avant-*. La RELEASE et le RENOMMAGE restent a faire a la main : aucun outil disponible ici ne cree de release ni ne renomme un depot.",
     "licence": "Apache-2.0",
-    "nomPublicPropose": "c-a-french-to-c (définitif)",
-    "controlesPasses": 19,
-    "controlesTotal": 19,
-    "etiquettes": 16,
-    "versionPublique": "v0.4.0",
+    "nomPublicPropose": "a-french-to-code (decide, PAS encore applique ; le depot est toujours c-a-french-to-c)",
+    "controlesPasses": 18,
+    "controlesTotal": 18,
+    "etiquettes": 17,
+    "versionPublique": "v0.5.0",
     "procedure": "docs/PUBLICATION.md",
     "documentPublic": "docs/ETAT_DU_PROJET.md ; les instructions de travail internes restent hors du dépôt",
     "url": "https://github.com/Xigalion/c-a-french-to-c",
     "resteCoteGitHub": [
-      "publier la release v0.4.0 (aucune release visible anonymement)",
-      "créer les 4 étiquettes de classement des tickets",
-      "ajouter les sujets du dépôt",
-      "désactiver l'onglet Projects"
+      "creer la release v0.5.0 et y joindre dist/c-a-0.5.0.vsix (aucune release n existe, meme pour la 0.4.0)",
+      "renommer le depot en a-french-to-code, PUIS mettre a jour les fichiers qui citent le nom, PUIS git remote set-url",
+      "corriger la description du depot : elle ne parle que de C17, alors que Python est livre",
+      "creer les 4 etiquettes de classement des tickets",
+      "ajouter les sujets du depot",
+      "desactiver l'onglet Projects"
     ],
-    "suivi": "docs/SUIVI_PUBLIC.md ; node scripts/suivi-public.mjs"
+    "suivi": "docs/SUIVI_PUBLIC.md ; node scripts/suivi-public.mjs",
+    "paquet": {
+      "fichier": "dist/c-a-0.5.0.vsix",
+      "sha256": "1567c46ac7251011388dab82c8b91c7bddb5f801785116960fcd947d4bef909f",
+      "octets": 163843,
+      "entrees": 51,
+      "reproductible": "au bit, depuis un clone ANONYME du depot public a l etiquette v0.5.0",
+      "identifiant": "projet-a-local.c-a — INCHANGE, les installations 0.4.0 se mettent a jour en place",
+      "suiteHote": "114/114 deux fois contre le paquet INSTALLE (CA_EXTENSION_PATH)"
+    }
   }
 }

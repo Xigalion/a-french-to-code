@@ -1,7 +1,14 @@
 # Publication 0.5.0 — fusion, étiquette, notes
 
-**Rien n'est fusionné, rien n'est étiqueté, rien n'est publié.** Ce document
-contient les commandes exactes, dans l'ordre, et ce que chacune change.
+> **Fait le 18 novembre 2026** : `main` est fusionné en avance rapide,
+> l'étiquette `v0.5.0` est posée, et les deux sont poussés. Il reste **deux
+> gestes sur l'interface GitHub**, décrits en §9 : créer la release avec le
+> `.vsix`, et renommer le dépôt. Aucun outil disponible dans la session qui a
+> fait la publication ne sait faire l'un ou l'autre.
+
+Ce document contient les commandes exactes, dans l'ordre, et ce que chacune
+change. Il est conservé tel quel, y compris les étapes désormais faites : une
+procédure qu'on efface après usage ne sert pas la fois suivante.
 
 Date : 18 novembre 2026. Branche `phase-2-architecture`, **23 commits** en
 avance sur `main`.
@@ -156,3 +163,56 @@ Un test l'exige.
   C-A** —, mais sur une seule machine et un seul système ;
 - **aucun essai par un utilisateur**, ni en C ni en Python ;
 - **aucun essai hors Windows**, et un seul interpréteur Python.
+
+## 9. Ce qui reste, et pourquoi je ne l'ai pas fait
+
+Deux gestes, tous les deux sur **github.com**. Ni le serveur GitHub branché
+sur cette session ni `git` ne savent les faire : le premier n'expose que des
+lectures sur les releases, et aucun outil ne renomme un dépôt. Lire le jeton
+du gestionnaire d'identifiants pour appeler l'API directement **a été refusé**,
+et c'est la bonne réponse — un jeton de poussée n'a pas à traverser un agent.
+
+### 9.1 La release v0.5.0
+
+1. ouvrir **https://github.com/Xigalion/c-a-french-to-c/releases/new?tag=v0.5.0**
+   — l'étiquette existe déjà, GitHub la propose telle quelle, **sans créer de
+   commit** ;
+2. titre : **`A 0.5.0 — deux langages cibles`** ;
+3. corps : coller `docs/NOTES_PUBLICATION_0_5_0.md` **à partir du trait
+   horizontal**, sans son premier titre ni la ligne en italique ;
+4. joindre **`dist/c-a-0.5.0.vsix`** — l'empreinte annoncée dans les notes est
+   `1567c46a…`, et elle est reproductible depuis le dépôt public ;
+5. ne pas cocher « pre-release », ni « set as a draft ».
+
+*Aucune release n'existe sur ce dépôt, pas même pour la 0.4.0.* Si vous
+publiez aussi la 0.4.0, son paquet est `dist/c-a-0.4.0.vsix` et ses notes
+`dist/notes-de-release-v0.4.0.md`.
+
+### 9.2 Le renommage en `a-french-to-code`
+
+**Dans cet ordre**, parce que l'inverse laisse une fenêtre où les documents
+citent un dépôt qui n'existe pas :
+
+1. **Settings → General → Repository name** → `a-french-to-code` → *Rename*.
+   GitHub installe une **redirection permanente** depuis l'ancien nom : les
+   liens déjà partagés et les `git clone` existants continuent de fonctionner ;
+2. mettre à jour les fichiers qui citent le nom — la liste exacte est en
+   `docs/phase2/ETUDE_RENOMMAGE.md` §4 —, committer, pousser ;
+3. puis, en local :
+
+        git remote set-url origin https://github.com/Xigalion/a-french-to-code.git
+        git ls-remote origin HEAD        # doit répondre sans redirection
+
+**L'identifiant de l'extension ne bouge pas** : `projet-a-local.c-a`. Un test
+l'exige, et c'est ce qui fait qu'une installation 0.4.0 se met à jour en place
+au lieu de cohabiter avec une seconde extension.
+
+### 9.3 Trois réglages mineurs, tant qu'on y est
+
+- la **description** du dépôt ne parle que de C17 : elle est antérieure à
+  Python-A. Proposition : *« A traduit une phrase en français contrôlé en une
+  instruction d'un vrai langage : C17 avec C-A, Python avec Python-A. Outil
+  pédagogique, aperçu avant insertion, aucun ajout implicite. »* ;
+- les **quatre étiquettes** de classement des tickets (`docs/SUIVI_PUBLIC.md`
+  §2) : sans elles, les formulaires de tickets arrivent nus ;
+- l'onglet **Projects**, à désactiver : il promet un suivi qui n'existe pas.
