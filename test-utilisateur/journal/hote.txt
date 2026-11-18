@@ -33,3 +33,13 @@ passage 16 : vscode 1.138.0 | 114 reussis, 0 echecs  (la version INSTALLEE, 18 n
              etait bien l INSTALLATEUR et jamais l editeur. Aucun processus n a ete arrete par
              C-A, ni au passage 15 ni ici. La suite est desormais prouvee sur la version que le
              fondateur utilise, et plus seulement sur le plancher 1.96.4 du manifeste.)
+
+passage 17 : vscode 1.138.0 | 114 reussis, 0 echecs  x2  (contre le PAQUET INSTALLE, pas les
+             sources : le .vsix reconstruit depuis un clone ANONYME du depot public, installe
+             dans un dossier d extensions isole, identifiant projet-a-local.c-a@0.5.0. Lance par
+             CA_EXTENSION_PATH=<dossier installe> npm run test:vscode.
+             A retenir : un premier essai avec un lanceur ecrit pour l occasion a rendu 113/114
+             puis 89/114. Le temoin -- la suite officielle sur les sources, au meme moment --
+             donnait 114/114. C etait donc le lanceur jetable, pas le paquet. D ou l option
+             CA_EXTENSION_PATH ajoutee au lanceur OFFICIEL : un resultat d un harnais non
+             valide ne prouve rien, ni dans un sens ni dans l autre.)

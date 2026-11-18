@@ -28,8 +28,16 @@ writeFileSync(path.join(profile, 'User', 'settings.json'), JSON.stringify({
 }));
 const env = { ...process.env, CA_TEST_ROOT: root, CA_TEST_REPORT: report, CA_TEST_WORKSPACE: workspace };
 delete env.ELECTRON_RUN_AS_NODE;
+// Par defaut la suite teste les SOURCES compilees. CA_EXTENSION_PATH la fait
+// porter sur un autre dossier d'extension -- en pratique le contenu du .vsix
+// deballe, c'est-a-dire ce que l'utilisateur recoit vraiment. Les scenarios,
+// le profil et le workspace sont les memes : seul le code teste change.
+const extensionPath = process.env.CA_EXTENSION_PATH ?? path.join(root, 'extension');
+if (!existsSync(path.join(extensionPath, 'package.json'))) {
+  throw new Error(`CA_EXTENSION_PATH ne designe pas un dossier d’extension : ${extensionPath}`);
+}
 const child = spawn(executable, [workspace,
-  `--extensionDevelopmentPath=${path.join(root, 'extension')}`,
+  `--extensionDevelopmentPath=${extensionPath}`,
   `--extensionTestsPath=${path.join(root, 'test', 'vscode', 'suite.cjs')}`,
   `--user-data-dir=${profile}`, `--extensions-dir=${path.join(isolated, 'extensions')}`,
   '--new-window', '--disable-extensions', '--disable-workspace-trust', '--skip-welcome', '--skip-release-notes',
@@ -54,4 +62,5 @@ if (!existsSync(report)) {
 }
 const result = JSON.parse(readFileSync(report, 'utf8'));
 console.log(JSON.stringify(result, null, 2));
+console.log(`code teste : ${extensionPath}`);
 process.exitCode = result.failed === 0 ? 0 : 1;

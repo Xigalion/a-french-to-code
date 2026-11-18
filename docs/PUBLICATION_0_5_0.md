@@ -26,7 +26,8 @@ jour** d'un dépôt public, pas une première ouverture : c'est ce qui rend
 | contrôles de pré-publication | 18/18 | `node scripts/pre-publication.mjs --rapide` |
 | exercice de clôture Python | 6 programmes, 238 instructions, 0 retouche | `node exercice/python/cloture.mjs` |
 | corpus de validation gelé | 95,1 %, 0 erreur de sens | `node scripts/mesurer-reformulations.mjs` |
-| paquet reproductible **au bit** | depuis un clone neuf | §2 |
+| paquet reproductible **au bit** | depuis un clone neuf **et depuis le clone public anonyme** | §2 |
+| suite hôte contre le **paquet installé** | **114**, 0 échec, deux fois | `CA_EXTENSION_PATH=<dossier> npm run test:vscode` |
 
 **La fusion est une avance rapide** : `main` est un ancêtre de la branche, et
 `git merge-tree` ne signale aucun conflit.
