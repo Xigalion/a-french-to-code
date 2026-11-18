@@ -195,10 +195,12 @@ Vérifié sans aucun jeton, le 18 novembre 2026 :
 
 **Trois retouches**, toutes sur l'interface GitHub, aucune urgente :
 
-1. **la release est marquée *pre-release*.** Conséquence mesurée :
-   `/releases/latest` répond **404**, et la page d'accueil du dépôt n'affiche
-   aucune « Latest release ». Décocher *« Set as a pre-release »* et cocher
-   *« Set as the latest release »* ;
+1. **la release est marquée *pre-release*.** Conséquences mesurées, les deux :
+   l'API `/releases/latest` répond **404**, et la page
+   `/releases/latest` **redirige vers la liste** au lieu d'ouvrir la version —
+   le dépôt n'a donc **aucune « Latest release »**, et un outil qui demande la
+   dernière version n'en trouve pas. Décocher *« Set as a pre-release »*,
+   cocher *« Set as the latest release »* ;
 2. **un brouillon de release en double** subsiste, sans étiquette
    (`untagged-e186af3a…`). À supprimer : deux releases pour une version
    laissent croire à deux versions ;

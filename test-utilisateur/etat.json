@@ -84,7 +84,7 @@
     "preparePasFait": [
       "renommage en a-french-to-code : le nouveau nom repond 404, l ancien repond 200 SANS redirection",
       "references au depot et adresse du remote : volontairement INCHANGEES, puisque le renommage n a pas eu lieu",
-      "release marquee « latest » : elle est en pre-release, donc /releases/latest repond 404",
+      "release marquee « latest » : elle est en pre-release, donc l API /releases/latest repond 404 et la page /releases/latest redirige vers la liste — le depot n a aucune « Latest release »",
       "suppression du brouillon de release en double (untagged-e186af3a)",
       "retrait de l en-tete de gabarit du corps de la release",
       "description du depot : elle ne parle que de C17 alors que Python-A est livre",
