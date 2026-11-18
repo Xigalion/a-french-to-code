@@ -33,7 +33,7 @@
       "nom": "Phase 3 — catalogue LIVRE",
       "fait": 9,
       "total": 9,
-      "unite": "domaines couverts par la proposition",
+      "unite": "domaines couverts, catalogue livre",
       "source": "docs/phase3/catalogue-java.json ; node scripts/catalogue-java.mjs",
       "note": "144 formulations CALCULEES : 30 reprises, 27 adaptations, 87 natives. 57/57 intentions partagees a porter couvertes, 27 refus nommes, 28 informations passives. Aucun plafond : le nombre a bouge quatre fois, et chaque mouvement a une cause nommee -- intentions mortes, decision J10 des deux cotes, et un manque trouve par javac."
     },
@@ -111,19 +111,19 @@
     },
     {
       "nom": "Phase 3 — suite hote VS Code avec scenarios Java",
-      "fait": 0,
+      "fait": 1,
       "total": 1,
       "unite": "execution",
-      "source": "aucune : non relancee depuis l ajout de Java",
-      "note": "ZERO. La session Java est couverte par 14 tests Node, mais la suite HOTE n a pas ete relancee et ne contient aucun scenario Java. C est le premier travail de la suite, et l annoncer a zero vaut mieux que de laisser croire que 114 scenarios couvrent trois langages."
+      "source": "npm run test:vscode, VS Code 1.138.0 INSTALLEE",
+      "note": "121 scenarios sur 121, dont SEPT nouveaux pour Java : le refus d un .java sans le reglage, l insertion d une classe par l IHM reelle avec annulation en une fois, le refus de la portee fichier, le champ dans un corps de classe, le constructeur qui prend le nom de sa classe LU du document, une information passive journalisee, et une phrase native Java refusee dans un .c. Le profil de test epingle c-a.java a false ; le DEFAUT du manifeste est verifie par un scenario dedie."
     },
     {
       "nom": "Phase 3 — francais souple MESURE en Java",
-      "fait": 0,
+      "fait": 1,
       "total": 1,
       "unite": "mesure sur corpus independant",
-      "source": "aucune : le mecanisme est branche et teste, sa COUVERTURE n est pas chiffree",
-      "note": "ZERO. ARBITRE_JAVA fonctionne, et quatre garanties sont testees : mode strict intact, phrase de l utilisateur conservee dans le commentaire, rien d invente, et une candidate que Java refuse est ecartee. Mais aucun corpus independant n a mesure COMBIEN de formulations naturelles Java-A reconnait. Ne pas confondre « branche » et « mesure »."
+      "source": "node scripts/mesurer-java.mjs ; test-utilisateur/corpus/corpus-java.json",
+      "note": "52 entrees, 36 claires : 36 reconnues (100 %), 0 acceptee a tort, 0 erreur de SENS. La mesure a trouve TROIS defauts, dont un grave : six infinitifs manquaient au lexique, la garde des identifiants ignorait les noms communs que Java introduit -- « Appelle la methode afficher de e. » produisait « e.Affiche(); », une ERREUR DE SENS --, et la garde corrigee sur-protegeait a son tour. Le corpus porte son biais ECRIT : il a ete ecrit par l auteur du mecanisme, et ce 100 % mesure la PORTEE du mecanisme sur un langage nouveau, pas le francais spontane. Le corpus GELE de la phase 2 reste a 95,1 %, inchange."
     }
   ]
 }

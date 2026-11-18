@@ -158,8 +158,8 @@ l'exige.
 - **une seule machine, un seul système** — Windows ;
 - **un seul JDK**, Temurin 21.0.13 ; aucun autre fournisseur, aucune autre
   version ;
-- **la suite hôte VS Code n'a pas été relancée** depuis l'ajout de Java : les
-  scénarios Java y manquent encore, et c'est le premier travail de la suite ;
+- **un seul essai de la suite hôte**, sur cette machine : 121 scénarios, dont
+  sept pour Java, sur la VS Code **1.138.0 installée** ;
 - **aucun essai avec un paquetage à plusieurs niveaux** (`ecole.notes`), ni
   avec une classe générique écrite par l'utilisateur ;
 - **IME, documents longs, claviers non français** : jamais.
@@ -173,13 +173,20 @@ Python-A : c'est le langage qui parle.
 
 ## 7. Ce qui reste à faire avant de parler de V1 publiable
 
-1. **relancer la suite hôte VS Code** avec des scénarios Java, sur la version
-   installée **et** contre le paquet ;
-2. **mesurer** le français souple en Java sur un corpus indépendant, comme en
-   phase 2 — le mécanisme est branché et testé, sa **couverture** en Java n'est
-   pas chiffrée ;
-3. mettre à jour les documents publics : `README.md`, `CHANGELOG.md`,
-   `docs/CATALOGUE.md`, `docs/LIMITES_CONNUES.md`, `docs/ETAT_DU_PROJET.md` ;
-4. fabriquer et vérifier le `.vsix`.
+**Fait depuis la première version de ce bilan :**
 
-Rien de tout cela n'est commencé, et rien n'est fusionné dans `main`.
+- la **suite hôte** passe à **121 scénarios sur 121** sur la VS Code 1.138.0
+  installée, dont **sept** pour Java ;
+- le **français souple en Java** est mesuré : **36 / 36** phrases claires
+  reconnues, **0** acceptée à tort, **0** erreur de sens. La mesure a trouvé
+  trois défauts, dont une **erreur de sens** — A renommait silencieusement la
+  méthode de l'utilisateur.
+
+**Reste, et rien n'en est commencé :**
+
+1. la suite hôte **contre le paquet** (`CA_EXTENSION_PATH`), comme en phase 2 ;
+2. mettre à jour les documents publics : `README.md`, `CHANGELOG.md`,
+   `docs/CATALOGUE.md`, `docs/LIMITES_CONNUES.md`, `docs/ETAT_DU_PROJET.md` ;
+3. fabriquer et vérifier le `.vsix`, et sa reproductibilité au bit.
+
+**Rien n'est fusionné dans `main`, et rien n'est publié.**
