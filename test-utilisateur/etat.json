@@ -53,9 +53,9 @@
     }
   },
   "publication": {
-    "etat": "POUSSE le 18 novembre 2026 — main fusionne (avance rapide), etiquette v0.5.0 posee et poussee, 17 etiquettes au distant, aucune sauvegarde avant-*. La RELEASE et le RENOMMAGE restent a faire a la main : aucun outil disponible ici ne cree de release ni ne renomme un depot.",
+    "etat": "PUBLIE le 18 novembre 2026 — release v0.5.0 en ligne, .vsix joint, empreinte verifiee anonymement",
     "licence": "Apache-2.0",
-    "nomPublicPropose": "a-french-to-code (decide, PAS encore applique ; le depot est toujours c-a-french-to-c)",
+    "nomPublicPropose": "a-french-to-code — DECIDE, mais le renommage N A PAS pris effet : le nom repond 404",
     "controlesPasses": 18,
     "controlesTotal": 18,
     "etiquettes": 17,
@@ -63,14 +63,6 @@
     "procedure": "docs/PUBLICATION.md",
     "documentPublic": "docs/ETAT_DU_PROJET.md ; les instructions de travail internes restent hors du dépôt",
     "url": "https://github.com/Xigalion/c-a-french-to-c",
-    "resteCoteGitHub": [
-      "creer la release v0.5.0 et y joindre dist/c-a-0.5.0.vsix (aucune release n existe, meme pour la 0.4.0)",
-      "renommer le depot en a-french-to-code, PUIS mettre a jour les fichiers qui citent le nom, PUIS git remote set-url",
-      "corriger la description du depot : elle ne parle que de C17, alors que Python est livre",
-      "creer les 4 etiquettes de classement des tickets",
-      "ajouter les sujets du depot",
-      "desactiver l'onglet Projects"
-    ],
     "suivi": "docs/SUIVI_PUBLIC.md ; node scripts/suivi-public.mjs",
     "paquet": {
       "fichier": "dist/c-a-0.5.0.vsix",
@@ -80,6 +72,23 @@
       "reproductible": "au bit, depuis un clone ANONYME du depot public a l etiquette v0.5.0",
       "identifiant": "projet-a-local.c-a — INCHANGE, les installations 0.4.0 se mettent a jour en place",
       "suiteHote": "114/114 deux fois contre le paquet INSTALLE (CA_EXTENSION_PATH)"
-    }
+    },
+    "fait": [
+      "fusion de phase-2-architecture dans main, en avance rapide, sans commit de fusion",
+      "etiquette v0.5.0 posee et poussee par son nom ; 17 etiquettes au distant, aucune avant-*",
+      "release v0.5.0 en ligne : page 200, corps complet, .vsix joint",
+      "telechargement anonyme du .vsix : 200, 163 843 octets, sha256 1567c46a, identique AU BIT au paquet local",
+      "suite hote 114/114 sur la VS Code 1.138.0 INSTALLEE, et 114/114 deux fois contre le PAQUET installe",
+      "un .pyc portant le chemin absolu de la machine retire de TOUS les commits avant la premiere poussee"
+    ],
+    "preparePasFait": [
+      "renommage en a-french-to-code : le nouveau nom repond 404, l ancien repond 200 SANS redirection",
+      "references au depot et adresse du remote : volontairement INCHANGEES, puisque le renommage n a pas eu lieu",
+      "release marquee « latest » : elle est en pre-release, donc /releases/latest repond 404",
+      "suppression du brouillon de release en double (untagged-e186af3a)",
+      "retrait de l en-tete de gabarit du corps de la release",
+      "description du depot : elle ne parle que de C17 alors que Python-A est livre",
+      "les 4 etiquettes de classement des tickets, les sujets du depot, la desactivation de l onglet Projects"
+    ]
   }
 }

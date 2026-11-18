@@ -68,6 +68,11 @@ if (etat.publication) {
   console.log('   licence ' + pub.licence + ' | version ' + pub.versionPublique
     + ' | ' + pub.etiquettes + ' étiquettes | nom public ' + pub.nomPublicPropose);
   if (pub.url) console.log('   ' + pub.url);
+  // Deux listes, jamais une seule. Confondre « fait » et « prepare » est
+  // exactement l'erreur que ce fichier existe pour empecher : la 0.5.0 a ete
+  // annoncee renommee alors que le nouveau nom repondait 404.
+  for (const item of pub.fait ?? []) console.log('   FAIT     : ' + item);
+  for (const item of pub.preparePasFait ?? []) console.log('   PREPARE  : ' + item);
   for (const item of pub.resteCoteGitHub ?? []) console.log('   reste côté GitHub : ' + item);
   console.log('   procédure et retour arrière : ' + pub.procedure
     + (pub.suivi ? ' | suivi : ' + pub.suivi : ''));

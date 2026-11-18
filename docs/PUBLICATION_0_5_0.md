@@ -1,10 +1,21 @@
 # Publication 0.5.0 — fusion, étiquette, notes
 
-> **Fait le 18 novembre 2026** : `main` est fusionné en avance rapide,
-> l'étiquette `v0.5.0` est posée, et les deux sont poussés. Il reste **deux
-> gestes sur l'interface GitHub**, décrits en §9 : créer la release avec le
-> `.vsix`, et renommer le dépôt. Aucun outil disponible dans la session qui a
-> fait la publication ne sait faire l'un ou l'autre.
+> **Au 18 novembre 2026, 09 h** — ce qui est **fait** et ce qui n'est que
+> **préparé**, vérifié anonymement et non déclaré :
+>
+> | | |
+> |---|---|
+> | fusion dans `main`, avance rapide | **fait** |
+> | étiquette `v0.5.0` poussée par son nom | **fait** |
+> | release `v0.5.0` en ligne, `.vsix` joint et téléchargeable | **fait** |
+> | empreinte du `.vsix` téléchargé | **fait** — identique au bit |
+> | **renommage** en `a-french-to-code` | **PAS fait** — voir §10 |
+> | release marquée « latest » | **PAS fait** — elle est en *pre-release* |
+> | brouillon de release en double, à supprimer | **PAS fait** |
+
+Ce document contient les commandes exactes, dans l'ordre, et ce que chacune
+change. Il est conservé tel quel, y compris les étapes désormais faites : une
+procédure qu'on efface après usage ne sert pas la fois suivante.
 
 Ce document contient les commandes exactes, dans l'ordre, et ce que chacune
 change. Il est conservé tel quel, y compris les étapes désormais faites : une
@@ -138,7 +149,14 @@ donc par son nom.
 
 Titre : **A 0.5.0 — deux langages cibles**
 
-Le corps est dans `docs/NOTES_PUBLICATION_0_5_0.md`, prêt à coller.
+Le corps se **produit**, il ne se repère pas à l'œil :
+
+    node scripts/notes-release.mjs        # ecrit dist/notes-release-v0.5.0.md
+
+On colle ce fichier **entier**. `docs/NOTES_PUBLICATION_0_5_0.md` reste la
+source ; le script en retire son en-tête de gabarit et **refuse** de produire
+un corps où cet en-tête aurait survécu. La §9 dit ce qui est arrivé quand la
+consigne était « coller à partir du trait horizontal ».
 
 Fichier à joindre : **`dist/c-a-0.5.0.vsix`**, et son empreinte sha256 est
 dans les notes pour que quiconque puisse vérifier.
@@ -164,31 +182,63 @@ Un test l'exige.
 - **aucun essai par un utilisateur**, ni en C ni en Python ;
 - **aucun essai hors Windows**, et un seul interpréteur Python.
 
-## 9. Ce qui reste, et pourquoi je ne l'ai pas fait
+## 9. La release : faite, et trois retouches à faire
 
-Deux gestes, tous les deux sur **github.com**. Ni le serveur GitHub branché
-sur cette session ni `git` ne savent les faire : le premier n'expose que des
-lectures sur les releases, et aucun outil ne renomme un dépôt. Lire le jeton
-du gestionnaire d'identifiants pour appeler l'API directement **a été refusé**,
-et c'est la bonne réponse — un jeton de poussée n'a pas à traverser un agent.
+Vérifié sans aucun jeton, le 18 novembre 2026 :
 
-### 9.1 La release v0.5.0
+| Contrôle | Résultat |
+|---|---|
+| page de la release | **200** |
+| téléchargement du `.vsix` | **200**, 163 843 octets |
+| empreinte du fichier téléchargé | `1567c46a…` — **identique au bit** au paquet local |
+| corps de la release | le document, intégralement |
 
-1. ouvrir **https://github.com/Xigalion/c-a-french-to-c/releases/new?tag=v0.5.0**
-   — l'étiquette existe déjà, GitHub la propose telle quelle, **sans créer de
-   commit** ;
-2. titre : **`A 0.5.0 — deux langages cibles`** ;
-3. corps : coller `docs/NOTES_PUBLICATION_0_5_0.md` **à partir du trait
-   horizontal**, sans son premier titre ni la ligne en italique ;
-4. joindre **`dist/c-a-0.5.0.vsix`** — l'empreinte annoncée dans les notes est
-   `1567c46a…`, et elle est reproductible depuis le dépôt public ;
-5. ne pas cocher « pre-release », ni « set as a draft ».
+**Trois retouches**, toutes sur l'interface GitHub, aucune urgente :
 
-*Aucune release n'existe sur ce dépôt, pas même pour la 0.4.0.* Si vous
-publiez aussi la 0.4.0, son paquet est `dist/c-a-0.4.0.vsix` et ses notes
-`dist/notes-de-release-v0.4.0.md`.
+1. **la release est marquée *pre-release*.** Conséquence mesurée :
+   `/releases/latest` répond **404**, et la page d'accueil du dépôt n'affiche
+   aucune « Latest release ». Décocher *« Set as a pre-release »* et cocher
+   *« Set as the latest release »* ;
+2. **un brouillon de release en double** subsiste, sans étiquette
+   (`untagged-e186af3a…`). À supprimer : deux releases pour une version
+   laissent croire à deux versions ;
+3. **le corps contient l'en-tête du gabarit** — le titre `# A 0.5.0 …` en
+   double du titre de la release, et la ligne *« Corps de la release GitHub,
+   prêt à coller »*, qui est une consigne au publieur et non du texte pour un
+   lecteur.
 
-### 9.2 Le renommage en `a-french-to-code`
+Le point 3 n'est pas une faute de frappe, c'est un **défaut de la procédure** :
+elle demandait de « coller à partir du trait horizontal », donc de repérer un
+trait à l'œil. C'est corrigé à la racine — le corps à coller est désormais
+**produit** :
+
+    node scripts/notes-release.mjs        # ecrit dist/notes-release-v0.5.0.md
+
+Le script refuse de produire un fichier où l'en-tête du gabarit aurait
+survécu. Il n'y a plus rien à repérer : on colle le fichier entier.
+
+## 10. Le renommage : préparé, PAS appliqué
+
+**Vérifié anonymement, et c'est pour cela que rien n'a été renommé dans le
+dépôt :**
+
+| Contrôle | Résultat |
+|---|---|
+| `github.com/Xigalion/a-french-to-code` | **404** |
+| son API | **404 Not Found** |
+| `git ls-remote` sur ce nom | demande une authentification — donc **inexistant** |
+| `github.com/Xigalion/c-a-french-to-c` | **200, sans redirection** |
+
+Un dépôt renommé répond **301** sur son ancien nom. Celui-ci répond **200** :
+le renommage n'a pas pris effet.
+
+**Je n'ai donc pas mis à jour les références au dépôt, ni l'adresse du
+`remote`.** Les changer maintenant remplacerait des liens qui fonctionnent par
+des liens morts, et ferait pointer `origin` vers un dépôt qui n'existe pas —
+la poussée suivante échouerait. La règle tient en une phrase : **un document
+ne décrit pas un état souhaité comme s'il était acquis.**
+
+### La procédure, pour quand le renommage sera fait
 
 **Dans cet ordre**, parce que l'inverse laisse une fenêtre où les documents
 citent un dépôt qui n'existe pas :
@@ -207,7 +257,7 @@ citent un dépôt qui n'existe pas :
 l'exige, et c'est ce qui fait qu'une installation 0.4.0 se met à jour en place
 au lieu de cohabiter avec une seconde extension.
 
-### 9.3 Trois réglages mineurs, tant qu'on y est
+## 11. Trois réglages mineurs, tant qu'on y est
 
 - la **description** du dépôt ne parle que de C17 : elle est antérieure à
   Python-A. Proposition : *« A traduit une phrase en français contrôlé en une

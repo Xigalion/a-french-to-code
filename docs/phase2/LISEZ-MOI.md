@@ -1,8 +1,16 @@
 # Phase 2 — carte des livrables
 
-Branche `phase-2-architecture`. **`main` reste la V1 publique**, à l'étiquette
-`v0.4.0`, et la branche **n'est pas fusionnée**. Depuis le lot P0, elle modifie `src/`
-et `test/` : `node scripts/progression-phase2.mjs` imprime l'écart exact.
+> **La phase 2 est close depuis le 18 novembre 2026.** Le bilan, les défauts
+> trouvés et ce qui reste ouvert : [CLOTURE.md](CLOTURE.md).
+
+Branche `phase-2-architecture`, **fusionnée dans `main` le 18 novembre 2026**
+en avance rapide, et publiée sous l'étiquette **`v0.5.0`**.
+`node scripts/progression-phase2.mjs` lit l'état réel du dépôt — il ne
+l'affirme plus en dur, parce qu'une affirmation codée en dur ne se périme pas.
+
+*Les documents de lot ci-dessous gardent leur formulation d'origine, qui dit
+souvent « `main` reste la V1 publique ». C'était vrai à leur date : un compte
+rendu daté ne se réécrit pas.*
 
 | Lot | État | Preuve |
 |---|---|---|
