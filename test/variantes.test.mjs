@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { translate } from '../src/translate.ts';
 import { BUDGET, LEXIQUE, normaliser, zonesProtegees } from '../src/langue/variantes.ts';
+// Le lexique sert desormais TROIS langages : une entree vivante en Java seul
+// n'est pas une entree morte, et ce test doit pouvoir le voir.
+import { JAVA } from '../src/langages/java/langage.ts';
 
 // Souplesse linguistique — la couche est DÉSACTIVÉE par défaut : rien dans le
 // moteur ne l'appelle. Ces tests vérifient qu'elle est juste quand on
@@ -166,13 +169,31 @@ test('souplesse : chaque entrée du lexique produit au moins une lecture valide'
     // ecrit a la main les a trouves manquants.
     'affecter': 'Affecter la valeur 5 à x.',
     'inclure': 'Inclure la bibliothèque stdio.h.',
+    // Lot J9 : six infinitifs trouves par le corpus JAVA. Trois ont aussi une
+    // lecture en C17, trois n'en ont qu'une par le catalogue natif de Java --
+    // et c'est la raison pour laquelle ce test interroge desormais DEUX
+    // arbitres. Avec trois langages, le contrat d'une entree n'est plus
+    // « vivante en C17 » mais « vivante dans AU MOINS UN langage ».
+    'ajouter': 'Ajouter un champ de type int nommé x.',
+    'appeler': 'Appeler somme avec "1" et "2".',
+    'sortir': 'Sortir de la boucle la plus intérieure.',
+    'importer': 'Importer java.util.List.',
+    'lancer': 'Lancer une exception IllegalStateException avec le texte "non".',
+    'retirer': 'Retirer l’élément "0" de la liste notes.',
+  };
+  /** L'arbitre Java, reduit a ce dont ce test a besoin : le catalogue natif. */
+  const arbitreJava = (phrase) => {
+    const natif = JAVA.natif?.(phrase, { classeEnglobante: 'Eleve' });
+    if (natif === undefined || natif.status !== 'rendu') return { accepte: false };
+    return { accepte: true, sens: 'natif:' + natif.kind + ':' + natif.code,
+      intention: natif.kind, apercu: natif.code, resultat: natif };
   };
   for (const entree of LEXIQUE) {
     const phrase = phrases[entree.libre];
     assert.ok(phrase !== undefined, 'entrée sans phrase de démonstration : ' + entree.libre);
-    const v = normaliser(phrase);
-    assert.ok(['normalise', 'resolu', 'ambigu'].includes(v.verdict),
-      'entrée morte : ' + entree.libre + ' → ' + v.verdict);
+    const verdicts = [normaliser(phrase).verdict, normaliser(phrase, { arbitre: arbitreJava }).verdict];
+    assert.ok(verdicts.some(verdict => ['normalise', 'resolu', 'ambigu'].includes(verdict)),
+      'entrée morte dans TOUS les langages : ' + entree.libre + ' → ' + verdicts.join(', '));
     assert.ok(entree.motif.length > 0, 'entrée sans motif : ' + entree.libre);
   }
 });

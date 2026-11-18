@@ -1,0 +1,275 @@
+{
+  "_lisezMoi": "Corpus de mesure du francais souple EN JAVA. Ecrit au lot J9, et il porte son biais : il a ete ecrit par l'auteur du mecanisme. Il n'a servi a ENRICHIR aucune reformulation -- les 98 viennent de la phase 2 et n'ont pas bouge d'une ligne pour Java -- mais ce n'est pas la meme chose qu'un corpus ecrit par quelqu'un d'autre. Le chiffre qui en sort mesure la PORTEE du mecanisme sur un langage nouveau, pas le francais spontane.",
+  "ecritLe": "2026-11-18",
+  "regles": [
+    "attendu 'reconnue' : la phrase est claire, complete, dans le perimetre, et designe une intention que Java porte",
+    "attendu 'refusee' : la phrase est incomplete, ambigue, ou designe une notion que Java n'a pas",
+    "'sens' donne le code Java attendu quand il doit l'etre : une phrase reconnue avec un sens FAUX est une erreur de sens, et c'est la seule faute grave"
+  ],
+  "entrees": [
+    {
+      "phrase": "Créer une classe nommée Eleve.",
+      "attendu": "reconnue",
+      "sens": "public class Eleve {"
+    },
+    {
+      "phrase": "Crée une classe appelée Eleve.",
+      "attendu": "reconnue",
+      "sens": "public class Eleve {"
+    },
+    {
+      "phrase": "Créer une interface nommée Affichable.",
+      "attendu": "reconnue",
+      "sens": "public interface Affichable {"
+    },
+    {
+      "phrase": "Déclarer un booléen nommé fini.",
+      "attendu": "reconnue",
+      "sens": "boolean fini;"
+    },
+    {
+      "phrase": "Créer un booléen nommé fini de valeur vrai.",
+      "attendu": "reconnue",
+      "sens": "boolean fini = true;"
+    },
+    {
+      "phrase": "Déclarer une chaîne nommée nom.",
+      "attendu": "reconnue",
+      "sens": "String nom;"
+    },
+    {
+      "phrase": "Incrémenter compteur.",
+      "attendu": "reconnue",
+      "sens": "compteur += 1;",
+      "sensAlternatif": "compteur = (compteur + 1);",
+      "note": "Deux chemins : le catalogue NATIF ecrit « compteur += 1 », et la reformulation historique du lot S5 mene a l intention PARTAGEE, qui ecrit « compteur = (compteur + 1) ». Les deux sont justes et equivalents. Ce n est donc pas une erreur de sens, mais une INCONSISTANCE : deux phrases qui ne different que par un infinitif produisent deux ecritures."
+    },
+    {
+      "phrase": "Décrémenter compteur.",
+      "attendu": "reconnue",
+      "sens": "compteur -= 1;",
+      "sensAlternatif": "compteur = (compteur - 1);",
+      "note": "meme inconsistance que l increment"
+    },
+    {
+      "phrase": "Importer java.util.List.",
+      "attendu": "reconnue",
+      "sens": "import java.util.List;"
+    },
+    {
+      "phrase": "Créer un bloc essaie.",
+      "attendu": "reconnue",
+      "sens": "try {"
+    },
+    {
+      "phrase": "Créer une liste de type int nommée notes.",
+      "attendu": "reconnue",
+      "sens": "List<Integer> notes = new ArrayList<>();"
+    },
+    {
+      "phrase": "Créer un ensemble de type int nommé vus.",
+      "attendu": "reconnue",
+      "sens": "Set<Integer> vus = new HashSet<>();"
+    },
+    {
+      "phrase": "Créer une méthode privée nommée verifier qui ne retourne rien.",
+      "attendu": "reconnue",
+      "sens": "private void verifier() {"
+    },
+    {
+      "phrase": "Créer un constructeur qui ne prend rien.",
+      "attendu": "reconnue",
+      "sens": "public Eleve() {"
+    },
+    {
+      "phrase": "Déclarer le paquetage ecole.",
+      "attendu": "reconnue",
+      "sens": "package ecole;"
+    },
+    {
+      "phrase": "Ajouter un champ privé de type int nommé age.",
+      "attendu": "reconnue",
+      "sens": "private int age;"
+    },
+    {
+      "phrase": "Ajouter une branche finalement.",
+      "attendu": "reconnue",
+      "sens": "finally {"
+    },
+    {
+      "phrase": "Créer une classe abstraite nommée Forme.",
+      "attendu": "reconnue",
+      "sens": "public abstract class Forme {"
+    },
+    {
+      "phrase": "Mettre 20 dans age.",
+      "attendu": "reconnue",
+      "sens": "age = 20;"
+    },
+    {
+      "phrase": "Donne à age la valeur 20.",
+      "attendu": "reconnue",
+      "sens": "age = 20;"
+    },
+    {
+      "phrase": "Renvoyer 0.",
+      "attendu": "reconnue",
+      "sens": "return 0;"
+    },
+    {
+      "phrase": "Retourner la valeur 0.",
+      "attendu": "reconnue",
+      "sens": "return 0;"
+    },
+    {
+      "phrase": "Créer un entier nommé age de valeur 20.",
+      "attendu": "reconnue",
+      "sens": "int age = 20;"
+    },
+    {
+      "phrase": "Déclarer un entier nommé n.",
+      "attendu": "reconnue",
+      "sens": "int n;"
+    },
+    {
+      "phrase": "Créer un bloc si \"x > 0\".",
+      "attendu": "reconnue",
+      "sens": "if (x > 0) {"
+    },
+    {
+      "phrase": "Créer une boucle tant que \"i < 10\".",
+      "attendu": "reconnue",
+      "sens": "while (i < 10) {"
+    },
+    {
+      "phrase": "Sortir de la boucle la plus intérieure.",
+      "attendu": "reconnue",
+      "sens": "break;"
+    },
+    {
+      "phrase": "Afficher le texte \"bonjour\".",
+      "attendu": "reconnue",
+      "sens": "System.out.print(\"bonjour\");"
+    },
+    {
+      "phrase": "Afficher la valeur de n.",
+      "attendu": "reconnue",
+      "sens": "System.out.print(n);"
+    },
+    {
+      "phrase": "Afficher un retour à la ligne.",
+      "attendu": "reconnue",
+      "sens": "System.out.println();"
+    },
+    {
+      "phrase": "Créer une table de type int nommée notes avec des clés textuelles.",
+      "attendu": "reconnue",
+      "sens": "Map<String, Integer> notes = new HashMap<>();"
+    },
+    {
+      "phrase": "Ajouter \"15\" à la fin de la liste notes.",
+      "attendu": "reconnue",
+      "sens": "notes.add(15);"
+    },
+    {
+      "phrase": "Retirer l’élément \"0\" de la liste notes.",
+      "attendu": "reconnue",
+      "sens": "notes.remove(0);"
+    },
+    {
+      "phrase": "Appeler la méthode afficher de e.",
+      "attendu": "reconnue",
+      "sens": "e.afficher();"
+    },
+    {
+      "phrase": "Appeler le constructeur de la classe parente.",
+      "attendu": "reconnue",
+      "sens": "super();"
+    },
+    {
+      "phrase": "Lancer une exception IllegalStateException avec le texte \"non\".",
+      "attendu": "reconnue",
+      "sens": "throw new IllegalStateException(\"non\");"
+    },
+    {
+      "phrase": "Augmente compteur.",
+      "attendu": "refusee",
+      "pourquoi": "le pas n'est pas ecrit, et A ne le devine pas"
+    },
+    {
+      "phrase": "Diminue compteur.",
+      "attendu": "refusee",
+      "pourquoi": "le pas n'est pas ecrit"
+    },
+    {
+      "phrase": "Crée une classe.",
+      "attendu": "refusee",
+      "pourquoi": "il manque le nom de la classe"
+    },
+    {
+      "phrase": "Crée une liste nommée notes.",
+      "attendu": "refusee",
+      "pourquoi": "une liste Java est TYPEE : il manque le type des elements"
+    },
+    {
+      "phrase": "Crée une méthode nommée f qui ne retourne rien.",
+      "attendu": "refusee",
+      "pourquoi": "une methode Java porte une visibilite et un static : A ne choisit pas"
+    },
+    {
+      "phrase": "Affiche x.",
+      "attendu": "refusee",
+      "pourquoi": "ambigue : valeur, caractere ou chaine, et A n'en choisit aucune"
+    },
+    {
+      "phrase": "Déclare un pointeur de type int nommé p.",
+      "attendu": "refusee",
+      "pourquoi": "Java n'a pas de pointeurs"
+    },
+    {
+      "phrase": "Libère la mémoire pointée par p.",
+      "attendu": "refusee",
+      "pourquoi": "Java a un ramasse-miettes"
+    },
+    {
+      "phrase": "Inclue la bibliothèque stdio.h.",
+      "attendu": "refusee",
+      "pourquoi": "Java n'a pas de preprocesseur ; c'est « Importe ... »"
+    },
+    {
+      "phrase": "Déclare une variable de type unsigned int nommée n.",
+      "attendu": "refusee",
+      "pourquoi": "Java n'a aucun entier non signe"
+    },
+    {
+      "phrase": "Crée un bloc si \"n\".",
+      "attendu": "refusee",
+      "pourquoi": "en Java un nombre n'est pas une condition, et A n'ajoute pas la comparaison"
+    },
+    {
+      "phrase": "Crée une variable locale typée par inférence nommée n de valeur 0.",
+      "attendu": "refusee",
+      "pourquoi": "var est refuse par la decision J8 : il cache le type, qui est la notion"
+    },
+    {
+      "phrase": "Ferme le fichier f.",
+      "attendu": "refusee",
+      "pourquoi": "le bloc essaie avec ressource ferme seul"
+    },
+    {
+      "phrase": "Déclare un entier nommé class.",
+      "attendu": "refusee",
+      "pourquoi": "« class » est un mot reserve de Java"
+    },
+    {
+      "phrase": "Fais quelque chose d’intelligent avec les notes.",
+      "attendu": "refusee",
+      "pourquoi": "hors perimetre : aucune intention"
+    },
+    {
+      "phrase": "Crée une classe nommée Eleve et voila.",
+      "attendu": "refusee",
+      "pourquoi": "du texte en trop apres une phrase complete"
+    }
+  ]
+}

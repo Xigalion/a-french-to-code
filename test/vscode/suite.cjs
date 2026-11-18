@@ -1286,6 +1286,111 @@ exports.run = async function run() {
       assert.equal(api.inspect().diagnostic.stage, 'translation');
       assert.equal(state.document.getText(), CORPS);
     });
+    // ================= Java-A, lot J10 ================================
+    //
+    // La suite ne contenait aucun scenario Java : la session etait couverte
+    // par 14 tests Node, ce qui n'est pas la meme chose. Ici c'est l'IHM
+    // REELLE -- InputBox, diff, QuickPick, TextEditor.edit -- qui ecrit.
+    const EOL = process.platform === 'win32' ? '\r\n' : '\n';
+    async function fixtureJava(text = '', cursor = text.length) {
+      const file = path.join(workspace, `Eleve${++fixtureNumber}.java`);
+      fs.writeFileSync(file, text, 'utf8');
+      const document = await vscode.workspace.openTextDocument(vscode.Uri.file(file));
+      const editor = await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.One });
+      editor.options = { insertSpaces: true, tabSize: 4, indentSize: 'tabSize' };
+      const position = document.positionAt(cursor);
+      editor.selection = new vscode.Selection(position, position);
+      documents.push(document);
+      await delay(100);
+      return { file, document, editor };
+    }
+    async function avecJava(body) {
+      try {
+        await vscode.workspace.getConfiguration('c-a').update('java', true, vscode.ConfigurationTarget.Global);
+        await waitFor(() => vscode.workspace.getConfiguration('c-a').get('java') === true, 'reglage java actif');
+        await body();
+      } finally {
+        await vscode.workspace.getConfiguration('c-a').update('java', false, vscode.ConfigurationTarget.Global);
+      }
+    }
+    await test('lot J10 : sans le reglage, un fichier .java est refuse', async () => {
+      assert.equal(vscode.workspace.getConfiguration('c-a').get('java'), false);
+      const state = await fixtureJava('');
+      await vscode.commands.executeCommand('c-a.translate', 'Cree une classe nommee Eleve.');
+      // Aucune session ne s'ouvre : la commande a refuse la cible.
+      await delay(300);
+      assert.equal(api.inspect(), undefined);
+      assert.equal(state.document.getText(), '');
+    });
+    await test('lot J10 : avec le reglage, une classe Java est inseree', async () => {
+      await avecJava(async () => {
+        const state = await fixtureJava('');
+        await preview('Crée une classe nommée Eleve.');
+        assert.equal(api.inspect().langage, 'java');
+        await inserted();
+        const eol = state.document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+        assert.equal(state.document.getText(),
+          '// Crée une classe nommée Eleve.' + eol + 'public class Eleve {' + eol + '    ' + eol + '}');
+        // Une seule modification annulable.
+        await vscode.commands.executeCommand('undo');
+        await waitFor(() => state.document.getText() === '', 'annulation en une fois');
+      });
+    });
+    await test('lot J10 : rien d executable a la portee fichier', async () => {
+      // La lacune que le lot 26 avait trouvee en C17, refusee ici DES LE
+      // DEPART : en Java, pas meme une affectation ne vit au fichier.
+      await avecJava(async () => {
+        const state = await fixtureJava('');
+        await start('Affiche la valeur de n.');
+        await accept();
+        const diagnostic = api.inspect().diagnostic;
+        assert.equal(diagnostic.code, 'PORTEE_INTERDITE');
+        assert.equal(diagnostic.stage, 'placement');
+        assert.equal(state.document.getText(), '');
+      });
+    });
+    await test('lot J10 : un champ est insere dans un corps de classe', async () => {
+      await avecJava(async () => {
+        const corps = 'public class Eleve {' + EOL + EOL + '}' + EOL;
+        const state = await fixtureJava(corps, corps.indexOf('}') - EOL.length);
+        await preview('Ajoute un champ privé de type int nommé age.');
+        // L'etiquette de rattachement montre la classe LUE du document.
+        assert.equal(api.inspect().attachmentLabel, 'classe Eleve');
+        await inserted();
+        assert.ok(state.document.getText().includes('    private int age;'),
+          JSON.stringify(state.document.getText()));
+      });
+    });
+    await test('lot J10 : un constructeur prend le nom de sa classe, lu du document', async () => {
+      await avecJava(async () => {
+        const corps = 'public class Eleve {' + EOL + EOL + '}' + EOL;
+        const state = await fixtureJava(corps, corps.indexOf('}') - EOL.length);
+        await preview('Crée un constructeur qui prend un int nommé age.');
+        await inserted();
+        assert.ok(state.document.getText().includes('    public Eleve(int age) {'),
+          JSON.stringify(state.document.getText()));
+      });
+    });
+    await test('lot J10 : une information passive est journalisee', async () => {
+      await avecJava(async () => {
+        const corps = 'public class Eleve {' + EOL + EOL + '}' + EOL;
+        await fixtureJava(corps, corps.indexOf('}') - EOL.length);
+        await preview('Ajoute un champ privé de type int nommé age.');
+        const codes = api.inspect().information.map(item => item.code);
+        assert.ok(codes.includes('JAVA_PRIVATE_IS_NOT_CHECKED_BY_A'), codes.join(', '));
+        // Aucun avis de calcul : Java-A dit ces regles sur SON canal.
+        assert.deepEqual(api.inspect().advisories, []);
+      });
+    });
+    await test('lot J10 : une phrase native Java est refusee dans un fichier .c', async () => {
+      // La propriete qui garantit que le moteur C17 n'a pas bouge : le
+      // catalogue natif de Java n'est atteignable que par un .java.
+      const state = await fixture(CORPS);
+      await start('Crée une classe nommée Eleve.');
+      await accept();
+      assert.equal(api.inspect().diagnostic.stage, 'translation');
+      assert.equal(state.document.getText(), CORPS);
+    });
     await test('v0.5.0 : les deux reglages sont ACTIFS par defaut dans le manifeste', async () => {
       // Le profil de test les epingle a false pour que les scenarios soient
       // deterministes. Le defaut du MANIFESTE, lui, est ce que verra un
@@ -1293,12 +1398,15 @@ exports.run = async function run() {
       // seule facon de le verifier sans dependre du profil.
       const souplesse = vscode.workspace.getConfiguration('c-a').inspect('souplesse');
       const python = vscode.workspace.getConfiguration('c-a').inspect('python');
+      const java = vscode.workspace.getConfiguration('c-a').inspect('java');
       assert.equal(souplesse.defaultValue, true, 'le francais souple doit etre actif par defaut');
       assert.equal(python.defaultValue, true, 'Python doit etre actif par defaut');
+      assert.equal(java.defaultValue, true, 'Java doit etre actif par defaut');
       // Et le mode strict reste ACCESSIBLE : le profil le prouve, puisqu'il
       // l'a epingle a false et que les scenarios stricts passent.
       assert.equal(vscode.workspace.getConfiguration('c-a').get('souplesse'), false);
       assert.equal(vscode.workspace.getConfiguration('c-a').get('python'), false);
+      assert.equal(vscode.workspace.getConfiguration('c-a').get('java'), false);
     });
     await test('changer indentSize seul invalide le plan', async () => {
       const { editor } = await fixture();

@@ -52,6 +52,20 @@ export const LEXIQUE: readonly Entree[] = [
   // que sur une formulation mesuree.
   { libre: 'affecter', formes: ['Affecte'], motif: 'infinitif, trouve par le corpus libre' },
   { libre: 'inclure', formes: ['Inclue'], motif: 'infinitif, trouve par le corpus libre' },
+  // Six infinitifs trouves par le corpus JAVA du lot J9
+  // (test-utilisateur/corpus/corpus-java.json) : leurs verbes sont au
+  // catalogue, exactement comme les six precedents, et la regle de cette
+  // table est qu'elle ne grandit que sur une formulation MESUREE.
+  //
+  // Ils profitent aussi a C17 et a Python, et c'est une EXTENSION assumee :
+  // le differentiel la declare et l'audite. Une extension peut transformer un
+  // refus ; elle ne retire aucune capacite.
+  { libre: 'importer', formes: ['Importe'], motif: 'infinitif, trouve par le corpus java' },
+  { libre: 'ajouter', formes: ['Ajoute'], motif: 'infinitif, trouve par le corpus java' },
+  { libre: 'appeler', formes: ['Appelle'], motif: 'infinitif, trouve par le corpus java' },
+  { libre: 'lancer', formes: ['Lance'], motif: 'infinitif, trouve par le corpus java' },
+  { libre: 'retirer', formes: ['Retire'], motif: 'infinitif, trouve par le corpus java' },
+  { libre: 'sortir', formes: ['Sors'], motif: 'infinitif, trouve par le corpus java' },
   { libre: 'appelé', formes: ['nommé'], motif: 'synonyme' },
   { libre: 'appelée', formes: ['nommée'], motif: 'synonyme' },
   { libre: 'valant', formes: ['de valeur'], motif: 'synonyme' },
@@ -71,7 +85,24 @@ export const BUDGET = { substitutions: 4, candidates: 64 };
 /** Les mots après lesquels le mot suivant est un **identifiant** de
  * l'utilisateur : il ne doit jamais être substitué, même s'il figure au
  * lexique. Une variable peut s'appeler « mets ». */
-const AVANT_IDENTIFIANT = ['nommé', 'nommée', 'nommés', 'nommées', 'appelé', 'appelée', 'nom'];
+const AVANT_IDENTIFIANT = ['nommé', 'nommée', 'nommés', 'nommées', 'appelé', 'appelée', 'nom',
+  // DÉFAUT DE SENS corrigé au lot J9, trouvé par le corpus Java.
+  //
+  // Java nomme des identifiants après un nom commun, là où C17 et Python les
+  // nomment presque toujours après « nommé ». Dans « Appelle la méthode
+  // afficher de e. », le mot `afficher` est au LEXIQUE : la couche le
+  // remplaçait par « Affiche » et produisait `e.Affiche();`. A renommait
+  // silencieusement la méthode de l'utilisateur — la faute la plus grave de
+  // toute la classification, et la seule qu'aucun taux ne rachète.
+  //
+  // Cette liste ne peut que PROTÉGER : elle empêche une substitution, elle
+  // n'en autorise aucune.
+  'méthode', 'champ', 'classe', 'paquetage', 'exception', 'paramètre'];
+
+/** Les mots qui annoncent un nom, et qui ne peuvent donc jamais ÊTRE le nom.
+ * Ils échappent à la protection ci-dessus : voir `zonesProtegees`. */
+const NOMMAGE: ReadonlySet<string> = new Set(['nommé', 'nommée', 'nommés', 'nommées',
+  'appelé', 'appelée', 'appelés', 'appelées']);
 
 /** Ce qu'un arbitre répond d'une phrase candidate.
  *
@@ -159,6 +190,13 @@ export function zonesProtegees(phrase: string): { debut: number; fin: number }[]
       const suite = /^\s+([^\s.]+)/u.exec(phrase.slice(depuis));
       const identifiant = suite?.[1];
       if (!avant || suite === null || identifiant === undefined) continue;
+      // Un mot de NOMMAGE n'est jamais un identifiant. Sans cette exception,
+      // « Crée une classe appelée Eleve. » perdait sa normalisation : le mot
+      // `appelée` suivait `classe`, donc il était protégé, donc il n'était
+      // plus remplacé par `nommée`. La garde sur-protégeait, et une
+      // sur-protection refuse une phrase juste aussi sûrement qu'un trou
+      // accepte une phrase fausse. Trouvé par le corpus Java, au lot J9.
+      if (NOMMAGE.has(minuscule(identifiant))) continue;
       const debut = depuis + suite[0].length - identifiant.length;
       zones.push({ debut, fin: debut + identifiant.length });
     }
