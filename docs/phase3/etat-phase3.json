@@ -1,0 +1,113 @@
+{
+  "_lisezMoi": "Etat chiffre de la phase 3, Java-A. Edite a la main. Une barre ne monte que si une PREUVE existe, nommee dans 'source'. Une barre sans source est une barre fausse. Lu par scripts/progression-phase3.mjs.",
+  "miseAJour": "2026-11-18",
+  "branche": "phase-3-java",
+  "langage": "java",
+  "versionDeReference": "Java 21 LTS, proposee et non encore validee",
+  "indicateurs": [
+    {
+      "nom": "Phase 3 — feuille de route enregistree",
+      "fait": 1,
+      "total": 1,
+      "unite": "decision",
+      "source": "docs/FEUILLE_DE_ROUTE.md",
+      "note": "Quatre langages fondamentaux : C17 et Python livres, Java en cours, SQL non commence. Puis le modele pedagogique 2. Rust ulterieurement, sans rang."
+    },
+    {
+      "nom": "Phase 3 — audit du socle reutilisable",
+      "fait": 1,
+      "total": 1,
+      "unite": "audit",
+      "source": "docs/phase3/AUDIT_REUTILISATION.md",
+      "note": "Mesure en lisant les fichiers. Reutilisable TEL QUEL : registre, noyau d'expressions, 98 reformulations, variantes. A ECRIRE : java/placement.ts, parce que l'etiquette 'accolades' encode des regles du C et non des accolades. A ETENDRE sans y toucher : statementScope, de deux portees a quatre."
+    },
+    {
+      "nom": "Phase 3 — version de reference etudiee",
+      "fait": 1,
+      "total": 1,
+      "unite": "proposition",
+      "source": "docs/phase3/JAVA21_CONTRAINTES.md",
+      "note": "Java 21 LTS proposee. Fait verifie et decisif : JEP 445 (classe implicite, main d'instance) est PREVIEW en 21 et exige --enable-preview a la compilation ET a l'execution. Le point d'entree sera donc explicite. Aucun JDK n'est installe sur la machine : autorisation externe demandee."
+    },
+    {
+      "nom": "Phase 3 — catalogue propose",
+      "fait": 9,
+      "total": 9,
+      "unite": "domaines couverts par la proposition",
+      "source": "docs/phase3/CATALOGUE_JAVA_PROPOSE.md",
+      "note": "127 formulations et 24 informations passives sur neuf domaines, des fondamentaux aux fichiers. PROPOSITION, zero ligne implementee. Aucun plafond n'est fixe : le catalogue compte ce que l'enseignement de Java exige."
+    },
+    {
+      "nom": "Phase 3 — classement des 84 intentions existantes",
+      "fait": 82,
+      "total": 82,
+      "unite": "intentions classees",
+      "source": "docs/phase3/CLASSEMENT_INTENTIONS.md",
+      "note": "31 reprises directes, 26 adaptations semantiques, 25 refus nommes. Les deux genres restants sur 84 sont des diagnostics de placement, pas des intentions. Comparaison : Python reprenait 33 et refusait 51 — Java est structurellement plus proche du C, et l'ecart se joue sur l'OBJET, pas sur la syntaxe."
+    },
+    {
+      "nom": "Phase 3 — decisions fondamentales SOUMISES",
+      "fait": 11,
+      "total": 11,
+      "unite": "decisions redigees avec recommandation",
+      "source": "docs/phase3/DECISIONS_JAVA.md",
+      "note": "Onze decisions, chacune avec les options reellement ouvertes, leur cout et une recommandation motivee. Les trois qui changent le plus pour un apprenant : J1 point d'entree, J6 exceptions verifiees, J10 le mot tableau ou liste dans la phrase."
+    },
+    {
+      "nom": "Phase 3 — decisions fondamentales VALIDEES",
+      "fait": 0,
+      "total": 11,
+      "unite": "decisions validees",
+      "source": "aucune : rien n est valide",
+      "note": "Zero. Ce chiffre ne doit jamais etre confondu avec le precedent : l'un compte ce qui est REDIGE, celui-ci ce qui est DECIDE. L'implementation ne commence pas avant."
+    },
+    {
+      "nom": "Phase 3 — plan d'implementation et de validation",
+      "fait": 1,
+      "total": 1,
+      "unite": "plan",
+      "source": "docs/phase3/PLAN_JAVA.md",
+      "note": "Onze lots J0 a J11, chacun avec un critere de sortie mesurable. Deux chiffres sont INTERDITS comme criteres : un taux de reconnaissance du francais spontane, et un nombre d'intentions."
+    },
+    {
+      "nom": "Phase 3 — lots implementes",
+      "fait": 0,
+      "total": 11,
+      "unite": "lots",
+      "source": "aucune : rien n est implemente",
+      "note": "Zero ligne de code Java dans src/. La branche phase-3-java ne contient que de la documentation."
+    },
+    {
+      "nom": "Phase 3 — chaine d'outils Java disponible",
+      "fait": 0,
+      "total": 1,
+      "unite": "JDK",
+      "source": "verifie le 18 novembre 2026 : java et javac absents du PATH, Program Files/Java et Eclipse Adoptium inexistants",
+      "note": "BLOCAGE EXTERNE. Sans JDK, les lots J3 a J11 produiraient des tests unitaires et AUCUNE preuve de compilation — et le projet a deja ecrit que la reussite des tests automatises ne vaut pas completion. Propose : Temurin 21 LTS portable, hors du depot, PATH non modifie. J0 a J2 peuvent avancer sans."
+    },
+    {
+      "nom": "Phase 3 — validation par compilation javac",
+      "fait": 0,
+      "total": 1,
+      "unite": "exercice de cloture compile et execute",
+      "source": "aucune",
+      "note": "Zero. Le contenu de l'exercice est fixe D'AVANCE dans PLAN_JAVA.md section 4, precisement pour qu'il ne soit pas ajuste apres coup au niveau de ce que A sait faire."
+    },
+    {
+      "nom": "Phase 3 — preservation de C et Python",
+      "fait": 1,
+      "total": 1,
+      "unite": "differentiel",
+      "source": "node scripts/differentiel.mjs v0.5.0 --no-loss, au point de depart de la branche",
+      "note": "Point de depart : la branche est strictement egale a main, donc 0 ecart par construction. Cette barre doit rester a 1/1 a CHAQUE lot : tout ecart est un defaut de la phase 3, jamais une amelioration."
+    },
+    {
+      "nom": "Phase 3 — usage humain reel",
+      "fait": 0,
+      "total": 10,
+      "unite": "seances",
+      "source": "aucune : rien n est mesure",
+      "note": "Zero, et c'est le meme zero qu'en phase 2 : personne n'a encore ecrit un programme avec A, dans aucun langage. Les barres ci-dessus mesurent ce qui est CONSTRUIT ; celle-ci ce qui est VECU."
+    }
+  ]
+}
