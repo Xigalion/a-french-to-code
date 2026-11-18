@@ -80,9 +80,14 @@ const ETIQUETTES = new Set(['CASE_INT', 'CASE_CHAR', 'CASE_DEFAULT', 'BREAK_SWIT
 /** Ce qu'une accolade ouvrante a ouvert. */
 type Cadre = 'classe' | 'interface' | 'methode' | 'bloc' | 'boucle' | 'aiguillage';
 
+/** Un cadre ouvert, et le nom du type quand il en a un. Le nom sert au
+ * CONTEXTE : un constructeur Java prend le nom de sa classe englobante, et A
+ * ne l'invente pas. */
+type CadreOuvert = { cadre: Cadre; nom?: string };
+
 type Etat = {
   /** La pile des cadres ouverts, du plus extérieur au plus intérieur. */
-  pile: Cadre[];
+  pile: CadreOuvert[];
   /** Un type a-t-il déjà été déclaré au fichier ? Décide de l'ordre des
    * `import`, que Java impose. */
   typeDeclare: boolean;
@@ -102,12 +107,17 @@ type Etat = {
  * ne comprend pas Java, il reconnaît ce que A écrit et ce qu'un humain écrit
  * normalement. Un en-tête qu'il ne reconnaît pas devient un `bloc`, et c'est
  * le défaut sûr : un bloc n'autorise ni membre ni champ. */
-function classer(entete: string, dans: Cadre | undefined): { cadre: Cadre; mot: string } {
+function classer(entete: string, dans: Cadre | undefined): { cadre: Cadre; mot: string; nom?: string } {
   const texte = entete.replace(/\s+/gu, ' ').trim();
   const mot = /(?:^|[^\p{L}])(if|else|while|for|do|switch|try|catch|finally|synchronized)\s*(?:\(|\{|$)/u
     .exec(texte)?.[1] ?? '';
-  if (/(?:^|[^\p{L}])interface(?![\p{L}\p{N}_])/u.test(texte)) return { cadre: 'interface', mot: 'interface' };
-  if (/(?:^|[^\p{L}])(?:class|enum|record)(?![\p{L}\p{N}_])/u.test(texte)) return { cadre: 'classe', mot: 'class' };
+  const nomType = /(?:^|[^\p{L}])(?:class|interface|enum|record)[ 	]+([A-Za-z][A-Za-z0-9_]*)/u.exec(texte)?.[1];
+  if (/(?:^|[^\p{L}])interface(?![\p{L}\p{N}_])/u.test(texte)) {
+    return { cadre: 'interface', mot: 'interface', ...(nomType === undefined ? {} : { nom: nomType }) };
+  }
+  if (/(?:^|[^\p{L}])(?:class|enum|record)(?![\p{L}\p{N}_])/u.test(texte)) {
+    return { cadre: 'classe', mot: 'class', ...(nomType === undefined ? {} : { nom: nomType }) };
+  }
   if (mot === 'while' || mot === 'for' || mot === 'do') return { cadre: 'boucle', mot };
   if (mot === 'switch') return { cadre: 'aiguillage', mot };
   if (mot !== '') return { cadre: 'bloc', mot };
@@ -153,12 +163,12 @@ function balayer(texte: string, fin: number): Etat {
       continue;
     }
     if (c === '{') {
-      const dans = etat.pile.at(-1);
-      const { cadre, mot } = classer(texte.slice(ancre, i), dans);
+      const dans = etat.pile.at(-1)?.cadre;
+      const { cadre, mot, nom } = classer(texte.slice(ancre, i), dans);
       if (cadre === 'classe' || cadre === 'interface') {
         if (etat.pile.length === 0) etat.typeDeclare = true;
       }
-      etat.pile.push(cadre);
+      etat.pile.push({ cadre, ...(nom === undefined ? {} : { nom }) });
       etat.dernierFerme = undefined;
       etat.dernierMot = mot;
       etat.quelqueChose = true;
@@ -169,7 +179,7 @@ function balayer(texte: string, fin: number): Etat {
     if (c === '}') {
       const sorti = etat.pile.pop();
       if (sorti === undefined) etat.desequilibre = true;
-      else { etat.dernierFerme = sorti; }
+      else { etat.dernierFerme = sorti.cadre; }
       etat.quelqueChose = true;
       ancre = i + 1;
       i++;
@@ -183,12 +193,31 @@ function balayer(texte: string, fin: number): Etat {
 }
 
 /** La portée courante, déduite de la pile. */
-function porteeDe(pile: readonly Cadre[]): Portee {
-  const haut = pile.at(-1);
+function porteeDe(pile: readonly CadreOuvert[]): Portee {
+  const haut = pile.at(-1)?.cadre;
   if (haut === undefined) return 'fichier';
   if (haut === 'classe') return 'classe';
   if (haut === 'interface') return 'interface';
   return 'methode';
+}
+
+/** Le nom du type le plus proche qui englobe le curseur, ou `undefined`.
+ *
+ * C'est le CONTEXTE dont un constructeur a besoin : il porte le nom de sa
+ * classe, et A ne l'invente pas. Même procédé que `structTarget.ts` au lot 20,
+ * qui lit la structure englobante au lieu de demander son nom dans la phrase.
+ */
+export function classeEnglobante(texte: string, decalage: number): string | undefined {
+  const etat = balayer(texte, decalage);
+  if (etat.desequilibre) return undefined;
+  for (let i = etat.pile.length - 1; i >= 0; i--) {
+    const cadre = etat.pile[i];
+    if (cadre === undefined) continue;
+    if ((cadre.cadre === 'classe' || cadre.cadre === 'interface') && cadre.nom !== undefined) {
+      return cadre.nom;
+    }
+  }
+  return undefined;
 }
 
 function refus(code: DiagnosticJava['code'], message: string, range: Intervalle): PlanJava {
@@ -309,7 +338,7 @@ export function planifierJava(demande: DemandeJava): PlanJava {
   // 6. `break` et `continue` : une boucle doit englober. `break` est aussi
   //    légal dans un aiguillage, et c'est la seule différence entre les deux.
   if (TRANSFERTS.has(demande.kind)) {
-    const cadres = etat.pile;
+    const cadres = etat.pile.map(ouvert => ouvert.cadre);
     const admis: Cadre[] = demande.kind === 'BREAK' ? ['boucle', 'aiguillage'] : ['boucle'];
     // La recherche s'arrête à la méthode : une boucle hors de la méthode
     // n'englobe pas, et il n'y en a pas en Java de toute façon.
@@ -331,7 +360,7 @@ export function planifierJava(demande: DemandeJava): PlanJava {
 
   // 7. Une étiquette de cas, et la sortie d'aiguillage, exigent l'aiguillage.
   if (ETIQUETTES.has(demande.kind)) {
-    if (etat.pile.at(-1) !== 'aiguillage') {
+    if (etat.pile.at(-1)?.cadre !== 'aiguillage') {
       return refus('CAS_HORS_AIGUILLAGE',
         'Aucun aiguillage n’englobe directement cette ligne : un cas se place dans le corps du '
         + '« switch », pas dans un bloc imbriqué.', { start: debutLigne, end: finLigne });
@@ -341,7 +370,7 @@ export function planifierJava(demande: DemandeJava): PlanJava {
   // 8. `return` : une méthode doit englober. En Java, c'est garanti par la
   //    règle 3 — l'exécutable exige `methode` — mais le dire explicitement
   //    produit un message juste au lieu d'un message générique.
-  if (RETOURS.has(demande.kind) && !etat.pile.includes('methode')) {
+  if (RETOURS.has(demande.kind) && !etat.pile.some(ouvert => ouvert.cadre === 'methode')) {
     return refus('RETOUR_HORS_METHODE',
       'Aucune méthode n’englobe cette ligne : « retourne » n’existe que dans une méthode ou un '
       + 'constructeur.', { start: debutLigne, end: finLigne });

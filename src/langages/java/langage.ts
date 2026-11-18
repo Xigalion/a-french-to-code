@@ -18,6 +18,9 @@ import { inscrire } from '../registre.ts';
 import type { Langage } from '../registre.ts';
 import { PORTEES_JAVA, rendreJava } from './rendu.ts';
 import { RAISONS_JAVA } from './raisons.ts';
+import { analyserCatalogueJava } from './catalogue.ts';
+import { rendreJavaNatif } from './renduNatif.ts';
+import { expliquerJava } from './informations.ts';
 
 export const JAVA: Langage = {
   nom: 'java',
@@ -38,6 +41,29 @@ export const JAVA: Langage = {
       // expression, un entier employé comme condition, un mot réservé de Java
       // que C17 accepte comme nom.
       : { status: 'refus', code: 'CONSTRUCTION_NON_PORTEE', raison: resultat.raison };
+  },
+  // Le catalogue NATIF. Une seule entrée : analyse, rendu et informations
+  // d'un coup, parce que pour une intention native la phrase française et le
+  // code produit appartiennent au même module.
+  //
+  // `classeEnglobante` n'est pas un paramètre de cette entrée : le registre ne
+  // connaît pas le document. Un constructeur hors contexte reçoit donc un
+  // refus nommé, et c'est la session de l'hôte — qui lit le document — qui
+  // appelle `rendreJavaNatif` avec la classe quand elle la connaît.
+  natif: (text, contexte) => {
+    const analyse = analyserCatalogueJava(text);
+    if (analyse === undefined) return undefined;
+    if (analyse.status === 'refuse') {
+      return { status: 'refus', code: analyse.diagnostic.code,
+        message: analyse.diagnostic.message, range: analyse.diagnostic.range };
+    }
+    const rendu = rendreJavaNatif(analyse.instruction, contexte?.classeEnglobante);
+    if (rendu.status === 'refus') {
+      return { status: 'refus', code: 'CONSTRUCTION_NON_PORTEE',
+        message: rendu.raison, range: { start: 0, end: text.length } };
+    }
+    return { status: 'rendu', kind: analyse.instruction.kind, code: rendu.code,
+      informations: expliquerJava(analyse.instruction.kind, { start: 0, end: text.length }) };
   },
 };
 

@@ -36,6 +36,15 @@ export type ResultatNatif =
   | { status: 'rendu'; kind: string; code: string; informations: readonly InformationLangage[] }
   | { status: 'refus'; code: string; message: string; range: { start: number; end: number } };
 
+/** Ce que le document apprend à un catalogue natif. Ajouté au lot J3, et
+ * volontairement minimal : un seul renseignement, celui dont une intention
+ * livrée a besoin. L'élargir « au cas où » ferait du registre un passe-plat. */
+export type ContexteNatif = {
+  /** Le nom de la classe ou de l'interface qui englobe le point d'insertion,
+   * ou `undefined` si le curseur n'est dans aucune. */
+  readonly classeEnglobante?: string;
+};
+
 export type Langage = {
   readonly nom: string;
   /** Extensions de fichier que ce langage reconnaît, point compris. */
@@ -53,8 +62,16 @@ export type Langage = {
   readonly rendre: (instruction: Instruction) => RenduResultat;
   /** Le catalogue pédagogique propre au langage. `undefined` : le langage n'en
    * a pas, et C17 est dans ce cas — les 84 intentions ont été conçues pour
-   * lui, il n'a rien à ajouter. */
-  readonly natif?: (text: string) => ResultatNatif | undefined;
+   * lui, il n'a rien à ajouter.
+   *
+   * `contexte` est **facultatif**, et il l'est pour une raison : certaines
+   * intentions natives ne peuvent pas être rendues sans un renseignement que
+   * seul le document porte. En Java, un constructeur prend le nom de sa
+   * classe englobante — exactement comme un champ C prend sa structure
+   * englobante depuis le lot 20. Sans ce contexte, le langage refuse avec une
+   * raison nommée plutôt que d'inventer un nom. Un langage qui n'en a pas
+   * besoin ignore le paramètre, et Python est dans ce cas. */
+  readonly natif?: (text: string, contexte?: ContexteNatif) => ResultatNatif | undefined;
 };
 
 /** Tous les genres d'intention que le moteur publie. La liste vient de la
