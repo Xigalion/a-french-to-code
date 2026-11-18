@@ -48,8 +48,12 @@ controles.push(existsSync(dossierJava)
 //    machine, sinon elle survit a l'installation du JDK.
 let jdk = 'javac introuvable';
 try {
-  jdk = 'javac present : ' + execFileSync('javac', ['-version'], { encoding: 'utf8' }).trim();
-} catch { /* absent : c'est le cas documente, pas une erreur du script */ }
+  // Par scripts/jdk.mjs, et non par le PATH : le JDK est PORTABLE et hors du
+  // depot, donc interroger le PATH repondait « introuvable » alors que la
+  // compilation marchait. Un controle qui se trompe est pire qu absent.
+  const { outil } = await import('./jdk.mjs');
+  jdk = 'javac present : ' + execFileSync(outil('javac'), ['-version'], { encoding: 'utf8' }).trim();
+} catch { /* absent : c est le cas documente, pas une erreur du script */ }
 controles.push(jdk);
 
 // 3. L'etat du depot, lu.

@@ -3,7 +3,7 @@
   "miseAJour": "2026-11-18",
   "branche": "phase-3-java",
   "langage": "java",
-  "versionDeReference": "Java 21 LTS, proposee et non encore validee",
+  "versionDeReference": "Java 21 LTS, validee ; Temurin 21.0.13+9, empreinte conforme a Adoptium",
   "indicateurs": [
     {
       "nom": "Phase 3 — feuille de route enregistree",
@@ -30,20 +30,20 @@
       "note": "Java 21 LTS proposee. Fait verifie et decisif : JEP 445 (classe implicite, main d'instance) est PREVIEW en 21 et exige --enable-preview a la compilation ET a l'execution. Le point d'entree sera donc explicite. Aucun JDK n'est installe sur la machine : autorisation externe demandee."
     },
     {
-      "nom": "Phase 3 — catalogue propose",
+      "nom": "Phase 3 — catalogue LIVRE",
       "fait": 9,
       "total": 9,
       "unite": "domaines couverts par la proposition",
-      "source": "docs/phase3/CATALOGUE_JAVA_PROPOSE.md",
-      "note": "127 formulations et 24 informations passives sur neuf domaines, des fondamentaux aux fichiers. PROPOSITION, zero ligne implementee. Aucun plafond n'est fixe : le catalogue compte ce que l'enseignement de Java exige."
+      "source": "docs/phase3/catalogue-java.json ; node scripts/catalogue-java.mjs",
+      "note": "144 formulations CALCULEES : 30 reprises, 27 adaptations, 87 natives. 57/57 intentions partagees a porter couvertes, 27 refus nommes, 28 informations passives. Aucun plafond : le nombre a bouge quatre fois, et chaque mouvement a une cause nommee -- intentions mortes, decision J10 des deux cotes, et un manque trouve par javac."
     },
     {
       "nom": "Phase 3 — classement des 84 intentions existantes",
-      "fait": 82,
-      "total": 82,
+      "fait": 84,
+      "total": 84,
       "unite": "intentions classees",
       "source": "docs/phase3/CLASSEMENT_INTENTIONS.md",
-      "note": "31 reprises directes, 26 adaptations semantiques, 25 refus nommes. Les deux genres restants sur 84 sont des diagnostics de placement, pas des intentions. Comparaison : Python reprenait 33 et refusait 51 — Java est structurellement plus proche du C, et l'ecart se joue sur l'OBJET, pas sur la syntaxe."
+      "note": "30 reprises, 27 adaptations, 27 refus. La premiere version annoncait 82 en deduisant deux genres de diagnostic qui NE SONT PAS dans la partition, et ses trois sous-totaux etaient faux. Le classement est desormais un fichier, et un controle refuse un genre classe deux fois, un genre non classe, une raison vide, ou un total qui ne tombe pas sur la partition LUE dans la source."
     },
     {
       "nom": "Phase 3 — decisions fondamentales SOUMISES",
@@ -55,11 +55,11 @@
     },
     {
       "nom": "Phase 3 — decisions fondamentales VALIDEES",
-      "fait": 0,
+      "fait": 11,
       "total": 11,
       "unite": "decisions validees",
-      "source": "aucune : rien n est valide",
-      "note": "Zero. Ce chiffre ne doit jamais etre confondu avec le precedent : l'un compte ce qui est REDIGE, celui-ci ce qui est DECIDE. L'implementation ne commence pas avant."
+      "source": "message du fondateur du 18 novembre 2026",
+      "note": "Les onze validees. J6 precisee : A INFORME des obligations liees aux exceptions verifiees, sans choisir entre try/catch et throws, et sans modifier une signature existante. J10 precisee : la distinction explicite entre tableau et liste est validee, et appliquee des DEUX cotes -- les phrases historiques « de t » restent valides, regle 7."
     },
     {
       "nom": "Phase 3 — plan d'implementation et de validation",
@@ -71,35 +71,35 @@
     },
     {
       "nom": "Phase 3 — lots implementes",
-      "fait": 0,
-      "total": 11,
+      "fait": 12,
+      "total": 12,
       "unite": "lots",
-      "source": "aucune : rien n est implemente",
-      "note": "Zero ligne de code Java dans src/. La branche phase-3-java ne contient que de la documentation."
+      "source": "git log de la branche phase-3-java",
+      "note": "J0 a J11, soit DOUZE lots -- la premiere version du plan annoncait onze en comptant une borne sur deux. J0 reconciliation, J1 socle, J2 portees et placement, J3-J8 catalogue natif, J9 francais souple, J10 hote VS Code, J11 exercice de cloture."
     },
     {
       "nom": "Phase 3 — chaine d'outils Java disponible",
-      "fait": 0,
+      "fait": 1,
       "total": 1,
       "unite": "JDK",
-      "source": "verifie le 18 novembre 2026 : java et javac absents du PATH, Program Files/Java et Eclipse Adoptium inexistants",
-      "note": "BLOCAGE EXTERNE. Sans JDK, les lots J3 a J11 produiraient des tests unitaires et AUCUNE preuve de compilation — et le projet a deja ecrit que la reussite des tests automatises ne vaut pas completion. Propose : Temurin 21 LTS portable, hors du depot, PATH non modifie. J0 a J2 peuvent avancer sans."
+      "source": "scripts/jdk.mjs ; empreinte sha256 verifiee contre l API Adoptium",
+      "note": "Temurin 21.0.13+9 LTS, archive officielle, sha256 CONFORME a celui publie par Adoptium. Installe HORS du depot, PATH systeme inchange, localise par chemin RELATIF. Aucun chemin personnel dans un fichier versionne, et un controle de pre-publication le verifie."
     },
     {
       "nom": "Phase 3 — validation par compilation javac",
-      "fait": 0,
+      "fait": 1,
       "total": 1,
       "unite": "exercice de cloture compile et execute",
-      "source": "aucune",
-      "note": "Zero. Le contenu de l'exercice est fixe D'AVANCE dans PLAN_JAVA.md section 4, precisement pour qu'il ne soit pas ajuste apres coup au niveau de ce que A sait faire."
+      "source": "exercice/java/journal/cloture.json ; node exercice/java/cloture.mjs",
+      "note": "4 fichiers, 96 phrases, 11 gestes d editeur, ZERO retouche. javac --release 21 -encoding UTF-8 -Xlint:all : code 0, AUCUN avertissement. java -ea : code 0, sortie conforme au calcul fait a la main. L enonce etait fixe AVANT l implementation, et il a trouve deux defauts -- dont un manque du catalogue, dit par javac."
     },
     {
       "nom": "Phase 3 — preservation de C et Python",
       "fait": 1,
       "total": 1,
       "unite": "differentiel",
-      "source": "node scripts/differentiel.mjs v0.5.0 --no-loss, au point de depart de la branche",
-      "note": "Point de depart : la branche est strictement egale a main, donc 0 ecart par construction. Cette barre doit rester a 1/1 a CHAQUE lot : tout ecart est un defaut de la phase 3, jamais une amelioration."
+      "source": "node scripts/differentiel.mjs v0.5.0 --no-loss",
+      "note": "1 335 559 comparaisons, 0 regression, 0 capacite perdue. Java S AJOUTE : la partition des 84 genres de src/statementScope.ts n a pas ete touchee, et un test l impose toujours exhaustive."
     },
     {
       "nom": "Phase 3 — usage humain reel",
@@ -108,6 +108,22 @@
       "unite": "seances",
       "source": "aucune : rien n est mesure",
       "note": "Zero, et c'est le meme zero qu'en phase 2 : personne n'a encore ecrit un programme avec A, dans aucun langage. Les barres ci-dessus mesurent ce qui est CONSTRUIT ; celle-ci ce qui est VECU."
+    },
+    {
+      "nom": "Phase 3 — suite hote VS Code avec scenarios Java",
+      "fait": 0,
+      "total": 1,
+      "unite": "execution",
+      "source": "aucune : non relancee depuis l ajout de Java",
+      "note": "ZERO. La session Java est couverte par 14 tests Node, mais la suite HOTE n a pas ete relancee et ne contient aucun scenario Java. C est le premier travail de la suite, et l annoncer a zero vaut mieux que de laisser croire que 114 scenarios couvrent trois langages."
+    },
+    {
+      "nom": "Phase 3 — francais souple MESURE en Java",
+      "fait": 0,
+      "total": 1,
+      "unite": "mesure sur corpus independant",
+      "source": "aucune : le mecanisme est branche et teste, sa COUVERTURE n est pas chiffree",
+      "note": "ZERO. ARBITRE_JAVA fonctionne, et quatre garanties sont testees : mode strict intact, phrase de l utilisateur conservee dans le commentaire, rien d invente, et une candidate que Java refuse est ecartee. Mais aucun corpus independant n a mesure COMBIEN de formulations naturelles Java-A reconnait. Ne pas confondre « branche » et « mesure »."
     }
   ]
 }
