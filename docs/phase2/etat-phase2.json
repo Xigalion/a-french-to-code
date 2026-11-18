@@ -1,6 +1,6 @@
 {
   "_lisezMoi": "Etat de la phase 2. Edite a la main. Lu par scripts/progression-phase2.mjs. Chaque indicateur porte la source de sa mesure : une barre sans source n'est qu'une opinion dessinee.",
-  "miseAJour": "2026-11-17",
+  "miseAJour": "2026-11-18",
   "branche": "phase-2-architecture",
   "indicateurs": [
     {
@@ -97,7 +97,7 @@
       "total": 1,
       "unite": "verification",
       "source": "git diff main..HEAD -- src/ : non vide, et c'est voulu depuis P0",
-      "note": "main reste la V1 publique a l'etiquette v0.4.0, sommet 955205d. La branche porte 21 commits, la fusion serait une AVANCE RAPIDE sans conflit, et elle n'est pas faite : elle attend l'autorisation finale."
+      "note": "main reste la V1 publique a l'etiquette v0.4.0, sommet 955205d. La branche porte 23 commits, la fusion serait une AVANCE RAPIDE sans conflit, et elle n'est pas faite : elle attend l'autorisation finale."
     },
     {
       "nom": "Phase 2 — usage humain reel, Python",
@@ -105,7 +105,7 @@
       "total": 10,
       "unite": "seances",
       "source": "aucune : rien n est mesure",
-      "note": "Zero. Personne n a essaye Python, et le reglage c-a.python est desactive par defaut. Ce chiffre ne doit jamais etre confondu avec les precedents : les quatre autres barres mesurent ce qui est CONSTRUIT, celle-ci ce qui est VECU."
+      "note": "Zero. Personne n a essaye Python, et le reglage c-a.python est desormais ACTIF par defaut. Ce chiffre ne doit jamais etre confondu avec les precedents : les quatre autres barres mesurent ce qui est CONSTRUIT, celle-ci ce qui est VECU."
     },
     {
       "nom": "Phase 2 — version publique 0.5.0 preparee",
@@ -113,15 +113,15 @@
       "total": 6,
       "unite": "livrables",
       "source": "CHANGELOG.md, README.md, docs/ETAT_DU_PROJET.md, docs/LIMITES_CONNUES.md, docs/PUBLICATION_0_5_0.md, docs/NOTES_PUBLICATION_0_5_0.md, dist/c-a-0.5.0.vsix",
-      "note": "Version, journal, README, etat public, limites, notes de publication et paquet : faits. Le .vsix est reproductible AU BIT depuis un clone neuf, sha256 1567c46a. La suite hote passe a 114/114 sur vscode 1.96.4. RIEN n'est fusionne ni publie."
+      "note": "Version, journal, README, etat public, limites, notes de publication et paquet : faits. Le .vsix est reproductible AU BIT depuis un clone neuf, sha256 1567c46a. La suite hote passe a 114/114 sur la vscode 1.138.0 INSTALLEE. RIEN n'est fusionne ni publie."
     },
     {
       "nom": "Phase 2 — tests hote sur la version INSTALLEE",
-      "fait": 0,
+      "fait": 1,
       "total": 1,
       "unite": "execution",
-      "source": "test-utilisateur/journal/hote.txt, passage 15",
-      "note": "Les 114 scenarios passent sur une archive vscode 1.96.4, la version MINIMALE du manifeste. La 1.138.0 installee refuse de demarrer un hote de test : deux processus CodeSetup orphelins, PID 70352 et 71652, detiennent le mutex vscode-updating depuis 15:21:09. Aucun processus n'a ete arrete."
+      "source": "test-utilisateur/journal/hote.txt, passage 16",
+      "note": "114 scenarios sur 114, vscode 1.138.0 INSTALLEE, le 18 novembre 2026. Les deux processus CodeSetup orphelins PID 70352 et 71652 avaient disparu : le blocage etait l INSTALLATEUR, pas l editeur. Aucun processus n a ete arrete par C-A. La suite passe aussi sur la 1.96.4, plancher du manifeste."
     }
   ]
 }

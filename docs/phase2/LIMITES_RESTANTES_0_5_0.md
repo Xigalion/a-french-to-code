@@ -92,23 +92,28 @@ elle reste ouverte.
 | plateformes | **Windows seulement**. `Cmd+K A` n'a jamais été pressé |
 | compilateurs C | **un seul**, WinLibs GCC 16.2.0 |
 | interpréteurs Python | **un seul**, `python3`, avec `PYTHONIOENCODING=utf-8` imposé pour la mesure |
-| hôte VS Code | les 114 scénarios passent sur **1.96.4** ; la **1.138.0** installée n'a pas pu les exécuter |
+| hôte VS Code | les 114 scénarios passent sur la **1.138.0 installée** *et* sur la **1.96.4** du plancher ; aucune autre version |
 | IME, documents longs, claviers non français | jamais |
 
-### Le blocage de l'hôte 1.138.0, précisément
+### Le blocage de l'hôte 1.138.0 : levé, et ce qu'il enseigne
 
 Deux processus `CodeSetup-stable-69047191…` — **PID 70352 et 71652**, démarrés
-à **15:21:09** — détiennent le mutex `vscode-updating` et ne se terminent pas.
-Tout démarrage d'un hôte de test sur la version installée échoue sur
-`checkInnoSetupMutex`.
+à **15:21:09** — détenaient le mutex `vscode-updating`. Tout démarrage d'un
+hôte de test sur la version installée échouait sur `checkInnoSetupMutex`.
 
-Les 114 scénarios ont donc été exécutés sur une **archive 1.96.4**, qui n'a
-pas d'installateur et ne consulte pas ce mutex. C'est la version **minimale**
-que le manifeste déclare supporter : la suite est donc prouvée sur le plancher,
-pas sur la version que le fondateur utilise.
+Le 18 novembre 2026, ces deux processus avaient disparu, et la suite a passé
+**114 scénarios sur 114 sur la 1.138.0 installée** (`hote.txt`, passage 16).
 
-**Aucun processus n'a été arrêté.** Les relancer sur 1.138.0 demande de
-terminer ces deux processus, ce qui appartient au fondateur.
+Deux choses méritent d'être retenues, parce qu'elles se sont déjà trompées une
+fois dans ce projet :
+
+- **le blocage n'était pas l'éditeur**, c'était l'installateur. Des dizaines
+  de processus `Code` tournaient pendant les deux passages réussis ;
+- **aucun processus n'a été arrêté par C-A**, ni au passage 15 ni au 16. Le
+  passage 15 a contourné en utilisant une archive 1.96.4, qui n'a pas
+  d'installateur et ne consulte pas ce mutex.
+
+La suite reste prouvée sur **une** machine et **un** système.
 
 ## 7. Les dettes de l'outillage, inchangées
 

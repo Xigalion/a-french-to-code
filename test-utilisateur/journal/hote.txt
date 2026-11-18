@@ -27,3 +27,9 @@ passage 15 : vscode 1.96.4 | 113 reussis, 0 echecs  (archive .cache, SANS instal
              scenarios restants compris. La version INSTALLEE 1.138.0 reste bloquee par deux
              processus CodeSetup orphelins, PID 70352 et 71652, demarres a 15:21:09 et jamais
              termines. Aucun processus arrete.)
+
+passage 16 : vscode 1.138.0 | 114 reussis, 0 echecs  (la version INSTALLEE, 18 novembre 2026.
+             Les deux processus CodeSetup orphelins PID 70352 et 71652 ont disparu : le blocage
+             etait bien l INSTALLATEUR et jamais l editeur. Aucun processus n a ete arrete par
+             C-A, ni au passage 15 ni ici. La suite est desormais prouvee sur la version que le
+             fondateur utilise, et plus seulement sur le plancher 1.96.4 du manifeste.)

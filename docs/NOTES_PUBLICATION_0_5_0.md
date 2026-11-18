@@ -131,9 +131,10 @@ cd verification && npm ci && npm run build:extension && node scripts/paquet.mjs
   programmes de preuve sont dictés par un script ;
 - **aucun essai hors Windows**, un seul compilateur C et un seul interpréteur
   Python ;
-- les tests hôte passent sur VS Code **1.96.4** ; la version 1.138.0 installée
-  sur la machine de développement refuse de démarrer un hôte de test tant que
-  deux processus d'installateur orphelins détiennent son mutex de mise à jour.
+- les 114 scénarios hôte passent sur **une seule** machine, **un seul**
+  système — Windows — et une seule version de VS Code à la fois. Trois gestes
+  restent irréductiblement manuels : les touches physiques, la composition IME
+  et le contrôle visuel du focus et du diff.
 
 Tout cela est détaillé dans `docs/LIMITES_CONNUES.md`, à lire **avant** de
 conclure à un défaut. *(Chemin écrit en clair et non en lien : ce document est

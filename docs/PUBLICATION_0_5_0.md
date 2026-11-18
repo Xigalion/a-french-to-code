@@ -3,8 +3,14 @@
 **Rien n'est fusionné, rien n'est étiqueté, rien n'est publié.** Ce document
 contient les commandes exactes, dans l'ordre, et ce que chacune change.
 
-Date : 17 novembre 2026. Branche `phase-2-architecture`, **21 commits** en
+Date : 18 novembre 2026. Branche `phase-2-architecture`, **23 commits** en
 avance sur `main`.
+
+**Le dépôt est déjà public**, et `main` y est au sommet `v0.4.0` + quatre
+commits documentaires, avec les 16 étiquettes citées par les documents et
+**aucune** étiquette de sauvegarde `avant-*`. La 0.5.0 est donc une **mise à
+jour** d'un dépôt public, pas une première ouverture : c'est ce qui rend
+`--force-with-lease` inutile ici, et une poussée forcée inacceptable.
 
 ---
 
@@ -14,7 +20,7 @@ avance sur `main`.
 |---|---|---|
 | tests Node | **4 376**, 0 échec | `npm test` |
 | typecheck moteur et extension | vert | `npm run typecheck` |
-| tests hôte VS Code | **114**, 0 échec, VS Code 1.96.4 | `npm run test:vscode` |
+| tests hôte VS Code | **114**, 0 échec, VS Code **1.138.0 installée** | `npm run test:vscode` |
 | différentiel contre `v0.4.0` | **0 régression, 0 extension, 0 capacité perdue** | `node scripts/differentiel.mjs v0.4.0 --no-loss` |
 | liens et chemins cités | 0 problème | `node scripts/liens.mjs` |
 | contrôles de pré-publication | 18/18 | `node scripts/pre-publication.mjs --rapide` |
@@ -142,10 +148,10 @@ Un test l'exige.
 
 ## 8. Ce que cette publication ne règle pas
 
-- **les tests hôte sur la version installée de VS Code.** Les 114 scénarios
-  passent sur VS Code **1.96.4**, une archive sans installateur. La version
-  **1.138.0** installée refuse de démarrer un hôte de test tant que deux
-  processus `CodeSetup` orphelins — PID 70352 et 71652, démarrés à 15:21:09 —
-  détiennent le mutex `vscode-updating`. **Aucun processus n'a été arrêté** ;
+- **les plateformes autres que Windows**, jamais essayées, et `Cmd+K A`
+  jamais pressé. Les 114 scénarios passent désormais sur la version
+  **installée, 1.138.0** — les deux processus `CodeSetup` orphelins qui
+  détenaient le mutex ont disparu, et **aucun processus n'a été arrêté par
+  C-A** —, mais sur une seule machine et un seul système ;
 - **aucun essai par un utilisateur**, ni en C ni en Python ;
 - **aucun essai hors Windows**, et un seul interpréteur Python.
