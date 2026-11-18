@@ -2,11 +2,16 @@
 
 Ouverte le **18 novembre 2026**, branche `phase-3-java`.
 
-> **Rien n'est implémenté.** La branche ne contient que de la documentation.
-> `src/langages/java/` n'existe pas, et `node scripts/progression-phase3.mjs`
-> le **vérifie** au lieu de l'affirmer.
+> **La phase 3 est close depuis le 18 novembre 2026.** Java-A V1 est livré, et
+> la version **0.6.0** est préparée. Le bilan, les quatorze défauts trouvés et
+> ce qui reste ouvert : [CLOTURE.md](CLOTURE.md) et
+> [BILAN_JAVA_V1.md](BILAN_JAVA_V1.md).
+>
+> Rien n'est fusionné dans `main`, et rien n'est publié.
 
-L'implémentation attend la validation des orientations fondamentales.
+*Les documents ci-dessous gardent leur formulation d'origine, qui dit souvent
+« rien n'est implémenté ». C'était vrai à leur date : un compte rendu daté ne
+se réécrit pas.*
 
 ---
 

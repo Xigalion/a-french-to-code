@@ -148,6 +148,19 @@ controle('aucun dossier de travail de compilation suivi', () => {
   return mauvais.length === 0 ? true : mauvais.slice(0, 5).join(', ');
 });
 
+// Ce contrôle existe parce que j'ai fait trois fois la même erreur : un `.pyc`
+// retiré de TOUT l'historique avant la 0.5.0 parce qu'il portait le chemin
+// absolu de la machine, puis cinq `.class` de l'exercice de clôture, puis un
+// sixième oublié parce que le `.gitignore` est arrivé APRÈS son suivi. Un
+// `.gitignore` ne retire pas ce qui est déjà suivi, et un artefact de
+// compilation n'est jamais inerte : le premier portait un nom d'utilisateur.
+controle('aucun artefact de compilation suivi', () => {
+  const ARTEFACTS = /\.(class|pyc|pyo|o|obj|exe|dll|so|dylib|a|lib)$|(^|\/)__pycache__\//u;
+  const mauvais = suivis.filter(chemin => ARTEFACTS.test(chemin));
+  return mauvais.length === 0 ? true
+    : mauvais.length + ' fichier(s) : ' + mauvais.slice(0, 5).join(', ');
+});
+
 // Les instructions de travail internes restent locales : ni suivies, ni
 // présentes dans l'historique publié. Leur substance est publiée par
 // docs/ETAT_DU_PROJET.md, et c'est la décision du 17 novembre 2026.

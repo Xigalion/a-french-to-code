@@ -1,6 +1,6 @@
 {
   "_lisezMoi": "État du test utilisateur. Édité à la main après chaque séance, lu par scripts/progression.mjs. Les scores des campagnes 1 à 3 sont historiques et ne se recalculent jamais.",
-  "version": "A 0.5.0 — C-A (C17) et Python-A (Python)",
+  "version": "A 0.6.0 — C-A (C17), Python-A (Python), Java-A (Java 21)",
   "miseAJour": "2026-11-17",
   "couverture": {
     "domaines": 9,
@@ -53,41 +53,42 @@
     }
   },
   "publication": {
-    "etat": "PUBLIE le 18 novembre 2026 — release v0.5.0 en ligne, .vsix joint, empreinte verifiee anonymement",
+    "etat": "0.6.0 PREPAREE et non publiee, le 18 novembre 2026. La 0.5.0 est en ligne. Depot renomme en a-french-to-code, redirection 301 verifiee depuis l ancien nom.",
     "licence": "Apache-2.0",
-    "nomPublicPropose": "a-french-to-code — DECIDE, mais le renommage N A PAS pris effet : le nom repond 404",
-    "controlesPasses": 18,
-    "controlesTotal": 18,
+    "nomPublicPropose": "a-french-to-code — RENOMMAGE EFFECTIF, verifie (200 sur le nouveau nom, 301 sur l ancien)",
+    "controlesPasses": 19,
+    "controlesTotal": 19,
     "etiquettes": 17,
-    "versionPublique": "v0.5.0",
+    "versionPublique": "v0.5.0 en ligne ; v0.6.0 preparee, non etiquetee",
     "procedure": "docs/PUBLICATION.md",
     "documentPublic": "docs/ETAT_DU_PROJET.md ; les instructions de travail internes restent hors du dépôt",
     "url": "https://github.com/Xigalion/a-french-to-code",
     "suivi": "docs/SUIVI_PUBLIC.md ; node scripts/suivi-public.mjs",
     "paquet": {
-      "fichier": "dist/c-a-0.5.0.vsix",
-      "sha256": "1567c46ac7251011388dab82c8b91c7bddb5f801785116960fcd947d4bef909f",
-      "octets": 163843,
-      "entrees": 51,
-      "reproductible": "au bit, depuis un clone ANONYME du depot public a l etiquette v0.5.0",
-      "identifiant": "projet-a-local.c-a — INCHANGE, les installations 0.4.0 se mettent a jour en place",
-      "suiteHote": "114/114 deux fois contre le paquet INSTALLE (CA_EXTENSION_PATH)"
+      "fichier": "dist/c-a-0.6.0.vsix",
+      "sha256": "49e56b55b0f5b9ab7cffccc6a941351f5a99c1a314e3d3c6d9ee8596debc3cab",
+      "octets": 210661,
+      "entrees": 62,
+      "reproductible": "au bit, depuis DEUX clones propres",
+      "identifiant": "projet-a-local.c-a — INCHANGE ; mise a niveau depuis la 0.5.0 VERIFIEE",
+      "suiteHote": "121/121 aux QUATRE combinaisons : sources et paquet, sur VS Code 1.96.4 et 1.138.0"
     },
     "fait": [
-      "fusion de phase-2-architecture dans main, en avance rapide, sans commit de fusion",
-      "etiquette v0.5.0 posee et poussee par son nom ; 17 etiquettes au distant, aucune avant-*",
-      "release v0.5.0 en ligne : page 200, corps complet, .vsix joint",
-      "telechargement anonyme du .vsix : 200, 163 843 octets, sha256 1567c46a, identique AU BIT au paquet local",
-      "suite hote 114/114 sur la VS Code 1.138.0 INSTALLEE, et 114/114 deux fois contre le PAQUET installe",
-      "un .pyc portant le chemin absolu de la machine retire de TOUS les commits avant la premiere poussee"
+      "renommage du depot en a-french-to-code : EFFECTIF, et les references sont appliquees",
+      "documents publics des trois langages actualises",
+      "docs/CATALOGUE_JAVA.md engendre depuis le moteur",
+      "paquet 0.6.0 reproductible AU BIT depuis deux clones propres",
+      "suite hote 121/121 aux quatre combinaisons",
+      "mise a niveau depuis la 0.5.0 verifiee : une seule extension, identifiant inchange",
+      "differentiel contre v0.5.0 : 0 regression, 0 capacite perdue",
+      "un 19e controle de pre-publication refuse tout artefact de compilation suivi, et il a ete ARME pour verifier qu il se declenche"
     ],
     "preparePasFait": [
-      "renommage en a-french-to-code : le nouveau nom repond 404, l ancien repond 200 SANS redirection",
-      "references au depot et adresse du remote : volontairement INCHANGEES, puisque le renommage n a pas eu lieu",
-      "release marquee « latest » : elle est en pre-release, donc l API /releases/latest repond 404 et la page /releases/latest redirige vers la liste — le depot n a aucune « Latest release »",
-      "suppression du brouillon de release en double (untagged-e186af3a)",
-      "retrait de l en-tete de gabarit du corps de la release",
-      "description du depot : elle ne parle que de C17 alors que Python-A est livre",
+      "fusion de phase-3-java dans main : avance rapide possible, NON FAITE",
+      "etiquette v0.6.0 : NON POSEE",
+      "release 0.6.0 : NON PUBLIEE",
+      "la release 0.5.0 est marquee pre-release, donc le depot n a aucune « Latest release »",
+      "un brouillon de release en double subsiste (untagged-e186af3a)",
       "les 4 etiquettes de classement des tickets, les sujets du depot, la desactivation de l onglet Projects"
     ]
   }
