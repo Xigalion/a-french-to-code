@@ -385,6 +385,17 @@ export function rendreJavaNatif(instruction: InstructionJava, classeEnglobante?:
       const { declare, nom: cible, concrete } = instruction.parameters;
       return nom(cible, () => rendu(`${declare} ${cible} = new ${concrete}();\n`));
     }
+    // Manque trouvé par l'exercice de clôture : dès qu'une classe a un
+    // constructeur à paramètre, son constructeur sans argument CESSE
+    // d'exister — c'est exactement ce que `JAVA_DEFAULT_CONSTRUCTOR_DISAPPEARS`
+    // annonce — et la forme sans argument ne compile plus. `javac` l'a dit, et
+    // aucun test unitaire ne pouvait le dire : il faut deux classes et une
+    // compilation pour que le défaut apparaisse.
+    case 'JAVA_OBJET_POLYMORPHE_ARG': {
+      const { declare, nom: cible, concrete, expression } = instruction.parameters;
+      return nom(cible, () => expr(expression,
+        code => rendu(`${declare} ${cible} = new ${concrete}(${code});\n`)));
+    }
 
     // ---------------- J9 — exceptions, paquetages, fichiers -------------
     case 'JAVA_PAQUETAGE':
@@ -393,11 +404,17 @@ export function rendreJavaNatif(instruction: InstructionJava, classeEnglobante?:
     case 'JAVA_ESSAIE': return bloc('try');
     // Une branche remplace l'accolade fermante : le placement l'exige, et le
     // rendu l'écrit.
+    // Une branche s'écrit APRÈS l'accolade fermante du bloc qu'elle continue,
+    // et elle écrit la sienne — exactement comme « sinon » depuis le lot 10.
+    // La première version écrivait aussi l'accolade fermante du bloc
+    // précédent, ce qui en produisait DEUX. Trouvé par l'exercice de clôture,
+    // et invisible pour les tests unitaires : aucun d'eux n'enchaînait un
+    // bloc essaie et sa branche dans un même document.
     case 'JAVA_ATTRAPE': {
       const { exception, nom: variable } = instruction.parameters;
-      return nom(variable, () => rendu(`} catch (${exception} ${variable}) {\n    \n`));
+      return nom(variable, () => bloc(`catch (${exception} ${variable})`));
     }
-    case 'JAVA_FINALEMENT': return rendu('} finally {\n    \n');
+    case 'JAVA_FINALEMENT': return bloc('finally');
     case 'JAVA_LANCE': {
       const { exception, texte } = instruction.parameters;
       return rendu(`throw new ${exception}(${renderStringLiteral(texte)});\n`);

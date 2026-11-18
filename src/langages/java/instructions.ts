@@ -116,6 +116,8 @@ export type InstructionJava =
   | { kind: 'JAVA_SUPER_METHODE'; parameters: { methode: string } }
   | { kind: 'JAVA_DECL_TYPE_CLASSE'; parameters: { classe: string; nom: string } }
   | { kind: 'JAVA_OBJET_POLYMORPHE'; parameters: { declare: string; nom: string; concrete: string } }
+  | { kind: 'JAVA_OBJET_POLYMORPHE_ARG'; parameters: { declare: string; nom: string; concrete: string;
+      expression: NumericExpression } }
   // ================= J9 — exceptions, paquetages, fichiers ==============
   | { kind: 'JAVA_PAQUETAGE'; parameters: { nom: string } }
   | { kind: 'JAVA_IMPORT'; parameters: { classe: string } }

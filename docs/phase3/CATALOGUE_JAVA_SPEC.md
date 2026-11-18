@@ -5,10 +5,10 @@ le réécrit depuis `catalogue-java.json`, qui est la source.*
 
 | | |
 |---|---|
-| formulations | **143** |
+| formulations | **144** |
 | dont reprises du catalogue partagé | 30 |
 | dont adaptations sémantiques | 27 |
-| dont propres à Java | **86** |
+| dont propres à Java | **87** |
 | intentions partagées à porter, couvertes | 57 / 57 |
 
 Origine : **reprise** = phrase et sens inchangés ; **adaptation** = la phrase ou la
@@ -167,7 +167,7 @@ ni Python.
 | `Déclare une structure nommée {CLASSE}.` | `class Point {` | adaptation · `STRUCT_DECL` |
 | `Déclare une variable de type structure {CLASSE} nommée {NOM}.` | `Point p = new Point();` | adaptation · `STRUCT_VAR` |
 
-## J8 — Héritage, interfaces, polymorphisme  (12)
+## J8 — Héritage, interfaces, polymorphisme  (13)
 
 | Phrase française | Java produit | Origine |
 |---|---|---|
@@ -181,6 +181,7 @@ ni Python.
 | `Crée une classe nommée {CLASSE} qui hérite de {CLASSE}.` | `public class Etudiant extends Personne {` | native |
 | `Crée une classe nommée {CLASSE} qui implémente {CLASSE}.` | `public class Eleve implements Affichable {` | native |
 | `Crée une interface nommée {CLASSE}.` | `public interface Affichable {` | native |
+| `Crée une variable de type {CLASSE} nommée {NOM} comme un objet de la classe {CLASSE} avec {EXPR}.` | `Affichable a = new Eleve(12);` | native |
 | `Crée une variable de type {CLASSE} nommée {NOM} comme un objet de la classe {CLASSE}.` | `Affichable a = new Eleve();` | native |
 | `Déclare une variable de type {CLASSE} nommée {NOM}.` | `Affichable a;` | native |
 
@@ -189,8 +190,8 @@ ni Python.
 | Phrase française | Java produit | Origine |
 |---|---|---|
 | `Affiche le message de l’exception {NOM}.` | `System.out.print(e.getMessage());` | native |
-| `Ajoute une branche attrape {CLASSE} nommée {NOM}.` | `} catch (IOException e) {` | native |
-| `Ajoute une branche finalement.` | `} finally {` | native |
+| `Ajoute une branche attrape {CLASSE} nommée {NOM}.` | `catch (IOException e) {` | native |
+| `Ajoute une branche finalement.` | `finally {` | native |
 | `Crée un bloc essaie avec un lecteur nommé {NOM} sur le fichier {TEXTE}.` | `try (BufferedReader lecteur = new BufferedReader(new FileReader("notes.txt"))) {` | native |
 | `Crée un bloc essaie avec un écrivain nommé {NOM} sur le fichier {TEXTE}.` | `try (PrintWriter f = new PrintWriter("sortie.txt")) {` | native |
 | `Crée un bloc essaie.` | `try {` | native |

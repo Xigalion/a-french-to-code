@@ -26,7 +26,7 @@ const CONTEXTE = { classeEnglobante: 'Eleve' };
 
 test('J3-J8 : les 82 formes natives sont reconnues et rendues', () => {
   const natives = SPEC.formulations.filter(f => f.origine === 'native');
-  assert.equal(natives.length, 86, 'la specification a bouge sans que le test le dise');
+  assert.equal(natives.length, 87, 'la specification a bouge sans que le test le dise');
   for (const { phrase, kind } of EXEMPLES_JAVA) {
     const resultat = JAVA.natif(phrase, CONTEXTE);
     assert.notEqual(resultat, undefined, 'declinee par le catalogue : ' + phrase);

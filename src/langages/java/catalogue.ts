@@ -246,6 +246,12 @@ export const MOTIFS: readonly Motif[] = [
   { forme: 'Crée une variable de type {CLASSE} nommée {NOM} comme un objet de la classe {CLASSE}',
     kind: 'JAVA_OBJET_POLYMORPHE',
     demonstration: 'Crée une variable de type Affichable nommée a comme un objet de la classe Eleve.' },
+  // Manque trouve par l'exercice de cloture : des qu'une classe a un
+  // constructeur a parametre, son constructeur sans argument CESSE d'exister,
+  // et la forme sans argument ne compile plus.
+  { forme: 'Crée une variable de type {CLASSE} nommée {NOM} comme un objet de la classe {CLASSE} avec {EXPR}',
+    kind: 'JAVA_OBJET_POLYMORPHE_ARG',
+    demonstration: 'Crée une variable de type Affichable nommée a comme un objet de la classe Eleve avec "12".' },
 
   // ============================ J9 — exceptions, fichiers ===============
   { forme: 'Déclare le paquetage {NOM}', kind: 'JAVA_PAQUETAGE',
@@ -537,6 +543,9 @@ function construire(kind: GenreJava, c: Lues, phrase: string): InstructionJava |
     case 'JAVA_DECL_TYPE_CLASSE': return { kind, parameters: { classe: classe(0), nom: nom(0) } };
     case 'JAVA_OBJET_POLYMORPHE':
       return { kind, parameters: { declare: classe(0), nom: nom(0), concrete: classe(1) } };
+    case 'JAVA_OBJET_POLYMORPHE_ARG':
+      return { kind, parameters: { declare: classe(0), nom: nom(0), concrete: classe(1),
+        expression: expr(0) } };
     case 'JAVA_PAQUETAGE': return { kind, parameters: { nom: nom(0) } };
     case 'JAVA_IMPORT': return { kind, parameters: { classe: classe(0) } };
     case 'JAVA_ESSAIE': return { kind, parameters: {} };

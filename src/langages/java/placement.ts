@@ -247,10 +247,17 @@ function moteDuBlocFerme(texte: string, avant: number): string {
     if (c === '}') profondeur++;
     else if (c === '{') {
       profondeur--;
-      if (profondeur === 0) {
-        const entete = texte.slice(Math.max(0, i - 400), i);
-        return /(?:^|[^\p{L}])(if|else|try|catch)\s*(?:\([^)]*\)\s*)?$/u.exec(entete)?.[1] ?? '';
-      }
+      if (profondeur !== 0) continue;
+      // L'en-tête va du début de l'instruction jusqu'à cette accolade. Le
+      // chercher par une expression régulière ancrée à la fin avait un défaut
+      // trouvé par l'exercice de clôture : un `try (BufferedReader f = new
+      // BufferedReader(new FileReader("x")))` contient des parenthèses
+      // IMBRIQUÉES, que « \([^)]*\) » ne traverse pas. On remonte donc au
+      // séparateur d'instruction, et on lit le PREMIER mot-clé de l'en-tête.
+      let debut = i - 1;
+      while (debut >= 0 && !';{}'.includes(texte[debut] ?? '')) debut--;
+      const entete = texte.slice(debut + 1, i);
+      return /(?:^|[^\p{L}])(if|else|try|catch|finally)(?![\p{L}\p{N}_])/u.exec(entete)?.[1] ?? '';
     }
   }
   return '';

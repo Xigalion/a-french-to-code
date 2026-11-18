@@ -1,9 +1,9 @@
 {
   "_lisezMoi": "SPECIFICATION du catalogue Java-A : une entree par formulation publiee, avec sa phrase francaise, sa sortie Java exacte, son origine et l'intention partagee dont elle vient. Les compteurs sont CALCULES par scripts/catalogue-java.mjs a partir de ces entrees, jamais ecrits a la main : c'est la correction du defaut qui avait produit « 134 = 101 + 33 » a cote d'un tableau totalisant 127. Au lot J1, un test imposera que le catalogue livre corresponde a ce fichier.",
-  "total": 143,
+  "total": 144,
   "parOrigine": {
     "adaptation": 27,
-    "native": 86,
+    "native": 87,
     "reprise": 30
   },
   "parDomaine": {
@@ -14,7 +14,7 @@
     "J5": 17,
     "J6": 25,
     "J7": 15,
-    "J8": 12,
+    "J8": 13,
     "J9": 14
   },
   "formulations": [
@@ -909,6 +909,13 @@
     },
     {
       "domaine": "J8",
+      "phrase": "Crée une variable de type {CLASSE} nommée {NOM} comme un objet de la classe {CLASSE} avec {EXPR}.",
+      "sortie": "Affichable a = new Eleve(12);",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J8",
       "phrase": "Crée une variable de type {CLASSE} nommée {NOM} comme un objet de la classe {CLASSE}.",
       "sortie": "Affichable a = new Eleve();",
       "origine": "native",
@@ -931,14 +938,14 @@
     {
       "domaine": "J9",
       "phrase": "Ajoute une branche attrape {CLASSE} nommée {NOM}.",
-      "sortie": "} catch (IOException e) {",
+      "sortie": "catch (IOException e) {",
       "origine": "native",
       "intention": null
     },
     {
       "domaine": "J9",
       "phrase": "Ajoute une branche finalement.",
-      "sortie": "} finally {",
+      "sortie": "finally {",
       "origine": "native",
       "intention": null
     },
