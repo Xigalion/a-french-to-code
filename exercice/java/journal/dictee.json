@@ -1,0 +1,152 @@
+{
+  "javac": "javac 21.0.13",
+  "phrases": 29,
+  "gestes": 1,
+  "journal": [
+    {
+      "phrase": "Déclare une structure nommée Moyennes.",
+      "kind": "STRUCT_DECL",
+      "portee": "fichier"
+    },
+    {
+      "phrase": "Crée la fonction principale.",
+      "kind": "MAIN",
+      "portee": "classe"
+    },
+    {
+      "phrase": "Déclare un tableau de type int nommé notes de dimension 5.",
+      "kind": "ARRAY_DECL",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Affecte la valeur 12 à l’élément \"0\" de notes.",
+      "kind": "ARRAY_ASSIGN_INT",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Affecte la valeur 15 à l’élément \"1\" de notes.",
+      "kind": "ARRAY_ASSIGN_INT",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Affecte la valeur 8 à l’élément \"2\" de notes.",
+      "kind": "ARRAY_ASSIGN_INT",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Affecte la valeur 17 à l’élément \"3\" de notes.",
+      "kind": "ARRAY_ASSIGN_INT",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Affecte la valeur 11 à l’élément \"4\" de notes.",
+      "kind": "ARRAY_ASSIGN_INT",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Crée un entier nommé total de valeur 0.",
+      "kind": "INIT_INT",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Crée un entier nommé i de valeur 0.",
+      "kind": "INIT_INT",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Crée une boucle tant que \"i < 5\".",
+      "kind": "WHILE",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Affecte à total le résultat numérique de \"total + notes[i]\".",
+      "kind": "NUMERIC_ASSIGN",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Affecte à i le résultat numérique de \"i + 1\".",
+      "kind": "NUMERIC_ASSIGN",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Affiche le texte \"total = \".",
+      "kind": "PRINT_TEXT",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Affiche la valeur de total.",
+      "kind": "PRINT_INT",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Affiche un retour à la ligne.",
+      "kind": "PRINT_NEWLINE",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Crée un entier nommé moyenne de valeur 0.",
+      "kind": "INIT_INT",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Affecte à moyenne le résultat numérique de \"total / 5\".",
+      "kind": "NUMERIC_ASSIGN",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Affiche le texte \"moyenne entière = \".",
+      "kind": "PRINT_TEXT",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Affiche la valeur de moyenne.",
+      "kind": "PRINT_INT",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Affiche un retour à la ligne.",
+      "kind": "PRINT_NEWLINE",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Crée un entier nommé reste de valeur 0.",
+      "kind": "INIT_INT",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Affecte à reste le résultat numérique de \"total % 5\".",
+      "kind": "NUMERIC_ASSIGN",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Affiche le texte \"reste = \".",
+      "kind": "PRINT_TEXT",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Affiche la valeur de reste.",
+      "kind": "PRINT_INT",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Affiche un retour à la ligne.",
+      "kind": "PRINT_NEWLINE",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Crée un bloc si \"moyenne > 10\".",
+      "kind": "IF",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Affiche le texte \"moyenne au-dessus de 10\".",
+      "kind": "PRINT_TEXT",
+      "portee": "methode"
+    },
+    {
+      "phrase": "Affiche un retour à la ligne.",
+      "kind": "PRINT_NEWLINE",
+      "portee": "methode"
+    }
+  ]
+}
