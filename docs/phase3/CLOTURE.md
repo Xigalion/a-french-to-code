@@ -7,6 +7,14 @@ prouver.
 Le quatrième langage, **SQL**, n'est pas commencé. Les modèles pédagogiques
 supérieurs non plus.
 
+> **Clôture définitive, 18 novembre 2026.** `phase-3-java` est fusionnée dans
+> `main` en **avance rapide**, l'étiquette **`v0.6.0`** est posée et poussée, et
+> les vérifications anonymes sont faites — dont la plus exigeante : le paquet
+> reconstruit depuis un clone **anonyme de l'étiquette** est **identique octet
+> pour octet**. Reste un geste manuel, la **release GitHub**, à créer en
+> ***pre-release*** tant que la validation humaine n'a pas eu lieu :
+> [`../PUBLICATION_0_6_0.md`](../PUBLICATION_0_6_0.md) §7.
+
 ---
 
 ## 1. Ce qui existe maintenant et n'existait pas

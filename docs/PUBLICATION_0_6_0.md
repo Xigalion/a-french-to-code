@@ -1,11 +1,24 @@
-# Publication 0.6.0 — fusion, étiquette, release
+# Publication 0.6.0 — ce qui est fait, ce qui reste
 
-> **Rien n'est fusionné, rien n'est étiqueté, rien n'est publié.** Ce document
-> contient les commandes exactes, dans l'ordre, et ce que chacune change.
+> **Fusionné, étiqueté, poussé le 18 novembre 2026.** La **release GitHub**
+> reste à créer : aucun outil de la session ne la crée. Le lien, le fichier et
+> le texte exact sont au §7.
 
-Date : 18 novembre 2026. Branche `phase-3-java`, **12 commits** en avance sur
-`main`. Dépôt : **`Xigalion/a-french-to-code`** — le renommage **a pris
-effet**, et l'ancien nom répond 301.
+Dépôt : **`Xigalion/a-french-to-code`**. L'ancien nom répond **301**.
+
+**Ce document distingue partout ce qui a été réellement exécuté de ce qui est
+seulement préparé.** C'est la leçon de la 0.5.0, dont le suivi avait un temps
+annoncé comme faites des opérations qui attendaient encore.
+
+| Opération | État |
+|---|---|
+| fusion de `phase-3-java` dans `main`, en avance rapide | **FAIT** |
+| étiquette annotée `v0.6.0` | **FAIT** |
+| poussée de `main` | **FAIT** |
+| poussée de `v0.6.0`, **par son nom** | **FAIT** |
+| vérifications anonymes du dépôt, de l'étiquette et du paquet | **FAIT** — §8 |
+| **release GitHub 0.6.0, en *pre-release*, avec le `.vsix`** | **À FAIRE à la main** — §7 |
+| éléments secondaires du dépôt (étiquettes de tickets, Projects, brouillon de la 0.5.0) | **écartés** sur consigne — §9 |
 
 ---
 
@@ -23,14 +36,13 @@ effet**, et l'ancien nom répond 301.
 | français souple en Java | **36/36**, 0 acceptée à tort, 0 erreur de sens | `node scripts/mesurer-java.mjs` |
 | français souple, corpus **gelé** C17 | 95,1 %, inchangé | `node scripts/mesurer-reformulations.mjs` |
 | liens et chemins cités | 0 problème | `node scripts/liens.mjs` |
-| contrôles de pré-publication | **19/19** | `node scripts/pre-publication.mjs --rapide` |
-| paquet reproductible **au bit** | depuis **deux** clones propres | §2 |
+| contrôles de pré-publication | **19/19**, relancés **sur `main`** après la fusion | `node scripts/pre-publication.mjs --rapide` |
+| paquet reproductible **au bit** | depuis **trois** constructions | §2 |
 | mise à niveau depuis la 0.5.0 | une seule extension, identifiant inchangé | §3 |
 
-**La fusion est une avance rapide** : `main` est un ancêtre de la branche, et
-`git merge-tree` ne signale aucun conflit.
+La fusion était une **avance rapide** : `main` était un ancêtre de la branche.
 
-## 2. Le paquet, et comment le vérifier
+## 2. Le paquet, et sa correspondance avec le commit étiqueté
 
 ```
 dist/c-a-0.6.0.vsix
@@ -39,9 +51,11 @@ taille  210 661 octets
 entrées 62
 ```
 
-**Reproductible au bit** : deux clones propres du même commit, `npm ci`,
-`npm run build:extension`, `node scripts/paquet.mjs` — et la même empreinte,
-identique à celle du poste de développement.
+**Reproductible au bit, et vérifié contre l'étiquette publique** : un clone
+**anonyme** de `v0.6.0`, `npm ci`, construction, `node scripts/paquet.mjs` — et
+le fichier est **identique octet pour octet** à celui du poste de
+développement. Ce n'est donc pas « le paquet d'un commit qui ressemble à
+l'étiquette » : c'est le paquet **de** l'étiquette.
 
 ```bash
 git clone --branch v0.6.0 https://github.com/Xigalion/a-french-to-code.git verification
@@ -68,73 +82,76 @@ Et dans le dossier isolé, après la mise à niveau :
 - **aucune seconde extension ne cohabite**, et aucune commande n'est déclarée
   deux fois.
 
-## 4. La fusion — commandes exactes
+## 4. La fusion — ce qui a été exécuté
 
 ```bash
-# 1. l'avance rapide est-elle possible ? Cette commande ne modifie rien, et
-#    elle échoue si main a divergé.
-git merge-base --is-ancestor main phase-3-java && echo "avance rapide possible"
-
-# 2. passer sur main, et vérifier qu'il n'y a rien en cours
+git merge-base --is-ancestor main phase-3-java   # avance rapide possible
 git checkout main
-git status --short            # doit être vide
-
-# 3. avance rapide, sans commit de fusion : l'historique reste linéaire
-git merge --ff-only phase-3-java
-
-# 4. vérifier que l'arbre est bien celui de la branche
-git diff --stat phase-3-java   # doit être vide
+git merge --ff-only phase-3-java                 # avance rapide, sans commit de fusion
+git diff --stat phase-3-java                     # vide
 ```
 
-**Pourquoi `--ff-only`** : il **échoue** si l'avance rapide n'est pas possible,
-au lieu de fabriquer un commit de fusion silencieux.
+**`--ff-only`** a été employé parce qu'il **échoue** si l'avance rapide n'est
+pas possible, au lieu de fabriquer un commit de fusion silencieux.
+L'historique reste linéaire : **aucun commit de fusion**.
 
 ### Retour arrière
 
-Avant toute poussée, le retour est immédiat, et il ne demande **ni étiquette
-ni hachage** : `git merge` pose `ORIG_HEAD` sur le sommet d'avant la fusion.
+Avant la poussée, `ORIG_HEAD` suffisait. **Après la poussée, il ne suffit
+plus** : revenir demanderait une poussée forcée sur une branche publique, ce
+que ce dépôt s'interdit. Le retour en arrière se fait désormais par un
+**nouveau commit** qui annule, pas par une réécriture.
 
-```bash
-git reset --hard ORIG_HEAD
-git log -1 --oneline
-```
+**Ne jamais utiliser `v0.5.0`** pour revenir : comme `v0.4.0` avant elle, cette
+étiquette n'est pas le sommet de `main` — des commits documentaires l'ont
+suivie, et un retour vers elle les perdrait.
 
-**Ne pas utiliser `v0.5.0`** pour revenir : comme `v0.4.0` avant elle, cette
-étiquette n'est pas le sommet de `main`. Des commits documentaires l'ont
-suivie, et un retour vers elle les perdrait. C'est le piège que la procédure de
-la 0.5.0 avait documenté après l'avoir trouvé.
-
-## 5. L'étiquette
+## 5. L'étiquette — posée
 
 ```bash
 git tag -a v0.6.0 -m "A 0.6.0 — trois langages cibles : C17, Python, Java 21"
-git tag --list v0.6.0
-git show v0.6.0 --stat | head
 ```
 
-Posée **après** la fusion, sur `main`, pour qu'elle désigne le même arbre que
-la branche.
+Posée **après** la fusion, sur `main`, donc elle désigne le même arbre que la
+branche. Vérifié : `v0.6.0^{}` et `main` sont le même commit, localement
+**et** au distant.
 
-## 6. La poussée
+## 6. La poussée — faite
 
 ```bash
-git push origin main
-git push origin v0.6.0
+git push origin main      # avance rapide acceptee par le distant
+git push origin v0.6.0    # [new tag]
 ```
 
-**`--force-with-lease` n'est pas nécessaire** : la fusion est une avance
-rapide, et l'historique public n'est pas réécrit.
+**`--force-with-lease` n'était pas nécessaire** : avance rapide, aucun
+historique public réécrit.
 
-**Ne pas pousser `--tags`** : cela enverrait aussi les étiquettes de sauvegarde
-`avant-*`, qui contiennent des chemins personnels. Deux contrôles de
-`scripts/pre-publication.mjs` l'interdisent, et l'étiquette se pousse donc par
-son nom.
+**`--tags` n'a pas été employé**, et ne doit pas l'être : cela enverrait aussi
+les étiquettes de sauvegarde `avant-*`, qui contiennent des chemins personnels.
+Deux contrôles de `scripts/pre-publication.mjs` l'interdisent.
 
-## 7. La release GitHub
+## 7. La release GitHub — le seul geste manuel
 
-Titre : **A 0.6.0 — trois langages cibles**
+Aucun outil de cette session ne crée une release : le serveur GitHub
+disponible ne sait que **lire** les releases, et `gh` n'est pas installé.
 
-Le corps se **produit**, il ne se repère pas à l'œil :
+**Lien** — l'étiquette existe déjà au distant, le formulaire la trouvera :
+
+    https://github.com/Xigalion/a-french-to-code/releases/new?tag=v0.6.0
+
+**Étiquette à choisir :** `v0.6.0` (*Choose a tag* → elle est dans la liste,
+il n'y a rien à créer).
+
+**Titre :**
+
+    A 0.6.0 — trois langages cibles
+
+**Fichier à joindre :**
+
+    dist/c-a-0.6.0.vsix
+    sha256 49e56b55b0f5b9ab7cffccc6a941351f5a99c1a314e3d3c6d9ee8596debc3cab
+
+**Texte à coller** — il se **produit**, il ne se repère pas à l'œil :
 
     node scripts/notes-release.mjs 0_6_0     # écrit dist/notes-release-v0.6.0.md
 
@@ -143,30 +160,54 @@ l'en-tête du gabarit aurait survécu — c'est le défaut de la 0.5.0, dont la
 release est partie avec son titre en double et la ligne « prêt à coller »
 visible par les lecteurs.
 
-Fichier à joindre : **`dist/c-a-0.6.0.vsix`**, et son empreinte sha256 est dans
-les notes pour que quiconque puisse vérifier.
+**Cocher « Set as a pre-release ».** C'est une **décision du fondateur** du
+18 novembre 2026 : la 0.6.0 reste en avant-première **tant que la validation
+humaine n'a pas eu lieu**. Et c'est cohérent — `0/10` séances, aucun
+utilisateur n'a encore écrit un programme avec A. Conséquence à assumer : le
+dépôt continuera de n'afficher **aucune** « Latest release », puisque la 0.5.0
+est elle aussi en *pre-release*. Ce n'est pas un défaut mais le reflet exact de
+l'état du projet.
 
-Ne cocher **ni** « Set as a pre-release » **ni** « Save draft ». La release
-0.5.0 est partie en *pre-release*, et le dépôt n'a donc affiché **aucune**
-« Latest release » : `/releases/latest` répondait 404 côté API et redirigeait
-vers la liste côté page.
+**Ne pas cocher « Save draft ».** Un brouillon n'est visible que du
+propriétaire, et la vérification anonyme échouerait.
 
-## 8. Les retouches qui restent sur la 0.5.0
+## 8. Les vérifications anonymes — faites
 
-Elles n'ont rien à voir avec la 0.6.0, mais elles sont encore vraies :
+Toutes sans jeton, avec un client générique.
 
-1. la release **0.5.0** est marquée *pre-release* — à décocher, ou à laisser si
-   la 0.6.0 devient la « latest » ;
-2. un **brouillon de release en double** subsiste (`untagged-e186af3a…`), à
-   supprimer ;
-3. le corps de la 0.5.0 contient l'en-tête du gabarit.
+| Vérification | Résultat |
+|---|---|
+| `github.com/Xigalion/a-french-to-code` | **200** |
+| ancien nom `c-a-french-to-c` | **301** vers le nouveau |
+| `tree/v0.6.0` | **200** |
+| API, référence de l'étiquette `v0.6.0` | **200**, objet annoté déréférencé vers un commit |
+| `main` au distant | **le même commit que l'étiquette**, et le même qu'en local |
+| `README.md` à l'étiquette | **200**, et il nomme **C17, Python et Java 21** |
+| `docs/CATALOGUE_JAVA.md` à l'étiquette | **200** |
+| `CHANGELOG.md` sur `main` | **200** |
+| paquet reconstruit depuis le clone anonyme de `v0.6.0` | **sha256 identique**, 210 661 octets, `cmp` au vert |
+
+Ce qui **ne peut pas** être vérifié avant la création manuelle : l'accessibilité
+anonyme de la **release** et le **téléchargement** du `.vsix` depuis son URL de
+release. Les deux commandes à passer après le geste du §7 :
+
+```bash
+curl -sS -o /dev/null -w '%{http_code}\n' \
+  https://api.github.com/repos/Xigalion/a-french-to-code/releases/tags/v0.6.0
+curl -sSL -o verif.vsix \
+  https://github.com/Xigalion/a-french-to-code/releases/download/v0.6.0/c-a-0.6.0.vsix
+sha256sum verif.vsix   # doit donner 49e56b55…
+```
 
 ## 9. Ce que cette publication ne règle pas
 
 - **aucun essai par un utilisateur**, dans aucun des trois langages. `0/10`
-  séances, et c'est le même zéro depuis la phase 1 ;
+  séances, et c'est le même zéro depuis la phase 1. C'est précisément pourquoi
+  la release reste en *pre-release* ;
 - **aucun essai hors Windows**, un seul compilateur C, un seul interpréteur
   Python, un seul JDK ;
-- les **quatre étiquettes** de classement des tickets ne sont toujours pas
-  créées (`docs/SUIVI_PUBLIC.md` §2), ni les sujets du dépôt, et l'onglet
-  **Projects** est toujours actif alors qu'il promet un suivi qui n'existe pas.
+- les **éléments secondaires** du dépôt — les quatre étiquettes de classement
+  des tickets (`docs/SUIVI_PUBLIC.md` §2), les sujets, l'onglet **Projects**, le
+  brouillon de release en double de la 0.5.0 et l'en-tête de gabarit dans son
+  corps — sont **écartés sur consigne du fondateur** du 18 novembre 2026. Ils
+  restent vrais et restent écrits ici : écartés n'est pas réglé.

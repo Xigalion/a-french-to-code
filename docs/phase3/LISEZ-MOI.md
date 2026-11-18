@@ -3,11 +3,13 @@
 Ouverte le **18 novembre 2026**, branche `phase-3-java`.
 
 > **La phase 3 est close depuis le 18 novembre 2026.** Java-A V1 est livré, et
-> la version **0.6.0** est préparée. Le bilan, les quatorze défauts trouvés et
-> ce qui reste ouvert : [CLOTURE.md](CLOTURE.md) et
-> [BILAN_JAVA_V1.md](BILAN_JAVA_V1.md).
+> la version **0.6.0** est fusionnée dans `main`, étiquetée `v0.6.0` et
+> **poussée**. Le bilan, les quatorze défauts trouvés et ce qui reste ouvert :
+> [CLOTURE.md](CLOTURE.md) et [BILAN_JAVA_V1.md](BILAN_JAVA_V1.md).
 >
-> Rien n'est fusionné dans `main`, et rien n'est publié.
+> Reste **un seul geste**, manuel : créer la release GitHub, **en
+> *pre-release*** tant que la validation humaine n'a pas eu lieu. Lien, fichier
+> et texte exact : [`../PUBLICATION_0_6_0.md`](../PUBLICATION_0_6_0.md) §7.
 
 *Les documents ci-dessous gardent leur formulation d'origine, qui dit souvent
 « rien n'est implémenté ». C'était vrai à leur date : un compte rendu daté ne
@@ -59,6 +61,9 @@ l'existant, parce que Python-A n'a pas de classes.
 ## Ce que la phase 3 ne fait pas
 
 SQL, les modèles pédagogiques supérieurs, `record`, `switch` fléché, `var`, la
-factorisation des sessions de l'hôte — et **aucune modification des références
-GitHub** tant que le renommage du dépôt n'est pas vérifié : le nom
-`a-french-to-code` répond encore 404.
+factorisation des sessions de l'hôte.
+
+*À l'ouverture de la phase, cette section disait aussi « aucune modification
+des références GitHub tant que le renommage n'est pas vérifié : le nom
+`a-french-to-code` répond encore 404 ». Le renommage **a pris effet** depuis,
+l'ancien nom répond 301, et les références ont été appliquées.*

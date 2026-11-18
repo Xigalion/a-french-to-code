@@ -126,18 +126,18 @@
       "note": "52 entrees, 36 claires : 36 reconnues (100 %), 0 acceptee a tort, 0 erreur de SENS. La mesure a trouve TROIS defauts, dont un grave : six infinitifs manquaient au lexique, la garde des identifiants ignorait les noms communs que Java introduit -- « Appelle la methode afficher de e. » produisait « e.Affiche(); », une ERREUR DE SENS --, et la garde corrigee sur-protegeait a son tour. Le corpus porte son biais ECRIT : il a ete ecrit par l auteur du mecanisme, et ce 100 % mesure la PORTEE du mecanisme sur un langage nouveau, pas le francais spontane. Le corpus GELE de la phase 2 reste a 95,1 %, inchange."
     },
     {
-      "nom": "Phase 3 — version publique 0.6.0 preparee",
+      "nom": "Phase 3 — version publique 0.6.0 publiee (release manuelle exceptee)",
       "fait": 7,
       "total": 7,
       "unite": "livrables",
       "source": "README.md, CHANGELOG.md, docs/CATALOGUE_JAVA.md, docs/LIMITES_CONNUES.md, docs/ETAT_DU_PROJET.md, docs/NOTES_PUBLICATION_0_6_0.md, docs/PUBLICATION_0_6_0.md, dist/c-a-0.6.0.vsix",
-      "note": "Documents publics des TROIS langages, catalogue Java ENGENDRE depuis le moteur, notes de publication, procedure de fusion, et paquet reproductible AU BIT depuis deux clones propres (sha256 49e56b55, 210 661 octets, 62 entrees). La suite hote passe aux QUATRE combinaisons : sources et paquet, sur VS Code 1.96.4 et 1.138.0. Mise a niveau depuis la 0.5.0 verifiee : une seule extension, identifiant inchange. RIEN n est fusionne ni publie."
+      "note": "Documents publics des TROIS langages, catalogue Java ENGENDRE depuis le moteur, notes de publication, procedure, et paquet reproductible AU BIT. FUSIONNE en avance rapide dans main, etiquette v0.6.0 POSEE et POUSSEE, 19/19 controles de pre-publication relances SUR main. Verifie anonymement : depot 200, ancien nom 301, tree/v0.6.0 200, etiquette distante designant le MEME commit que main, README a l etiquette nommant les trois langages, et le paquet reconstruit depuis un clone ANONYME de l etiquette est IDENTIQUE octet pour octet (sha256 49e56b55, 210 661 octets, 62 entrees). Suite hote : QUATRE combinaisons, sources et paquet, sur VS Code 1.96.4 et 1.138.0. Mise a niveau depuis la 0.5.0 verifiee, identifiant projet-a-local.c-a inchange. RESTE UN GESTE MANUEL : la release GitHub, a creer en PRE-RELEASE tant que la validation humaine n a pas eu lieu."
     }
   ],
   "cloture": {
     "date": "2026-11-18",
     "document": "docs/phase3/CLOTURE.md",
-    "etat": "CLOSE. Java-A V1 livre, version 0.6.0 PREPAREE et non publiee. Le quatrieme langage, SQL, n'est pas commence.",
-    "ceQuiResteOuvert": "docs/phase3/BILAN_JAVA_V1.md (produit), docs/LIMITES_CONNUES.md (public), docs/PUBLICATION_0_6_0.md sections 8 et 9 (GitHub)"
+    "etat": "CLOSE DEFINITIVEMENT. Java-A V1 livre ; 0.6.0 fusionnee dans main, etiquetee v0.6.0 et poussee. Seule la release GitHub reste a creer a la main, en PRE-RELEASE. Le quatrieme langage, SQL, n est pas commence.",
+    "ceQuiResteOuvert": "docs/phase3/BILAN_JAVA_V1.md (produit), docs/LIMITES_CONNUES.md (public), docs/PUBLICATION_0_6_0.md section 7 (la release manuelle) et section 9 (les elements secondaires du depot, ECARTES sur consigne du 18 novembre 2026)"
   }
 }
