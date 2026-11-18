@@ -122,6 +122,14 @@
       "unite": "execution",
       "source": "test-utilisateur/journal/hote.txt, passage 16",
       "note": "114 scenarios sur 114, vscode 1.138.0 INSTALLEE, le 18 novembre 2026. Les deux processus CodeSetup orphelins PID 70352 et 71652 avaient disparu : le blocage etait l INSTALLATEUR, pas l editeur. Aucun processus n a ete arrete par C-A. La suite passe aussi sur la 1.96.4, plancher du manifeste."
+    },
+    {
+      "nom": "Phase 2 — suite hote contre le PAQUET installe",
+      "fait": 1,
+      "total": 1,
+      "unite": "verification",
+      "source": "test-utilisateur/journal/hote.txt, passage 17",
+      "note": "114 scenarios sur 114, DEUX fois, contre le .vsix reconstruit depuis un clone ANONYME du depot public a l etiquette v0.5.0, installe sous projet-a-local.c-a@0.5.0 dans un dossier isole. Lance par CA_EXTENSION_PATH, une option du lanceur OFFICIEL : un premier lanceur ecrit pour l occasion donnait 113 puis 89, quand le temoin sur les sources donnait 114 au meme moment. Le defaut etait dans le lanceur."
     }
   ]
 }

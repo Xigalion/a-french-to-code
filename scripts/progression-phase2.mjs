@@ -30,17 +30,23 @@ for (const i of etat.indicateurs) {
   console.log('');
 }
 
-// Verification : la derniere barre affirme que src/ n'a pas bouge. On le
-// verifie au lieu de le croire.
+// Verification : le controle ne doit jamais AFFIRMER un etat, il doit le
+// lire. Jusqu'au 18 novembre il imprimait « non fusionnee » en dur, ce qui
+// est devenu faux le jour de la fusion sans qu'une ligne change : une
+// affirmation codee en dur ne se perime pas, elle ment.
 let diff = '(non verifiable : branche main absente)';
 try {
-  const sortie = execFileSync('git', ['diff', '--stat', 'main..HEAD', '--', 'src/', 'extension/', 'test/'],
-    { cwd: racine, encoding: 'utf8' }).trim();
-  // Depuis P0, la branche modifie src/ et test/ : ce qui doit rester verifie,
-  // c'est que main n'a PAS bouge, et que la branche n'est pas fusionnee.
   const enAvance = execFileSync('git', ['rev-list', '--count', 'main..HEAD'], { cwd: racine, encoding: 'utf8' }).trim();
+  const enRetard = execFileSync('git', ['rev-list', '--count', 'HEAD..main'], { cwd: racine, encoding: 'utf8' }).trim();
   const sommetMain = execFileSync('git', ['rev-parse', '--short', 'main'], { cwd: racine, encoding: 'utf8' }).trim();
-  diff = 'main au sommet ' + sommetMain + ', branche en avance de ' + enAvance + ' commit(s), non fusionnee'
-    + (sortie === '' ? ' ; src/, extension/ et test/ inchanges' : '\n' + sortie);
+  let etiquette = 'aucune';
+  try {
+    etiquette = execFileSync('git', ['describe', '--tags', '--abbrev=0', 'main'], { cwd: racine, encoding: 'utf8' }).trim();
+  } catch { /* aucune etiquette accessible depuis main */ }
+  const etat = enAvance === '0'
+    ? 'fusionnee (rien en avance sur main)'
+    : 'NON fusionnee : ' + enAvance + ' commit(s) en avance sur main';
+  diff = 'main au sommet ' + sommetMain + ', derniere etiquette ' + etiquette
+    + ', branche ' + etat + (enRetard === '0' ? '' : ', ' + enRetard + ' commit(s) de retard');
 } catch { /* depot sans main : rien a conclure */ }
 console.log('Controle : ' + diff);
