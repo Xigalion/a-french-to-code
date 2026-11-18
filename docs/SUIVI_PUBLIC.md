@@ -4,7 +4,7 @@
 un classement décidé d'avance.
 
 > Le dépôt est public depuis le 17 novembre 2026 :
-> **https://github.com/Xigalion/c-a-french-to-c**
+> **https://github.com/Xigalion/a-french-to-code**
 >
 > Un dépôt public sans suivi est pire qu'un dépôt privé : il promet une
 > écoute qu'il ne tient pas. Ce document existe pour que la promesse soit

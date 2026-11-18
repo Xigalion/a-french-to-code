@@ -1,5 +1,11 @@
 # Procédure de publication, et retour arrière
 
+> **Renommage effectif le 18 novembre 2026.** Le dépôt s'appelle désormais
+> **`a-french-to-code`**. Les URL `c-a-french-to-c` de ce document sont
+> conservées telles quelles : elles décrivent un état daté, et GitHub en
+> assure la **redirection permanente** — vérifié, l'ancien nom répond 301.
+
+
 **Pour qui :** la personne qui va publier le dépôt. Les commandes sont
 écrites pour être copiées ; **aucune n'a été exécutée**.
 

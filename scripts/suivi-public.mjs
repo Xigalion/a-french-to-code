@@ -13,7 +13,7 @@
 
 import { readFileSync } from 'node:fs';
 
-const DEPOT = process.env.CA_DEPOT ?? 'Xigalion/c-a-french-to-c';
+const DEPOT = process.env.CA_DEPOT ?? 'Xigalion/a-french-to-code';
 const API = 'https://api.github.com/repos/' + DEPOT;
 const tout = process.argv.includes('--tout');
 

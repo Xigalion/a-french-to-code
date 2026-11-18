@@ -102,7 +102,7 @@ le même programme saisi par l'interface, et un C — ici un Java — **identiqu
 - **SQL**, et les modèles pédagogiques supérieurs ;
 - `record`, `switch` fléché, `var` — décisions J7 et J8 ;
 - la **factorisation** des trois sessions de l'hôte — décision J9, après mesure ;
-- le **renommage GitHub**. Le dépôt s'appelle toujours `c-a-french-to-c`, le
+- le **renommage GitHub**. Le dépôt s'appelle toujours `a-french-to-code`, le
   nom `a-french-to-code` répond 404, et **aucune référence ne sera changée**
   tant que le renommage n'est pas vérifié ;
 - toute vérification de types, de symboles, de bornes ou de **visibilité**. A

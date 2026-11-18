@@ -6,6 +6,115 @@ des 32 lots est dans `docs/LOT*.md`.
 
 ---
 
+## 0.6.0 — 18 novembre 2026 — trois langages cibles
+
+**Toujours un prototype pédagogique.** Pas un produit.
+
+### Ce que cette version ajoute
+
+**Java 21 comme troisième langage cible**, avec son **propre catalogue
+pédagogique** — et non un portage du C :
+
+- **144 formulations** : 30 reprises du catalogue partagé, 27 **adaptations
+  sémantiques**, et **87 natives** ;
+- **27 refus nommés**, chacun désignant la construction Java qui enseigne la
+  même compétence ;
+- **28 informations pédagogiques passives**, dont trois qui **corrigent une
+  règle apprise ailleurs** et deux qui disent une **lacune de A** ;
+- **neuf domaines** couverts : types et point d'entrée, affichage et saisie,
+  expressions et chaînes, contrôle, méthodes, tableaux et collections, objets
+  et constructeurs, héritage et interfaces, exceptions et fichiers ;
+- un **placement propre**, par accolades mais à **quatre portées** — fichier,
+  classe, méthode, interface.
+
+**Java 21 LTS, sans aucune fonctionnalité en avant-première.** Les classes
+implicites et le `main` d'instance sont *preview* dans cette version du
+langage : le code produit exigerait deux drapeaux et cesserait de compiler
+quand la fonctionnalité changerait. Le point d'entrée est donc une classe
+**explicite** et un `main` **explicite**, commandés par deux phrases. Le
+premier programme Java demande **trois** phrases là où Python en demande une :
+c'est Java qui l'exige, pas A qui se complique.
+
+### Le réglage, et l'identifiant
+
+Un réglage de plus, **actif par défaut** comme les deux autres :
+
+| Réglage | À `false` |
+|---|---|
+| `c-a.souplesse` | restaure le **mode strict** |
+| `c-a.python` | n'ouvre pas les `.py` |
+| `c-a.java` | n'ouvre pas les `.java` |
+
+**L'identifiant technique ne change toujours pas** : `projet-a-local.c-a`.
+Une mise à jour depuis la 0.5.0 se fait normalement, sans rien désinstaller.
+
+### Ce que l'étiquette « accolades » ne suffisait pas à dire
+
+Java porte la même étiquette de blocs que C17, et son placement a pourtant
+dû être **écrit**. `planPlacement` encode des règles **du C**, pas des règles
+**des accolades** : en Java, rien d'exécutable ne vit à la portée fichier —
+pas même une affectation —, une méthode exige une **classe** (deux niveaux,
+pas un), et `package` précède les `import` qui précèdent le type, un ordre
+**à trois temps** que le C n'a pas.
+
+### Le français souple, réutilisé tel quel
+
+Les **98 reformulations** de la 0.5.0 servent sans modification : ce sont des
+règles français → français, elles ne savent pas quel langage les consomme.
+Mesuré sur un corpus indépendant : **36 phrases claires sur 36 reconnues**,
+**0 acceptée à tort**, **0 erreur de sens**.
+
+Et cette mesure a trouvé **un défaut de sens** qui touchait aussi les deux
+autres langages : la garde des identifiants ne connaissait que « nommé » et
+« appelé ». Dans « Appelle la méthode afficher de e. », le mot `afficher` est
+au lexique, et la couche produisait `e.Affiche();` — **A renommait
+silencieusement la méthode de l'utilisateur**. Corrigé, puis corrigé une
+seconde fois parce que la correction sur-protégeait à son tour.
+
+Six infinitifs ont été ajoutés au lexique — `importer`, `ajouter`, `appeler`,
+`lancer`, `retirer`, `sortir` —, et trois d'entre eux profitent aussi à C17.
+La table porte sa propre règle : elle ne grandit **que sur une formulation
+mesurée**.
+
+### Ce que cette version NE change pas
+
+**C-A et Python-A sont strictement préservés.** Le différentiel contre la
+0.5.0 : **1 335 559 comparaisons, 0 régression, 0 capacité perdue**. La
+partition des 84 genres du moteur n'a pas été touchée, et un test l'impose
+toujours exhaustive.
+
+### Preuves
+
+| | |
+|---|---|
+| tests | **4 438** Node, **121** hôte VS Code |
+| exercice de clôture Java | **4 fichiers, 96 phrases, 0 retouche manuelle** |
+| compilation | `javac --release 21 -encoding UTF-8 -Xlint:all` : code 0, **aucun avertissement** |
+| exécution | `java -ea` : code 0, sortie conforme au **calcul fait à la main** |
+| français souple en Java | **36/36**, 0 acceptée à tort, 0 erreur de sens |
+| différentiel contre la 0.5.0 | **0 régression, 0 capacité perdue** |
+
+### Ses limites
+
+- **aucune vérification** de symboles, de types, de bornes — ni, en Java, de
+  **visibilité**. Lire un champ `private` depuis une autre classe est accepté
+  par A et refusé par `javac` ;
+- **trois obligations de Java que A ne satisfait pas pour vous** : les
+  exceptions vérifiées, `static`, et le nom du fichier. Les trois sont
+  **dites** par des informations passives, et aucune n'est refermée ;
+- `record`, le `switch` fléché et `var` sont **refusés**, délibérément ;
+- **un seul JDK** essayé — Temurin 21.0.13 —, sur **Windows** seulement ;
+- **aucun essai par un utilisateur**, dans aucun des trois langages.
+
+Tout cela est détaillé dans [`docs/LIMITES_CONNUES.md`](docs/LIMITES_CONNUES.md).
+
+### Le dépôt a changé de nom
+
+Il s'appelle désormais **`a-french-to-code`**. GitHub assure la **redirection
+permanente** depuis l'ancien nom — vérifié, il répond 301.
+
+---
+
 ## 0.5.0 — 17 novembre 2026 — deux langages cibles
 
 **Toujours un prototype pédagogique.** Pas un produit.

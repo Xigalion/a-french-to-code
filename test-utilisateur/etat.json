@@ -62,7 +62,7 @@
     "versionPublique": "v0.5.0",
     "procedure": "docs/PUBLICATION.md",
     "documentPublic": "docs/ETAT_DU_PROJET.md ; les instructions de travail internes restent hors du dépôt",
-    "url": "https://github.com/Xigalion/c-a-french-to-c",
+    "url": "https://github.com/Xigalion/a-french-to-code",
     "suivi": "docs/SUIVI_PUBLIC.md ; node scripts/suivi-public.mjs",
     "paquet": {
       "fichier": "dist/c-a-0.5.0.vsix",

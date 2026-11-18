@@ -1,4 +1,4 @@
-# Limites connues de C-A
+# Limites connues de A — C-A, Python-A, Java-A
 
 **Pour qui :** quiconque s'apprête à utiliser C-A, ou à ouvrir un ticket.
 À lire **avant** de conclure à un défaut.
@@ -217,3 +217,93 @@ les laisse aux outils de lecture.
 - la sortie des programmes de preuve est comparée avec
   `PYTHONIOENCODING=utf-8` imposé — sans quoi la console réécrit les accents.
   C'est un réglage de la mesure, pas une retouche du code produit.
+
+---
+
+## Limites propres à Java
+
+### Ce qui n'existe pas, et ne viendra pas dans cette version
+
+| Notion | Pourquoi |
+|---|---|
+| les **classes implicites** et le `main` d'instance | ils sont *preview* en Java 21 : le code produit exigerait `--enable-preview` à la compilation **et** à l'exécution, et cesserait de compiler quand la fonctionnalité changerait. Le point d'entrée est donc une classe **explicite** et un `main` **explicite**, commandés par deux phrases |
+| `record` | il cache le constructeur, les champs et les accesseurs — c'est-à-dire **tout ce que le domaine des objets enseigne** |
+| le `switch` **fléché** (`case 1 ->`) | il supprime la traversée des cas, qui est précisément la notion à comprendre — y compris pour comprendre pourquoi les formes modernes l'ont supprimée |
+| `var` | il cache le type, et le type est la notion que le premier domaine enseigne |
+| les **génériques écrits par l'utilisateur** | aucune formulation ne les exprime. Les collections du catalogue sont typées, mais leur type vient d'une liste finie |
+| un paquetage à **plusieurs niveaux** | `Déclare le paquetage ecole.` écrit un seul segment. Jamais essayé avec `ecole.notes` |
+| une **classe publique seconde** dans un fichier | Java l'interdit, et A n'en écrit pas : une classe qui hérite vit donc dans **son** fichier |
+
+### Ce que Java refuse là où C17 acceptait
+
+Comme pour Python : **une phrase du catalogue C17 peut être refusée dans un
+fichier `.java`**, et c'est voulu. **27 intentions** sur 84 le sont.
+
+| Phrase | En C17 | En Java |
+|---|---|---|
+| tout ce qui touche aux **pointeurs** | `int *p`, `&x`, `*p` | **refusé** : un objet **est** déjà une référence |
+| `Alloue … octets …`, `Libère la mémoire …` | `malloc`, `free` | **refusé** : ramasse-miettes. Une allocation oubliée n'existe pas comme défaut |
+| `Affiche la taille du type int.` | `sizeof` | **refusé** : la taille d'un `int` est fixée par le langage, pas par la machine |
+| `Inclue la bibliothèque stdio.h.` | `#include` | **refusé** : pas de préprocesseur. `Importe …` nomme une **classe** |
+| `Ouvre la garde d'en-tête …` | `#ifndef` | **refusé** : aucune double inclusion n'est possible. **Le seul refus qui ne désigne aucun remplacement** — le problème n'existe pas |
+| `Déclare la fonction …` (prototype) | déclaration séparée | **refusé** : l'ordre des méthodes dans une classe est libre |
+| `Déclare le synonyme …` | `typedef` | **refusé** : un nom de type **est** un nom de classe |
+| `Déclare un fichier nommé f.`, `Ferme le fichier f.` | `FILE*`, `fclose` | **refusé** : le **bloc essaie avec ressource** ouvre et ferme |
+| `Lis un entier depuis le fichier f dans n.` | `fscanf` | **refusé** : Java lit une **ligne**. Lire un entier y est deux gestes, et les confondre cacherait où une saisie invalide échoue |
+
+Et **dix** phrases portées voient leur **construction** refusée : un pointeur
+dans une expression, un entier employé comme condition — `si "n"` ne compile
+pas en Java, et ajouter `!= 0` choisirait un sens que personne n'a donné —, le
+format `%u` faute d'entier non signé, et la flèche `->` qui n'existe pas.
+
+### Un nom valide en C17 peut être refusé en Java
+
+`class`, `new`, `final`, `static`, `true` sont des identifiants **C17
+parfaitement légaux** : le moteur les accepte, et c'est le langage cible qui
+les refuse, parce que Java les réserve.
+
+### Trois obligations de Java que A ne peut pas satisfaire pour vous
+
+**Et ce sont les trois endroits où A sera le plus frustrant.**
+
+1. **Les exceptions vérifiées.** Lire ou écrire un fichier **oblige** à
+   attraper l'exception ou à la déclarer dans la signature. A ne choisit **ni**
+   l'une **ni** l'autre : ajouter un `throws` modifierait une signature que
+   vous n'avez pas désignée, et ouvrir un `try` choisirait votre traitement
+   d'erreur. L'information `JAVA_CHECKED_EXCEPTION_MUST_BE_HANDLED` énonce
+   l'obligation et nomme les **deux** issues légales ;
+2. **`static`.** `main` est `static`, et une méthode d'instance n'y est pas
+   appelable sans objet. **A est sans état** : en écrivant un appel, il ne sait
+   pas si la méthode visée est `static`. Il peut donc produire du code que le
+   compilateur refusera. L'information est posée **à la déclaration**, faute de
+   pouvoir l'être à l'usage, et **la lacune n'est pas refermée** ;
+3. **le nom du fichier et le répertoire du paquetage.** `javac` exige qu'une
+   classe `public` vive dans un fichier portant **son nom**, et qu'un
+   `package` corresponde à un répertoire. A **informe** et ne renomme rien :
+   un fichier accepté peut ne pas compiler **pour une raison qui n'est pas
+   dans le code**.
+
+### Ce qui n'est pas vérifié, en Java non plus — et une chose de plus
+
+Ni les symboles, ni les types, ni les bornes. **Et la visibilité** : lire ou
+écrire un champ `private` depuis une autre classe est **accepté par A** et
+refusé par `javac`. C'est une limite de plus que dans les deux autres
+langages, parce que Java est le seul des trois à avoir la notion.
+
+### Un piège d'encodage, trouvé et contourné
+
+`javac` lit une source dans l'encodage de la **plate-forme**. A écrit du
+français dans les commentaires **et** dans les chaînes affichées, en UTF-8 :
+sans `-encoding UTF-8`, le compilateur corrompt les accents **dans le fichier
+compilé**. Le programme compile en code 0, s'exécute en code 0, et **affiche
+faux**. Les journaux de ce dépôt passent donc l'option ; si vous compilez à la
+main, passez-la aussi.
+
+### Ce qui n'a jamais été essayé
+
+- **aucun utilisateur** n'a écrit un programme Java avec A : les deux
+  programmes de preuve sont dictés par un script ;
+- **un seul JDK**, Temurin 21.0.13, sur **Windows** uniquement. Aucun autre
+  fournisseur, aucune autre version ;
+- aucun **paquetage à plusieurs niveaux**, aucune classe générique écrite par
+  l'utilisateur.

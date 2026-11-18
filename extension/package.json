@@ -2,7 +2,7 @@
   "name": "c-a",
   "displayName": "A — Français vers Code",
   "description": "Prototype pédagogique : traduction, aperçu et insertion explicite d’instructions depuis des phrases françaises contrôlées. Trois langages cibles : C17 avec C-A, Python avec Python-A, Java 21 avec Java-A.",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "publisher": "projet-a-local",
   "private": true,
   "type": "commonjs",

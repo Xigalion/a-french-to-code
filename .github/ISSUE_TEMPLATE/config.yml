@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Ce que C-A accepte
-    url: https://github.com/Xigalion/c-a-french-to-c/blob/main/docs/CATALOGUE.md
+    url: https://github.com/Xigalion/a-french-to-code/blob/main/docs/CATALOGUE.md
     about: Toutes les formulations reconnues et leur sortie C exacte. Tout ce qui n'y figure pas est refusé, volontairement.
   - name: Limites connues
-    url: https://github.com/Xigalion/c-a-french-to-c/blob/main/docs/LIMITES_CONNUES.md
+    url: https://github.com/Xigalion/a-french-to-code/blob/main/docs/LIMITES_CONNUES.md
     about: Ni symboles, ni types, ni bornes vérifiés. À lire avant d'ouvrir un ticket.

@@ -1,4 +1,4 @@
-# A / C-A — état du projet, méthode et preuves
+# A — état du projet, méthode et preuves
 
 **Pour qui :** un lecteur extérieur qui veut savoir ce qui est construit, ce
 qui est prouvé, comment le projet travaille, et ce qu'il ne faut pas croire.
@@ -14,8 +14,10 @@ qui est prouvé, comment le projet travaille, et ce qu'il ne faut pas croire.
 > fichiers touchés : c'est un **fait historique** — le lot l'avait bien mis
 > à jour — et non un fichier manquant du dépôt.
 >
-> État au 17 novembre 2026, version **0.5.0** — deux langages cibles, C17
-> et Python. Python et le français souple sont **désactivés par défaut**.
+> État au 18 novembre 2026, version **0.6.0** — **trois** langages cibles :
+> C17 avec C-A, Python avec Python-A, Java 21 avec Java-A. Les trois réglages
+> — français souple, Python, Java — sont **actifs par défaut**, et chacun se
+> ferme.
 
 ---
 
@@ -80,10 +82,12 @@ exacte de chaque formulation, est dans [`CATALOGUE.md`](CATALOGUE.md) :
 
 | Élément | Rôle |
 |---|---|
-| `src/translate.ts` | analyse de la phrase, AST d'intention, rendu C, diagnostics |
+| `src/translate.ts` | analyse de la phrase, AST d'intention, diagnostics |
+| `src/langages/registre.ts` | le registre : un langage y déclare ses extensions, ses blocs, son commentaire, ses intentions portées et ses refus |
+| `src/langages/c17/`, `python/`, `java/` | un dossier par langage cible : rendu, refus nommés, informations, catalogue natif, placement |
 | `src/expressionCore.ts` | noyau d'analyse d'expressions unifié |
 | trois profils | `expression`, `numericExpression`, `condition` — enveloppes minces, chacune définie par un **enregistrement de capacités** explicite |
-| `src/planPlacement.ts` | **planifie** l'insertion ; n'écrit rien |
+| trois placements | `planPlacement` (accolades C17), `python/placement` (indentation), `java/placement` (accolades à **quatre portées**). Ils **ne sont pas unifiés**, et c'est une décision : deux langages à accolades n'ont pas les mêmes portées |
 | reconnaisseurs contextuels | fonction englobante, chaîne `if`, boucle, aiguillage, structure, portée d'instruction |
 | `extension/` | l'hôte VS Code : saisie, aperçu, confirmation, insertion |
 
@@ -246,11 +250,59 @@ indice négatif compte depuis la fin au lieu de lire hors du tableau.
 test final. Les trois sont délibérés, et les raisons sont dans
 `docs/phase2/LOT_P5_CONTRAT_ET_BILAN.md`.
 
-## Français souple — version 0.5.0, désactivé par défaut
+## Java — troisième langage cible, version 0.6.0
 
-Si une phrase est refusée par le catalogue, et **seulement** dans ce cas, C-A
+Java n'est **pas un portage du C** non plus. Et il introduit ce que ni C17 ni
+Python-A n'avaient : l'**objet** comme unité obligatoire, les **exceptions
+vérifiées**, et deux contraintes de **système de fichiers**.
+
+| | |
+|---|---|
+| formulations | **144** — 30 reprises, 27 **adaptations sémantiques**, **87 natives** |
+| refus nommés | **27**, chacun désignant la construction Java qui enseigne la même compétence |
+| informations pédagogiques passives | **28**, dont trois qui **corrigent** une règle apprise en C17 ou en Python, et **deux qui disent une lacune de A** |
+| placement | par **accolades**, mais à **quatre portées** : fichier, classe, méthode, interface |
+| catalogue publié | [`docs/CATALOGUE_JAVA.md`](CATALOGUE_JAVA.md), engendré depuis le moteur |
+| programmes compilés et exécutés | **2**, dont un de **quatre fichiers** |
+| exercice de clôture | **96 phrases**, **0 retouche**, `javac --release 21 -Xlint:all` code 0 **sans un avertissement**, `java -ea` code 0 |
+
+**Java 21 LTS, sans aucune fonctionnalité en avant-première.** Les classes
+implicites et le `main` d'instance sont *preview* dans cette version : le code
+produit exigerait deux drapeaux et vieillirait. Le point d'entrée est donc
+explicite, et le premier programme Java demande **trois** phrases là où Python
+en demande une.
+
+**Ce que l'étiquette « accolades » ne suffisait pas à dire.** Java la porte
+comme C17, et son placement a pourtant dû être écrit : rien d'exécutable ne
+vit à la portée fichier — pas même une affectation —, une méthode exige une
+**classe** (deux niveaux, pas un), et `package` précède les `import` qui
+précèdent le type.
+
+**Trois obligations de Java que A ne satisfait pas pour vous**, et ce sont les
+trois endroits où il sera le plus frustrant : les **exceptions vérifiées** —
+A ne choisit ni `try`/`catch` ni `throws` —, **`static`** — A est sans état et
+ne sait pas si une méthode l'est —, et le **nom du fichier**, que `javac`
+impose et que A ne renomme pas. Les trois sont **dites** par des informations
+passives, et **aucune n'est refermée**.
+
+**Une asymétrie assumée :** Java-A a les classes, Python-A ne les a pas. En
+Java, une classe est obligatoire pour exécuter la moindre ligne ; en Python,
+le regroupement de données s'enseigne d'abord par un dictionnaire. Ce n'est
+pas un retard de Python-A, c'est le langage qui parle.
+
+**Ce que Java-A ne fait pas** : `record`, le `switch` fléché et `var` sont
+refusés, parce qu'ils cachent précisément ce que les domaines concernés
+enseignent — le constructeur, la traversée des cas, et le type. Et **aucun
+contrôle de visibilité** : lire un champ `private` depuis une autre classe est
+accepté par A et refusé par `javac`.
+
+## Français souple — version 0.6.0, ACTIF par défaut
+
+Si une phrase est refusée par le catalogue, et **seulement** dans ce cas, A
 essaie un lexique fini de synonymes et **98 reformulations** syntaxiques
-déterministes : changements d'ordre, formes courtes, verbes synonymes.
+déterministes : changements d'ordre, formes courtes, verbes synonymes. Les
+mêmes règles servent les **trois** langages : ce sont des règles
+français → français, elles ne savent pas quel langage les consomme.
 
 Quatre garanties, chacune testée :
 
@@ -266,7 +318,8 @@ Quatre garanties, chacune testée :
 
 | Mesure | Résultat |
 |---|---|
-| corpus de validation **gelé** | 95,1 % (58/61) des phrases du périmètre |
+| corpus de validation **gelé** (C17) | 95,1 % (58/61) des phrases du périmètre |
+| corpus **Java** | **100 %** (36/36) des phrases du périmètre |
 | erreurs de sens | **0** |
 | phrases acceptées à tort | **0** |
 
@@ -275,5 +328,14 @@ enrichir le mécanisme, mais il a été écrit par l'auteur de ce mécanisme. Le
 français spontané n'est mesuré par personne, et aucune mesure interne ne peut
 remplacer un utilisateur.
 
-Le français souple **deviendra le mode par défaut après validation finale**.
-Le mode strict restera accessible par le réglage `c-a.souplesse`.
+Le français souple est **actif par défaut** depuis la 0.5.0. Le mode strict
+reste accessible par le réglage `c-a.souplesse`, et la commande « A : Basculer
+entre français strict et français souple » le fait en un geste.
+
+**Et la mesure Java a trouvé un défaut de sens** qui touchait aussi les deux
+autres langages : la garde des identifiants ne connaissait que « nommé » et
+« appelé », et dans « Appelle la méthode afficher de e. » le mot `afficher`
+est au lexique — la couche produisait `e.Affiche();`, et **A renommait
+silencieusement la méthode de l'utilisateur**. C'est la faute la plus grave de
+la classification, et la seule qu'aucun taux ne rachète. Corrigée, puis
+corrigée une seconde fois parce que la correction sur-protégeait à son tour.
