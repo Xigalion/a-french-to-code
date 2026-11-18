@@ -76,14 +76,14 @@ faut reprendre, pas son contenu :
 
 | Fichier Python | Rôle | Équivalent Java à écrire |
 |---|---|---|
-| `catalogue.ts` (632 l.) | motifs ancrés, placeholders typés, drapeau `d` | `java/catalogue.ts` |
-| `instructions.ts` (221 l.) | l'union des genres natifs | `java/instructions.ts` |
-| `renduNatif.ts` (355 l.) | le rendu, un genre une ligne | `java/renduNatif.ts` |
-| `rendu.ts` (238 l.) | les intentions **portées** du catalogue partagé | `java/rendu.ts` |
-| `raisons.ts` (167 l.) | un refus **nommé** par intention absente | `java/raisons.ts` |
-| `informations.ts` (325 l.) | les informations passives | `java/informations.ts` |
+| `catalogue.ts` (632 l.) | motifs ancrés, placeholders typés, drapeau `d` | un catalogue natif Java (J3 à J8) |
+| `instructions.ts` (221 l.) | l'union des genres natifs | son union de genres (J3 à J8) |
+| `renduNatif.ts` (355 l.) | le rendu, un genre une ligne | son rendu natif (J3 à J8) |
+| `rendu.ts` (238 l.) | les intentions **portées** du catalogue partagé | `src/langages/java/rendu.ts` — **livré au lot J1** |
+| `raisons.ts` (167 l.) | un refus **nommé** par intention absente | `src/langages/java/raisons.ts` — **livré au lot J1** |
+| `informations.ts` (325 l.) | les informations passives | des informations passives (J3 à J8) |
 | `placement.ts` (244 l.) | le placement propre au langage | §4.1 |
-| `langage.ts` (58 l.) | l'inscription au registre | `java/langage.ts` |
+| `langage.ts` (58 l.) | l'inscription au registre | `src/langages/java/langage.ts` — **livré au lot J1** |
 
 Trois leçons du patron à ne pas réapprendre :
 
@@ -109,7 +109,7 @@ Java porte l'étiquette `accolades`, mais `planPlacement` encode des règles
 | une directive se place avant tout le reste | partiellement : `package` précède les `import`, qui précèdent la classe — un ordre **à trois temps** que le C n'a pas |
 | une définition de fonction se place à la portée fichier | **non** : une méthode se place dans une classe |
 
-**Conclusion : un module `java/placement.ts`**, comme Python en a un. La
+**Conclusion : un module de placement propre à Java**, comme Python en a un. La
 décision 2 du socle — les modules de placement se **sélectionnent**, ils ne
 s'unifient pas — est ici **confirmée** plutôt que contredite : deux langages à
 accolades n'ont pas les mêmes portées.

@@ -31,8 +31,8 @@ auditée entrée par entrée :
 | Lot | Objet | Critère de sortie **mesurable** |
 |---|---|---|
 | **J0** | audit et mesure : volume réel, duplication des sessions, portées | un chiffre de volume, et l'écart avec l'estimation de `DECISIONS_JAVA.md` §J11 |
-| **J1** | socle : `java/langage.ts`, inscription, `rendu.ts` des 31 reprises, `raisons.ts` des 25 refus | les **82** genres partitionnés par un test ; 31 rendus, 25 refus nommés, 0 genre sans classement |
-| **J2** | portées : `statementScope` à quatre portées, `java/placement.ts` | les 84 genres existants **inchangés** ; `package` / `import` / classe dans le bon ordre ; refus `METHODE_HORS_CLASSE` et `INSTRUCTION_HORS_METHODE` |
+| **J1** | socle : inscription au registre, rendu des **57** intentions portées, **27** refus nommés | les **84** genres partitionnés par un test ; 30 reprises, 27 adaptations, 27 refus, 0 genre sans classement |
+| **J2** | portées : `statementScope` à quatre portées, et un module de placement Java à créer | les 84 genres existants **inchangés** ; `package` / `import` / classe dans le bon ordre ; refus `METHODE_HORS_CLASSE` et `INSTRUCTION_HORS_METHODE` |
 | **J3** | catalogue natif J1–J4 : types, affichage, expressions, contrôle | 56 formulations ; un instantané figé ; `javac` sur un programme couvrant les quatre domaines |
 | **J4** | méthodes et tableaux : J5, J6 partie tableaux | 25 formulations ; décision J3 appliquée ; `JAVA_STATIC_CANNOT_CALL_INSTANCE` posée et testée |
 | **J5** | collections : `List`, `Map`, `Set`, « pour chaque », imports | 13 formulations ; décision J10 appliquée ; refus de la phrase ambiguë prouvé par un test |
@@ -43,7 +43,13 @@ auditée entrée par entrée :
 | **J10** | hôte VS Code : `sessionJava.ts`, cible `.java`, réglage `c-a.java` | la suite hôte passe, scénarios Java compris, sur la version **installée** |
 | **J11** | exercice de clôture | voir §4 |
 
-**Onze lots.** Python en a demandé neuf pour moins de surface ; annoncer moins
+**Douze lots, J0 à J11.** Et le dire ainsi est une correction : la première
+version de ce plan annonçait « onze lots » en comptant une borne sur deux —
+J0 à J11 inclus fait **douze**. L'erreur est de la même famille que les
+compteurs du catalogue, et elle a la même parade : le lot J0 produit le
+décompte, il ne l'affirme pas.
+
+Python avait demandé **neuf** lots pour moins de surface ; annoncer moins ici
 serait se mentir.
 
 ## 3. Les critères mesurables, et comment chacun se mesure
@@ -119,7 +125,7 @@ réussite des tests automatisés ne vaut pas complétion**.
 | quoi | **Eclipse Temurin JDK 21 LTS**, archive `.zip` |
 | où | **hors du dépôt**, comme WinLibs GCC |
 | `PATH` | **non modifié** ; appel par chemin relatif |
-| journal | `exercice/java/journal/compilation.txt`, chemins **relatifs** — la cause des 7 chemins personnels de l'audit de publication |
+| journal | un journal de compilation sous `exercice/`, à chemins **relatifs** — les chemins absolus ont été la cause des 7 fuites du nom d'utilisateur trouvées par l'audit de publication |
 | vérification | empreinte de l'archive consignée avant usage |
 
 **Ce qui peut avancer sans JDK :** J0, J1, J2 et le gros de J3 — l'analyse des

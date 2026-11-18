@@ -1,0 +1,995 @@
+{
+  "_lisezMoi": "SPECIFICATION du catalogue Java-A : une entree par formulation publiee, avec sa phrase francaise, sa sortie Java exacte, son origine et l'intention partagee dont elle vient. Les compteurs sont CALCULES par scripts/catalogue-java.mjs a partir de ces entrees, jamais ecrits a la main : c'est la correction du defaut qui avait produit « 134 = 101 + 33 » a cote d'un tableau totalisant 127. Au lot J1, un test imposera que le catalogue livre corresponde a ce fichier.",
+  "total": 139,
+  "parOrigine": {
+    "adaptation": 27,
+    "native": 82,
+    "reprise": 30
+  },
+  "parDomaine": {
+    "J1": 18,
+    "J2": 13,
+    "J3": 14,
+    "J4": 16,
+    "J5": 17,
+    "J6": 20,
+    "J7": 16,
+    "J8": 12,
+    "J9": 13
+  },
+  "formulations": [
+    {
+      "domaine": "J1",
+      "phrase": "Crée une classe nommée {CLASSE}.",
+      "sortie": "public class Eleve {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J1",
+      "phrase": "Crée une classe interne nommée {CLASSE}.",
+      "sortie": "class Noeud {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J1",
+      "phrase": "Crée la méthode principale.",
+      "sortie": "public static void main(String[] args) {",
+      "origine": "adaptation",
+      "intention": "MAIN"
+    },
+    {
+      "domaine": "J1",
+      "phrase": "Déclare un entier nommé {NOM}.",
+      "sortie": "int n;",
+      "origine": "reprise",
+      "intention": "DECL_INT"
+    },
+    {
+      "domaine": "J1",
+      "phrase": "Crée un entier nommé {NOM} de valeur {ENTIER}.",
+      "sortie": "int age = 20;",
+      "origine": "reprise",
+      "intention": "INIT_INT"
+    },
+    {
+      "domaine": "J1",
+      "phrase": "Crée un entier long nommé {NOM} de valeur {ENTIER}.",
+      "sortie": "long grand = 10000000000L;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J1",
+      "phrase": "Déclare un réel nommé {NOM}.",
+      "sortie": "double x;",
+      "origine": "reprise",
+      "intention": "NUMERIC_DECL"
+    },
+    {
+      "domaine": "J1",
+      "phrase": "Crée un réel nommé {NOM} de valeur {EXPR}.",
+      "sortie": "double moyenne = 1.5;",
+      "origine": "reprise",
+      "intention": "NUMERIC_INIT"
+    },
+    {
+      "domaine": "J1",
+      "phrase": "Crée un réel simple nommé {NOM} de valeur {EXPR}.",
+      "sortie": "float x = 1.5f;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J1",
+      "phrase": "Déclare un caractère nommé {NOM}.",
+      "sortie": "char c;",
+      "origine": "reprise",
+      "intention": "DECL_CHAR"
+    },
+    {
+      "domaine": "J1",
+      "phrase": "Crée un caractère nommé {NOM} de valeur {CAR}.",
+      "sortie": "char initiale = 'A';",
+      "origine": "reprise",
+      "intention": "INIT_CHAR"
+    },
+    {
+      "domaine": "J1",
+      "phrase": "Crée un booléen nommé {NOM} de valeur vrai.",
+      "sortie": "boolean fini = true;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J1",
+      "phrase": "Crée un booléen nommé {NOM} de valeur faux.",
+      "sortie": "boolean fini = false;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J1",
+      "phrase": "Déclare un booléen nommé {NOM}.",
+      "sortie": "boolean fini;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J1",
+      "phrase": "Crée une chaîne nommée {NOM} avec le texte {TEXTE}.",
+      "sortie": "String nom = \"Ada\";",
+      "origine": "adaptation",
+      "intention": "STRING_INIT"
+    },
+    {
+      "domaine": "J1",
+      "phrase": "Déclare une chaîne nommée {NOM}.",
+      "sortie": "String nom;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J1",
+      "phrase": "Crée une constante entière nommée {NOM} de valeur {ENTIER}.",
+      "sortie": "final int MAX = 100;",
+      "origine": "adaptation",
+      "intention": "CONST_DECL"
+    },
+    {
+      "domaine": "J1",
+      "phrase": "Crée une constante entière de classe nommée {NOM} de valeur {ENTIER}.",
+      "sortie": "static final int MAX = 100;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J2",
+      "phrase": "Affiche la valeur de {NOM}.",
+      "sortie": "System.out.print(n);",
+      "origine": "adaptation",
+      "intention": "PRINT_INT"
+    },
+    {
+      "domaine": "J2",
+      "phrase": "Affiche la valeur de {NOM} et passe à la ligne.",
+      "sortie": "System.out.println(n);",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J2",
+      "phrase": "Affiche le texte {TEXTE}.",
+      "sortie": "System.out.print(\"bonjour\");",
+      "origine": "adaptation",
+      "intention": "PRINT_TEXT"
+    },
+    {
+      "domaine": "J2",
+      "phrase": "Affiche le texte {TEXTE} et passe à la ligne.",
+      "sortie": "System.out.println(\"bonjour\");",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J2",
+      "phrase": "Affiche un retour à la ligne.",
+      "sortie": "System.out.println();",
+      "origine": "adaptation",
+      "intention": "PRINT_NEWLINE"
+    },
+    {
+      "domaine": "J2",
+      "phrase": "Affiche {NOM} en décimal.",
+      "sortie": "System.out.printf(\"%d\", n);",
+      "origine": "adaptation",
+      "intention": "PRINT_FORMATTED"
+    },
+    {
+      "domaine": "J2",
+      "phrase": "Affiche {NOM} en hexadécimal.",
+      "sortie": "System.out.printf(\"%x\", n);",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J2",
+      "phrase": "Affiche {NOM} en notation fixe avec {ENTIER} décimales.",
+      "sortie": "System.out.printf(\"%.2f\", x);",
+      "origine": "adaptation",
+      "intention": "NUMERIC_PRINT"
+    },
+    {
+      "domaine": "J2",
+      "phrase": "Affiche la chaîne {NOM}.",
+      "sortie": "System.out.print(nom);",
+      "origine": "adaptation",
+      "intention": "PRINT_STRING"
+    },
+    {
+      "domaine": "J2",
+      "phrase": "Affiche le caractère {NOM}.",
+      "sortie": "System.out.print(c);",
+      "origine": "adaptation",
+      "intention": "PRINT_CHAR"
+    },
+    {
+      "domaine": "J2",
+      "phrase": "Crée un lecteur de saisie nommé {NOM}.",
+      "sortie": "Scanner lecteur = new Scanner(System.in);",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J2",
+      "phrase": "Lis un entier depuis le lecteur de saisie {NOM} dans {NOM}.",
+      "sortie": "n = lecteur.nextInt();",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J2",
+      "phrase": "Lis une ligne depuis le lecteur de saisie {NOM} dans {NOM}.",
+      "sortie": "ligne = lecteur.nextLine();",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J3",
+      "phrase": "Affecte la valeur {ENTIER} à {NOM}.",
+      "sortie": "n = 20;",
+      "origine": "reprise",
+      "intention": "ASSIGN_INT"
+    },
+    {
+      "domaine": "J3",
+      "phrase": "Affecte à {NOM} le résultat de {EXPR}.",
+      "sortie": "n = a + b;",
+      "origine": "reprise",
+      "intention": "ASSIGN_EXPRESSION"
+    },
+    {
+      "domaine": "J3",
+      "phrase": "Affecte à {NOM} le résultat numérique de {EXPR}.",
+      "sortie": "x = a / 2.0;",
+      "origine": "reprise",
+      "intention": "NUMERIC_ASSIGN"
+    },
+    {
+      "domaine": "J3",
+      "phrase": "Affecte le caractère {CAR} à {NOM}.",
+      "sortie": "c = 'A';",
+      "origine": "reprise",
+      "intention": "ASSIGN_CHAR"
+    },
+    {
+      "domaine": "J3",
+      "phrase": "Affecte le texte {TEXTE} à {NOM}.",
+      "sortie": "s = \"Ada\";",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J3",
+      "phrase": "Incrémente {NOM}.",
+      "sortie": "n += 1;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J3",
+      "phrase": "Décrémente {NOM}.",
+      "sortie": "n -= 1;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J3",
+      "phrase": "Affecte à {NOM} le résultat converti en entier de {EXPR}.",
+      "sortie": "n = (int) x;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J3",
+      "phrase": "Affecte à {NOM} le résultat converti en réel de {EXPR}.",
+      "sortie": "x = (double) n;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J3",
+      "phrase": "Affecte à {NOM} la concaténation de {NOM} et {TEXTE}.",
+      "sortie": "s = s + \"!\";",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J3",
+      "phrase": "Affecte à {NOM} la longueur de la chaîne {NOM}.",
+      "sortie": "n = s.length();",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J3",
+      "phrase": "Affecte à {NOM} le caractère d’indice {EXPR} de la chaîne {NOM}.",
+      "sortie": "c = s.charAt(i);",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J3",
+      "phrase": "Affecte à {NOM} la comparaison des chaînes {NOM} et {NOM}.",
+      "sortie": "egal = a.equals(b);",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J3",
+      "phrase": "Affecte à {NOM} la conversion en entier de la chaîne {NOM}.",
+      "sortie": "n = Integer.parseInt(s);",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J4",
+      "phrase": "Crée un bloc si {EXPR}.",
+      "sortie": "if (x > 0) {",
+      "origine": "reprise",
+      "intention": "IF"
+    },
+    {
+      "domaine": "J4",
+      "phrase": "Ajoute une branche sinon si {EXPR}.",
+      "sortie": "} else if (x < 0) {",
+      "origine": "reprise",
+      "intention": "ELSE_IF"
+    },
+    {
+      "domaine": "J4",
+      "phrase": "Ajoute une branche sinon.",
+      "sortie": "} else {",
+      "origine": "reprise",
+      "intention": "ELSE"
+    },
+    {
+      "domaine": "J4",
+      "phrase": "Crée une boucle tant que {EXPR}.",
+      "sortie": "while (i < 10) {",
+      "origine": "reprise",
+      "intention": "WHILE"
+    },
+    {
+      "domaine": "J4",
+      "phrase": "Crée une boucle avec test final tant que {EXPR}.",
+      "sortie": "do {",
+      "origine": "reprise",
+      "intention": "DO_WHILE"
+    },
+    {
+      "domaine": "J4",
+      "phrase": "Crée une boucle pour {NOM} de valeur initiale {EXPR} tant que {EXPR} avec mise à jour {EXPR}.",
+      "sortie": "for (i = 0; i < 10; i = (i + 1)) {",
+      "origine": "reprise",
+      "intention": "FOR"
+    },
+    {
+      "domaine": "J4",
+      "phrase": "Crée une boucle pour chaque {TYPE} nommé {NOM} du tableau {NOM}.",
+      "sortie": "for (int v : notes) {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J4",
+      "phrase": "Crée une boucle pour chaque {TYPE} nommé {NOM} de la liste {NOM}.",
+      "sortie": "for (int v : notes) {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J4",
+      "phrase": "Sors de la boucle la plus intérieure.",
+      "sortie": "break;",
+      "origine": "reprise",
+      "intention": "BREAK"
+    },
+    {
+      "domaine": "J4",
+      "phrase": "Passe à l’itération suivante de la boucle la plus intérieure.",
+      "sortie": "continue;",
+      "origine": "reprise",
+      "intention": "CONTINUE"
+    },
+    {
+      "domaine": "J4",
+      "phrase": "Crée un aiguillage sur {EXPR}.",
+      "sortie": "switch (jour) {",
+      "origine": "reprise",
+      "intention": "SWITCH"
+    },
+    {
+      "domaine": "J4",
+      "phrase": "Ajoute un cas pour la valeur {ENTIER}.",
+      "sortie": "case 1:",
+      "origine": "reprise",
+      "intention": "CASE_INT"
+    },
+    {
+      "domaine": "J4",
+      "phrase": "Ajoute un cas pour le caractère {CAR}.",
+      "sortie": "case 'A':",
+      "origine": "reprise",
+      "intention": "CASE_CHAR"
+    },
+    {
+      "domaine": "J4",
+      "phrase": "Ajoute un cas pour le texte {TEXTE}.",
+      "sortie": "case \"lundi\":",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J4",
+      "phrase": "Ajoute le cas par défaut.",
+      "sortie": "default:",
+      "origine": "reprise",
+      "intention": "CASE_DEFAULT"
+    },
+    {
+      "domaine": "J4",
+      "phrase": "Sors de l’aiguillage.",
+      "sortie": "break;",
+      "origine": "reprise",
+      "intention": "BREAK_SWITCH"
+    },
+    {
+      "domaine": "J5",
+      "phrase": "Crée une méthode de classe nommée {NOM} qui retourne un {TYPE}.",
+      "sortie": "static int f() {",
+      "origine": "adaptation",
+      "intention": "FUNC_DEF"
+    },
+    {
+      "domaine": "J5",
+      "phrase": "Crée une méthode de classe nommée {NOM} qui ne retourne rien.",
+      "sortie": "static void f() {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J5",
+      "phrase": "Crée une méthode publique nommée {NOM} qui retourne un {TYPE}.",
+      "sortie": "public int getAge() {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J5",
+      "phrase": "Crée une méthode publique nommée {NOM} qui ne retourne rien.",
+      "sortie": "public void afficher() {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J5",
+      "phrase": "Crée une méthode privée nommée {NOM} qui ne retourne rien.",
+      "sortie": "private void verifier() {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J5",
+      "phrase": "Crée une méthode redéfinie nommée {NOM} qui ne retourne rien.",
+      "sortie": "@Override\npublic void afficher() {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J5",
+      "phrase": "Crée une méthode de classe nommée {NOM} qui ne retourne rien et peut lancer {CLASSE}.",
+      "sortie": "static void lire() throws IOException {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J5",
+      "phrase": "Retourne.",
+      "sortie": "return;",
+      "origine": "reprise",
+      "intention": "RETURN"
+    },
+    {
+      "domaine": "J5",
+      "phrase": "Retourne la valeur {ENTIER}.",
+      "sortie": "return 0;",
+      "origine": "reprise",
+      "intention": "RETURN_INT"
+    },
+    {
+      "domaine": "J5",
+      "phrase": "Retourne le résultat de {EXPR}.",
+      "sortie": "return a + b;",
+      "origine": "reprise",
+      "intention": "RETURN_EXPRESSION"
+    },
+    {
+      "domaine": "J5",
+      "phrase": "Retourne le résultat numérique de {EXPR}.",
+      "sortie": "return total / n;",
+      "origine": "reprise",
+      "intention": "RETURN_NUMERIC"
+    },
+    {
+      "domaine": "J5",
+      "phrase": "Retourne le texte {TEXTE}.",
+      "sortie": "return \"fini\";",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J5",
+      "phrase": "Retourne la chaîne {NOM}.",
+      "sortie": "return nom;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J5",
+      "phrase": "Appelle {NOM}.",
+      "sortie": "f();",
+      "origine": "reprise",
+      "intention": "CALL"
+    },
+    {
+      "domaine": "J5",
+      "phrase": "Affecte à {NOM} le résultat de l’appel de {NOM} avec {EXPR}.",
+      "sortie": "n = f(a);",
+      "origine": "reprise",
+      "intention": "CALL_ASSIGN"
+    },
+    {
+      "domaine": "J5",
+      "phrase": "Appelle la méthode {NOM} de {NOM}.",
+      "sortie": "e.afficher();",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J5",
+      "phrase": "Affecte à {NOM} le résultat de l’appel de la méthode {NOM} de {NOM}.",
+      "sortie": "n = e.getAge();",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J6",
+      "phrase": "Crée un tableau de type {TYPE} nommé {NOM} de dimension {ENTIER}.",
+      "sortie": "int[] notes = new int[10];",
+      "origine": "adaptation",
+      "intention": "ARRAY_DECL"
+    },
+    {
+      "domaine": "J6",
+      "phrase": "Déclare un tableau de type {TYPE} nommé {NOM}.",
+      "sortie": "int[] notes;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J6",
+      "phrase": "Affecte la valeur {ENTIER} à l’élément {EXPR} du tableau {NOM}.",
+      "sortie": "notes[0] = 15;",
+      "origine": "adaptation",
+      "intention": "ARRAY_ASSIGN_INT"
+    },
+    {
+      "domaine": "J6",
+      "phrase": "Affecte le caractère {CAR} à l’élément {EXPR} du tableau {NOM}.",
+      "sortie": "lettres[0] = 'A';",
+      "origine": "adaptation",
+      "intention": "ARRAY_ASSIGN_CHAR"
+    },
+    {
+      "domaine": "J6",
+      "phrase": "Affecte à l’élément {EXPR} du tableau {NOM} le résultat numérique de {EXPR}.",
+      "sortie": "notes[i] = a + 1;",
+      "origine": "adaptation",
+      "intention": "ARRAY_ASSIGN_EXPRESSION"
+    },
+    {
+      "domaine": "J6",
+      "phrase": "Affiche l’élément {EXPR} du tableau {NOM}.",
+      "sortie": "System.out.print(notes[0]);",
+      "origine": "adaptation",
+      "intention": "ARRAY_PRINT"
+    },
+    {
+      "domaine": "J6",
+      "phrase": "Affiche le caractère de l’élément {EXPR} du tableau {NOM}.",
+      "sortie": "System.out.print(lettres[0]);",
+      "origine": "adaptation",
+      "intention": "ARRAY_PRINT_CHAR"
+    },
+    {
+      "domaine": "J6",
+      "phrase": "Affecte à {NOM} la taille du tableau {NOM}.",
+      "sortie": "n = notes.length;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J6",
+      "phrase": "Crée une liste de type {TYPE} nommée {NOM}.",
+      "sortie": "List<Integer> notes = new ArrayList<>();",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J6",
+      "phrase": "Ajoute {EXPR} à la fin de la liste {NOM}.",
+      "sortie": "notes.add(15);",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J6",
+      "phrase": "Ajoute le texte {TEXTE} à la fin de la liste {NOM}.",
+      "sortie": "noms.add(\"Ada\");",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J6",
+      "phrase": "Affecte à {NOM} l’élément {EXPR} de la liste {NOM}.",
+      "sortie": "n = notes.get(0);",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J6",
+      "phrase": "Affecte à {NOM} la taille de la liste {NOM}.",
+      "sortie": "n = notes.size();",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J6",
+      "phrase": "Retire l’élément {EXPR} de la liste {NOM}.",
+      "sortie": "notes.remove(0);",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J6",
+      "phrase": "Crée une table de type {TYPE} nommée {NOM} avec des clés textuelles.",
+      "sortie": "Map<String, Integer> notes = new HashMap<>();",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J6",
+      "phrase": "Associe {EXPR} à la clé {TEXTE} dans la table {NOM}.",
+      "sortie": "notes.put(\"ada\", 15);",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J6",
+      "phrase": "Affecte à {NOM} la valeur de la clé {TEXTE} dans la table {NOM}.",
+      "sortie": "n = notes.get(\"ada\");",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J6",
+      "phrase": "Crée un ensemble de type {TYPE} nommé {NOM}.",
+      "sortie": "Set<Integer> vus = new HashSet<>();",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J6",
+      "phrase": "Ajoute {EXPR} à l’ensemble {NOM}.",
+      "sortie": "vus.add(3);",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J6",
+      "phrase": "Crée une boucle pour chaque clé textuelle nommée {NOM} de la table {NOM}.",
+      "sortie": "for (String cle : notes.keySet()) {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J7",
+      "phrase": "Ajoute un champ de type {TYPE} nommé {NOM}.",
+      "sortie": "int age;",
+      "origine": "adaptation",
+      "intention": "STRUCT_FIELD"
+    },
+    {
+      "domaine": "J7",
+      "phrase": "Ajoute un champ privé de type {TYPE} nommé {NOM}.",
+      "sortie": "private int age;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J7",
+      "phrase": "Ajoute un champ de type chaîne nommé {NOM}.",
+      "sortie": "String nom;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J7",
+      "phrase": "Ajoute un champ tableau de type {TYPE} nommé {NOM} de dimension {ENTIER}.",
+      "sortie": "int[] notes = new int[10];",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J7",
+      "phrase": "Déclare une structure nommée {CLASSE}.",
+      "sortie": "class Point {",
+      "origine": "adaptation",
+      "intention": "STRUCT_DECL"
+    },
+    {
+      "domaine": "J7",
+      "phrase": "Crée un constructeur qui ne prend rien.",
+      "sortie": "public Eleve() {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J7",
+      "phrase": "Crée un constructeur qui prend un {TYPE} nommé {NOM}.",
+      "sortie": "public Eleve(int age) {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J7",
+      "phrase": "Affecte au champ {NOM} la valeur du paramètre {NOM}.",
+      "sortie": "this.age = age;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J7",
+      "phrase": "Affecte la valeur {ENTIER} au champ {NOM}.",
+      "sortie": "this.age = 20;",
+      "origine": "adaptation",
+      "intention": "MEMBER_ASSIGN_INT"
+    },
+    {
+      "domaine": "J7",
+      "phrase": "Affecte le caractère {CAR} au champ {NOM}.",
+      "sortie": "this.initiale = 'A';",
+      "origine": "adaptation",
+      "intention": "MEMBER_ASSIGN_CHAR"
+    },
+    {
+      "domaine": "J7",
+      "phrase": "Affecte au champ {NOM} le résultat numérique de {EXPR}.",
+      "sortie": "this.moyenne = total / n;",
+      "origine": "adaptation",
+      "intention": "MEMBER_ASSIGN_EXPRESSION"
+    },
+    {
+      "domaine": "J7",
+      "phrase": "Affiche le champ {NOM} de {NOM}.",
+      "sortie": "System.out.print(e.age);",
+      "origine": "adaptation",
+      "intention": "MEMBER_PRINT"
+    },
+    {
+      "domaine": "J7",
+      "phrase": "Crée un objet nommé {NOM} de la classe {CLASSE}.",
+      "sortie": "Eleve e = new Eleve();",
+      "origine": "adaptation",
+      "intention": "STRUCT_VAR"
+    },
+    {
+      "domaine": "J7",
+      "phrase": "Crée un objet nommé {NOM} de la classe {CLASSE} avec {EXPR}.",
+      "sortie": "Eleve e = new Eleve(20);",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J7",
+      "phrase": "Affecte la valeur {ENTIER} au champ {NOM} de {NOM}.",
+      "sortie": "e.age = 20;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J7",
+      "phrase": "Affecte à {NOM} le champ {NOM} de {NOM}.",
+      "sortie": "n = e.age;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J8",
+      "phrase": "Crée une classe nommée {CLASSE} qui hérite de {CLASSE}.",
+      "sortie": "public class Etudiant extends Personne {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J8",
+      "phrase": "Crée une classe abstraite nommée {CLASSE}.",
+      "sortie": "public abstract class Forme {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J8",
+      "phrase": "Crée une interface nommée {CLASSE}.",
+      "sortie": "public interface Affichable {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J8",
+      "phrase": "Crée une classe nommée {CLASSE} qui implémente {CLASSE}.",
+      "sortie": "public class Eleve implements Affichable {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J8",
+      "phrase": "Ajoute une méthode attendue nommée {NOM} qui ne retourne rien.",
+      "sortie": "void afficher();",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J8",
+      "phrase": "Ajoute une méthode attendue nommée {NOM} qui retourne un {TYPE}.",
+      "sortie": "int taille();",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J8",
+      "phrase": "Ajoute une méthode abstraite nommée {NOM} qui retourne un {TYPE}.",
+      "sortie": "abstract int aire();",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J8",
+      "phrase": "Appelle le constructeur de la classe parente.",
+      "sortie": "super();",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J8",
+      "phrase": "Appelle le constructeur de la classe parente avec {EXPR}.",
+      "sortie": "super(20);",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J8",
+      "phrase": "Appelle la méthode {NOM} de la classe parente.",
+      "sortie": "super.afficher();",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J8",
+      "phrase": "Déclare une variable de type {CLASSE} nommée {NOM}.",
+      "sortie": "Affichable a;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J8",
+      "phrase": "Crée une variable de type {CLASSE} nommée {NOM} comme un objet de la classe {CLASSE}.",
+      "sortie": "Affichable a = new Eleve();",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J9",
+      "phrase": "Déclare le paquetage {NOM}.",
+      "sortie": "package ecole;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J9",
+      "phrase": "Importe {CLASSE}.",
+      "sortie": "import java.util.List;",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J9",
+      "phrase": "Crée un bloc essaie.",
+      "sortie": "try {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J9",
+      "phrase": "Ajoute une branche attrape {CLASSE} nommée {NOM}.",
+      "sortie": "} catch (IOException e) {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J9",
+      "phrase": "Ajoute une branche finalement.",
+      "sortie": "} finally {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J9",
+      "phrase": "Lance une exception {CLASSE} avec le texte {TEXTE}.",
+      "sortie": "throw new IllegalArgumentException(\"âge négatif\");",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J9",
+      "phrase": "Affiche le message de l’exception {NOM}.",
+      "sortie": "System.out.print(e.getMessage());",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J9",
+      "phrase": "Vérifie que {EXPR}.",
+      "sortie": "assert x > 0;",
+      "origine": "reprise",
+      "intention": "ASSERT"
+    },
+    {
+      "domaine": "J9",
+      "phrase": "Crée un bloc essaie avec un lecteur nommé {NOM} sur le fichier {TEXTE}.",
+      "sortie": "try (BufferedReader lecteur = new BufferedReader(new FileReader(\"notes.txt\"))) {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J9",
+      "phrase": "Crée un bloc essaie avec un écrivain nommé {NOM} sur le fichier {TEXTE}.",
+      "sortie": "try (PrintWriter f = new PrintWriter(\"sortie.txt\")) {",
+      "origine": "native",
+      "intention": null
+    },
+    {
+      "domaine": "J9",
+      "phrase": "Lis une ligne depuis le lecteur {NOM} dans {NOM}.",
+      "sortie": "ligne = lecteur.readLine();",
+      "origine": "adaptation",
+      "intention": "FILE_READ_STRING"
+    },
+    {
+      "domaine": "J9",
+      "phrase": "Écris le texte {TEXTE} dans l’écrivain {NOM}.",
+      "sortie": "f.print(\"fin\");",
+      "origine": "adaptation",
+      "intention": "FILE_WRITE_TEXT"
+    },
+    {
+      "domaine": "J9",
+      "phrase": "Écris la valeur de {NOM} dans l’écrivain {NOM}.",
+      "sortie": "f.print(n);",
+      "origine": "adaptation",
+      "intention": "FILE_WRITE_INT"
+    }
+  ]
+}
