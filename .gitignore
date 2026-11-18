@@ -23,3 +23,8 @@ local/
 
 # Instructions de travail internes : conservees localement, jamais publiees
 /CLAUDE.md
+
+# Artefacts compiles de Python : produits a l execution des exercices,
+# jamais lus par un test, et sans valeur dans un depot public.
+__pycache__/
+*.pyc
