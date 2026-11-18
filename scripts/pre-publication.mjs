@@ -20,10 +20,33 @@ process.chdir(racine);
 const rapide = process.argv.includes('--rapide');
 
 const resultats = [];
+/** `main` existe-t-elle localement ?
+ *
+ * Un clone fait avec `--branch <autre>` ne l'a PAS, et les cinq contrôles qui
+ * l'interrogent échouaient alors tous les cinq — pour une raison étrangère à
+ * ce qu'ils vérifient. Un contrôle qui échoue pour une mauvaise raison est
+ * trompeur : il fait croire à un dépôt sale là où il manque seulement une
+ * branche. Ils sont désormais **non applicables**, et le verdict final dit
+ * que l'audit est incomplet. Trouvé en vérifiant le paquet 0.6.0 depuis un
+ * clone propre. */
+let mainPresente = false;
+try {
+  execFileSync('git', ['rev-parse', '--verify', 'main'], { stdio: 'ignore' });
+  mainPresente = true;
+} catch { /* absente : les controles concernes le diront */ }
+let nonApplicables = 0;
 /** Les branches de travail declarees, imprimees apres les controles : ce
  * n'est pas un echec, c'est une information que le publieur doit voir. */
 let branchesDeTravail = [];
-function controle(nom, fn) {
+/** `exigeMain` : le contrôle interroge la branche `main`. Sans elle, il est
+ * annoncé NON APPLICABLE au lieu d'échouer. */
+function controle(nom, fn, exigeMain = false) {
+  if (exigeMain && !mainPresente) {
+    nonApplicables++;
+    resultats.push({ nom, ok: true, applicable: false,
+      detail: 'non applicable : la branche « main » est absente de ce clone' });
+    return;
+  }
   let detail;
   let ok = false;
   try { detail = fn(); ok = detail === true || (typeof detail === 'string' && detail.length === 0); }
@@ -63,7 +86,7 @@ controle('aucun nom d’utilisateur dans l’historique de main', () => {
   const utilisateur = basename(homedir());
   const trouve = git('log', 'main', '-S', utilisateur, '--oneline').trim();
   return trouve === '' ? true : trouve.split('\n').length + ' commit(s) : ' + trouve.split('\n')[0];
-});
+}, true);
 // Une branche de travail est légitime ; une branche inconnue ne l'est pas.
 // `push.default` n'envoie que la branche courante, mais le contrôle doit
 // rester celui d'un envoi SANS SURPRISE : toute branche autre que `main`
@@ -76,13 +99,13 @@ controle('aucune branche inattendue à côté de main', () => {
   if (inattendues.length > 0) return 'branches inattendues : ' + inattendues.join(', ');
   branchesDeTravail = branches.filter(nom => nom !== 'main');
   return true;
-});
+}, true);
 controle('aucune adresse personnelle dans l’auteur des commits de main', () => {
   const adresses = new Set(git('log', 'main', '--format=%ae%n%ce').split('\n').filter(Boolean));
   const suspectes = [...adresses].filter(adresse => !adresse.endsWith('users.noreply.github.com')
     && !adresse.endsWith('noreply@anthropic.com'));
   return suspectes.length === 0 ? true : suspectes.join(', ');
-});
+}, true);
 
 // 3. Aucun identifiant de commit cité : ils ne survivent pas à une réécriture.
 controle('aucune citation de hachage dans les documents', () => {
@@ -123,7 +146,7 @@ controle('les étiquettes hors de main sont des sauvegardes nommées', () => {
   }).map(([nom]) => nom);
   const inattendues = horsMain.filter(nom => !nom.startsWith('avant-'));
   return inattendues.length === 0 ? true : 'hors de main et non nommées « avant-… » : ' + inattendues.join(', ');
-});
+}, true);
 controle('la procédure n’envoie pas toutes les étiquettes d’un coup', () => {
   const procedure = readFileSync('docs/PUBLICATION.md', 'utf8');
   const dangereuse = /git push [^\n]*--tags(?![^\n]*jamais)/u.test(procedure)
@@ -172,7 +195,7 @@ controle('instructions de travail internes hors du dépôt publié', () => {
   }
   const ignore = spawnSync('git', ['check-ignore', '-q', 'CLAUDE.md']).status === 0;
   return ignore ? true : 'CLAUDE.md n’est pas couvert par .gitignore : il reviendrait au premier « git add -A »';
-});
+}, true);
 
 // 6. Documentation publique et licence.
 controle('documents publics présents', () => {
@@ -260,17 +283,28 @@ if (!rapide) {
 }
 
 const largeur = Math.max(...resultats.map(r => r.nom.length));
-for (const { nom, ok, detail } of resultats) {
-  console.log((ok ? '  OK   ' : '  ÉCHEC') + '  ' + nom.padEnd(largeur) + (detail ? '  → ' + detail : ''));
+for (const { nom, ok, applicable, detail } of resultats) {
+  const marque = applicable === false ? '  —    ' : ok ? '  OK   ' : '  ÉCHEC';
+  console.log(marque + '  ' + nom.padEnd(largeur) + (detail ? '  → ' + detail : ''));
 }
 const echecs = resultats.filter(r => !r.ok).length;
 console.log('');
 if (branchesDeTravail.length > 0) {
   console.log('Branche(s) de travail presente(s), non publiee(s) : ' + branchesDeTravail.join(', '));
 }
+const appliques = resultats.length - nonApplicables;
+if (nonApplicables > 0) {
+  // Dire que l'audit est INCOMPLET, et pourquoi. Annoncer « publiable » sur un
+  // audit partiel serait exactement le genre d'affirmation que ce script
+  // existe pour empecher.
+  console.log(nonApplicables + ' contrôle(s) NON APPLICABLE(S) : la branche « main » est absente de');
+  console.log('ce clone. L’audit est donc INCOMPLET — relancez-le dans un dépôt qui l’a.');
+}
 console.log(echecs === 0
-  ? 'Dépôt publiable selon ces ' + resultats.length + ' contrôles.'
-  : echecs + ' contrôle(s) en échec sur ' + resultats.length + '.');
+  ? (nonApplicables === 0
+    ? 'Dépôt publiable selon ces ' + resultats.length + ' contrôles.'
+    : 'Aucun échec sur les ' + appliques + ' contrôles applicables, mais l’audit est incomplet.')
+  : echecs + ' contrôle(s) en échec sur ' + appliques + ' applicables.');
 console.log('Ce que ces contrôles ne prouvent pas : qu’aucun secret n’a jamais existé');
 console.log('dans l’historique, ni que la documentation dit vrai. Ils vérifient des');
 console.log('motifs connus et des liens, pas le sens.');
