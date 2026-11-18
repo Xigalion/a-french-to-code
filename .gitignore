@@ -28,3 +28,9 @@ local/
 # jamais lus par un test, et sans valeur dans un depot public.
 __pycache__/
 *.pyc
+
+# Artefacts de compilation Java : produits par javac et par l execution des
+# exercices, jamais lus par un test. Meme lecon que les .pyc, et je l ai
+# reapprise une fois de trop.
+*.class
+exercice/java/cloture/notes.txt
