@@ -50,10 +50,18 @@ export type DemandeJava = {
   readonly code: string;
   readonly kind: string;
   readonly eol?: '\n' | '\r\n';
-  /** Le pas d'indentation de l'éditeur. Java n'en impose aucun : la
-   * convention est 4, et refuser un réglage de 2 au nom d'un 4 codé en dur
+  /** Le pas d'indentation de l'éditeur, en espaces. Java n'en impose aucun :
+   * la convention est 4, et refuser un réglage de 2 au nom d'un 4 codé en dur
    * serait refuser un réglage légitime. */
   readonly pas?: number;
+  /** L'unité d'indentation littérale, quand ce n'est pas une suite d'espaces.
+   *
+   * Java, contrairement à Python, **autorise** la tabulation et n'interdit pas
+   * de mélanger : refuser un fichier indenté par tabulations reviendrait à
+   * refuser un réglage d'éditeur parfaitement légal. Quand elle est donnée,
+   * c'est elle qui est répétée ; `pas` ne sert alors qu'à l'intervalle
+   * annoncé. */
+  readonly unite?: string;
 };
 
 const PAS_DEFAUT = 4;
@@ -380,7 +388,9 @@ export function planifierJava(demande: DemandeJava): PlanJava {
   //    blanche : en Java l'indentation est une mise en forme, et s'en servir
   //    comme d'une structure — ce que Python fait — serait faux ici.
   const profondeur = etat.pile.length;
-  const marge = ' '.repeat(profondeur * PAS);
+  const marge = demande.unite === undefined
+    ? ' '.repeat(profondeur * PAS)
+    : demande.unite.repeat(profondeur);
   // Une ligne blanche du rendu garde SON indentation : c'est le corps vide
   // d'un bloc, et c'est là que le curseur doit pouvoir se poser. La vider
   // laisserait le curseur en colonne zéro, dans un bloc indenté.

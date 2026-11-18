@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { TranslationSession } from './session.ts';
 import { PythonTranslationSession } from './sessionPython.ts';
+import { JavaTranslationSession } from './sessionJava.ts';
 import type { InformationAffichable, SessionControleur, SessionDiagnostic, TargetState } from './session.ts';
 import { PreviewStore } from './preview.ts';
 import type { PreviewPair } from './preview.ts';
@@ -16,7 +17,7 @@ export type SessionInspection = {
   information: InformationAffichable[];
   attachmentLabel: string | undefined;
   souple: boolean;
-  langage: 'c17' | 'python';
+  langage: 'c17' | 'python' | 'java';
   normalisation: { source: string; canonique: string; lectures: number } | undefined;
   validation: string | vscode.InputBoxValidationMessage | undefined;
   confirmationTitle: string | undefined;
@@ -77,17 +78,33 @@ function pythonActif(): boolean {
   return typeof reglage === 'boolean' ? reglage : PYTHON_PAR_DEFAUT;
 }
 
+/** Java est ACTIF par defaut, lot J10.
+ *
+ * Il arrive avec les neuf domaines couverts : 143 formulations -- 30 reprises,
+ * 27 adaptations, 86 natives --, 28 informations passives, quatre portees de
+ * placement, et des programmes compiles par javac et executes.
+ *
+ * Le reglage existe pour la meme raison que celui de Python : pouvoir le
+ * fermer sans desinstaller. A `false`, un fichier .java est refuse. */
+export const JAVA_PAR_DEFAUT = true;
+
+function javaActif(): boolean {
+  const reglage = vscode.workspace.getConfiguration('c-a').get<boolean>('java');
+  return typeof reglage === 'boolean' ? reglage : JAVA_PAR_DEFAUT;
+}
+
 /** Les langages que la commande accepte, par extension et identifiant VS Code.
  * Aucun repli : un fichier qui n'est ni l'un ni l'autre est refuse. */
-type Cible = { langage: 'c17' | 'python'; extension: string; languageId: string };
+type Cible = { langage: 'c17' | 'python' | 'java'; extension: string; languageId: string };
 const CIBLES: readonly Cible[] = [
   { langage: 'c17', extension: '.c', languageId: 'c' },
   { langage: 'python', extension: '.py', languageId: 'python' },
+  { langage: 'java', extension: '.java', languageId: 'java' },
 ];
 
 class NativeSession {
   readonly controller: SessionControleur;
-  private readonly langage: 'c17' | 'python';
+  private readonly langage: 'c17' | 'python' | 'java';
   private readonly languageId: string;
   private readonly document: vscode.TextDocument;
   private readonly column: vscode.ViewColumn;
@@ -130,7 +147,9 @@ class NativeSession {
     this.languageId = cible.languageId;
     this.controller = cible.langage === 'python'
       ? new PythonTranslationSession(initial, draft, { souple })
-      : new TranslationSession(initial, draft, { souple });
+      : cible.langage === 'java'
+        ? new JavaTranslationSession(initial, draft, { souple })
+        : new TranslationSession(initial, draft, { souple });
     const observe = () => {
       if (this.disposed || this.finishing) return;
       this.controller.observe(this.capture());
@@ -453,14 +472,19 @@ export function activate(context: vscode.ExtensionContext): ExtensionApi {
     if (active) { active.focus(); return; }
     const editor = vscode.window.activeTextEditor;
     const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
-    const disponibles = CIBLES.filter(c => c.langage === 'c17' || pythonActif());
+    const disponibles = CIBLES.filter(c => c.langage === 'c17'
+      || (c.langage === 'python' && pythonActif())
+      || (c.langage === 'java' && javaActif()));
     const cible = editor === undefined ? undefined : disponibles.find(candidat =>
       editor.document.uri.path.endsWith(candidat.extension) && editor.document.languageId === candidat.languageId);
     if (!editor || editor.document.uri.scheme !== 'file' || cible === undefined
       || editor.viewColumn === undefined || !(tab?.input instanceof vscode.TabInputText)) {
-      void vscode.window.showWarningMessage(pythonActif()
-        ? 'C-A : ouvrez un fichier .c en mode C, ou un fichier .py en mode Python, avant de saisir une instruction.'
-        : 'C-A : ouvrez un fichier .c ordinaire en mode C avant de saisir une instruction.');
+      // Le message nomme EXACTEMENT les extensions ouvertes : annoncer un
+      // langage desactive enverrait l'utilisateur ouvrir un fichier qui sera
+      // refuse ensuite.
+      const ouvertes = disponibles.map(c => c.extension).join(', ');
+      void vscode.window.showWarningMessage(
+        'A : ouvrez un fichier ' + ouvertes + ' dans son mode de langage avant de saisir une instruction.');
       return;
     }
     if (editor.selections.length !== 1 || !editor.selection.isEmpty) {

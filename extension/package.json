@@ -1,7 +1,7 @@
 {
   "name": "c-a",
   "displayName": "A — Français vers Code",
-  "description": "Prototype pédagogique : traduction, aperçu et insertion explicite d’instructions depuis des phrases françaises contrôlées. Deux déclinaisons : C-A vers C17, Python-A vers Python.",
+  "description": "Prototype pédagogique : traduction, aperçu et insertion explicite d’instructions depuis des phrases françaises contrôlées. Trois langages cibles : C17 avec C-A, Python avec Python-A, Java 21 avec Java-A.",
   "version": "0.5.0",
   "publisher": "projet-a-local",
   "private": true,
@@ -51,6 +51,11 @@
           "type": "boolean",
           "default": true,
           "description": "Python, **actif par défaut** : la commande C-A fonctionne dans un fichier .py. Le catalogue Python compte 97 intentions — 33 reprises du catalogue partagé et 64 natives — et 49 informations pédagogiques. Les classes, le « else » de boucle et la boucle à test final n’y sont pas. Mettez ce réglage à false pour n’ouvrir que les fichiers .c."
+        },
+        "c-a.java": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Ouvrir aussi les fichiers `.java` et y écrire du **Java 21**, avec le catalogue pédagogique de Java-A. À `false`, seuls les fichiers `.c` et `.py` sont ouverts. Java-A ne vérifie ni les types, ni les symboles, ni les bornes, ni la **visibilité** : une insertion acceptée n’est pas un programme correct."
         }
       }
     }
