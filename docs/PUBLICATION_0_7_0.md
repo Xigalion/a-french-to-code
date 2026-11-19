@@ -91,7 +91,7 @@ git diff --stat main phase-4-sql   # vide
 ```
 
 Les livraisons précédentes fusionnaient en **avance rapide**. Pas celle-ci, et
-ce n'est pas un choix de style : **deux commits intermédiaires de la branche
+ce n'est pas un choix de style : **quatre commits intermédiaires de la branche
 portaient un chemin personnel** dans le journal de l'exercice — `psql`
 préfixe ses erreurs du chemin absolu du script.
 
@@ -105,7 +105,7 @@ détail reste sur la branche, et `docs/phase4/BILAN_SQL_V1.md` le recense lot
 par lot.
 
 **Ce qui reste à nettoyer** : la branche `phase-4-sql` existe **au distant**,
-et ses deux commits portent toujours le chemin. La retirer demande soit la
+et quatre de ses commits portent toujours le chemin. La retirer demande soit la
 suppression de la branche distante, soit une réécriture d'un historique
 poussé — que les conventions du dépôt interdisent de faire sans décision
 explicite. **C'est le seul point d'hygiène ouvert**, et il est signalé plutôt

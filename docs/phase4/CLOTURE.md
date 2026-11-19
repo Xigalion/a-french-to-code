@@ -129,6 +129,11 @@ intermittent affaiblit tout chiffre qu'il produit**. Le nettoyage
 déterministe du lot précédent a réduit la fréquence, pas supprimé le
 phénomène.
 
+**Aucune campagne n'est ouverte pour ce seul problème** — décision du
+fondateur du 19 novembre 2026. Le phénomène, ses mesures, les deux hypothèses
+réfutées, la troisième laissée ouverte et la règle de conduite retenue sont
+consignés dans [`../INSTABILITE_SUITE_HOTE.md`](../INSTABILITE_SUITE_HOTE.md).
+
 ## 6. Ce qui reste ouvert
 
 **Côté produit**, nommé et assumé : aucune vérification de symboles, de types,
@@ -140,7 +145,7 @@ exprimable ; « ou » sans accent n'est pas reconnu, et ne le sera pas.
 compilateur C, un interpréteur Python, un JDK.
 
 **Côté historique publié** : la branche `phase-4-sql` existe au distant et
-**deux de ses commits portent un chemin personnel** dans le journal de
+**quatre de ses commits portent un chemin personnel** dans le journal de
 l'exercice. C'est pourquoi la fusion dans `main` a été faite en **squash** :
 l'historique de `main` est propre, et le contrôle qui scanne tout
 `git log main -S` le confirme. **La branche distante, elle, reste à nettoyer**,

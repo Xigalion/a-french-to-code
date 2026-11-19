@@ -372,3 +372,22 @@ le rappelle, et elle ne bloque pas — l'aperçu **est** la confirmation.
 `DROP TABLE` et `DROP VIEW` sont au catalogue : les refuser rendrait le
 domaine 1 inenseignable. La vraie réponse au risque n'est pas un garde-fou de
 A, c'est `ROLLBACK`, enseigné au domaine 9.
+
+## Une instabilité de la suite de tests, et ce qu'elle ne prouve pas
+
+La suite de tests qui pilote **la vraie interface de VS Code** est
+**intermittente** sur la machine de développement : un passage a échoué, puis
+le **même binaire** a passé les 130 scénarios cinq fois de suite sans aucune
+modification.
+
+**L'origine n'est pas établie.** Deux hypothèses ont été testées et réfutées,
+une troisième reste ouverte. Les échecs portent sur l'**état de l'éditeur** —
+contenu d'un document, délai d'attente — et jamais sur ce que le moteur
+traduit.
+
+Conséquence pour qui lit nos chiffres : **un chiffre juste obtenu sur un
+harnais intermittent ne garantit pas la reproductibilité.** Les résultats
+annoncés ont tous été observés ; ils sont moins solides qu'un résultat
+déterministe, et nous préférons l'écrire.
+
+Détail des mesures : `docs/INSTABILITE_SUITE_HOTE.md`.
