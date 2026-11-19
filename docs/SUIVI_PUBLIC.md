@@ -142,9 +142,14 @@ Et les scores des campagnes ne bougent pas, jamais, pour aucun ticket.
 Le script le répète à chaque passage tant que ce n'est pas fait :
 
 - **créer les quatre étiquettes** (§2) ;
-- **ajouter des sujets** au dépôt — sans eux il est introuvable par
-  recherche : `c`, `c17`, `vscode-extension`, `pedagogy`, `french`,
-  `typescript`, `education` ;
+- **ajouter des sujets** au dépôt — vérifié le 19 novembre 2026 : il n'en a
+  **aucun**, et sans eux il est introuvable par recherche. Les douze proposés,
+  pour les **quatre** langages :
+  `c`, `c17`, `python`, `java`, `sql`, `postgresql`, `vscode-extension`,
+  `pedagogy`, `french`, `typescript`, `education`, `transpiler`.
+  **Aucun outil de nos sessions ne peut les poser** : le serveur GitHub
+  disponible n'expose pas ce point d'entrée, et `gh` n'est pas installé.
+  C'est donc un geste d'interface : Settings → General → Topics ;
 - **désactiver l'onglet Projects**, actif et non suivi (Settings → General →
   Features) ;
 - **publier la release `v0.4.0`** si elle est encore en brouillon : sans

@@ -10,7 +10,7 @@
   "miseAJour": "2026-11-19",
   "branche": "phase-4-sql",
   "langage": "SQL, dialecte de reference PostgreSQL 18, priorite au SQL standard",
-  "etat": "PHASE 4 CLOSE. SQL-A V1 livre, fusionne dans main en SQUASH et etiquete v0.7.0. Les QUATRE langages fondamentaux sont techniquement realises. La release GitHub reste a creer a la main, en PRE-RELEASE. Ni Rust-A ni le modele pedagogique 2 ne sont commences.",
+  "etat": "PHASE 4 DEFINITIVEMENT CLOSE, le 19 novembre 2026. SQL-A V1 livre, 0.7.0 fusionnee en SQUASH, etiquetee v0.7.0, poussee, et la RELEASE EST PUBLIEE en pre-release -- verifiee anonymement jusqu au sha256 du VSIX telecharge et a son installation. Les QUATRE langages fondamentaux sont techniquement realises. Aucun nouveau langage ni modele pedagogique ne commence sans instruction.",
   "indicateurs": [
     {
       "nom": "Phase 4 — audit du socle",
@@ -107,12 +107,20 @@
       "unite": "livrables",
       "source": "CHANGELOG.md, README.md, docs/LIMITES_CONNUES.md, docs/ETAT_DU_PROJET.md, docs/CATALOGUE_SQL.md, docs/NOTES_PUBLICATION_0_7_0.md, docs/PUBLICATION_0_7_0.md, dist/c-a-0.7.0.vsix",
       "note": "Documents publics des QUATRE langages, catalogue SQL engendre depuis le moteur, bilan consolide compare les quatre cote a cote avec des chiffres MESURES. Paquet reproductible AU BIT depuis TROIS constructions : sha256 63ec159b, 246 435 octets, 72 entrees. Suite hote 130/130 sur trois combinaisons, dont la version MINIMALE 1.96.4. Mise a niveau depuis la 0.6.0 verifiee, identifiant inchange. 20/20 controles de pre-publication sur main. La verification depuis un clone propre a TROUVE un defaut : la reproductibilite etait cassee par des CRLF locaux."
+    },
+    {
+      "nom": "Phase 4 — release 0.7.0 publiee et verifiee",
+      "fait": 1,
+      "total": 1,
+      "unite": "release",
+      "source": "https://github.com/Xigalion/a-french-to-code/releases/tag/v0.7.0",
+      "note": "Verifiee ANONYMEMENT : api 200, page 200, prerelease true, draft false, corps de 172 lignes SANS l en-tete de gabarit. Le VSIX TELECHARGE est identique octet pour octet au paquet du depot ET au paquet reconstruit depuis un clone anonyme de l etiquette : la chaine de confiance est close sur QUATRE maillons. Il s installe sous projet-a-local.c-a@0.7.0 depuis le fichier telecharge, et la suite hote passe 130/130 deux fois contre cette installation."
     }
   ],
   "cloture": {
     "date": "2026-11-19",
     "document": "docs/phase4/CLOTURE.md",
-    "etat": "CLOSE. Huit defauts trouves et corriges, dont CINQ invisibles pour tout test unitaire. Paquet 0.7.0 reproductible au bit depuis TROIS constructions. 20/20 controles sur main.",
-    "ceQuiResteOuvert": "docs/phase4/CLOTURE.md sections 5 et 6 : une instabilite du harnais hote OBSERVEE et NON EXPLIQUEE, et la branche distante phase-4-sql dont deux commits portent un chemin personnel -- la fusion en squash protege main, pas la branche. Usage humain : 0/10."
+    "etat": "CLOSE DEFINITIVEMENT. Release publiee et verifiee. Branche distante supprimee apres verification que tout son contenu utile est dans main -- mais la suppression N EFFACE PAS : les quatre commits restent servis par hachage, mesure et documente.",
+    "ceQuiResteOuvert": "docs/INSTABILITE_SUITE_HOTE.md (origine NON etablie, aucune campagne ouverte, sur decision du fondateur) ; docs/HYGIENE_HISTORIQUE_PHASE4.md (effacement incomplet, trois voies, aucune engagee) ; les sujets du depot, qu aucun outil de nos sessions ne peut poser. Usage humain : 0/10."
   }
 }

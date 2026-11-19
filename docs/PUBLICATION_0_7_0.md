@@ -104,12 +104,12 @@ et le contrôle le confirme : **20/20 sur `main`**.
 détail reste sur la branche, et `docs/phase4/BILAN_SQL_V1.md` le recense lot
 par lot.
 
-**Ce qui reste à nettoyer** : la branche `phase-4-sql` existe **au distant**,
-et quatre de ses commits portent toujours le chemin. La retirer demande soit la
-suppression de la branche distante, soit une réécriture d'un historique
-poussé — que les conventions du dépôt interdisent de faire sans décision
-explicite. **C'est le seul point d'hygiène ouvert**, et il est signalé plutôt
-que tu.
+**Ce qui a été fait depuis, et ce qui reste** : la branche distante a été
+**supprimée** le 19 novembre 2026, sur autorisation, après vérification que
+tout son contenu utile est dans `main`. La suppression **n'efface pas** les
+objets : les quatre commits restent servis par l'API et par `raw` à qui
+connaît leur hachage, et un clone ne les obtient plus. Mesures et voies
+d'effacement réel : [`HYGIENE_HISTORIQUE_PHASE4.md`](HYGIENE_HISTORIQUE_PHASE4.md).
 
 ### Retour arrière
 
@@ -179,7 +179,11 @@ propriétaire, et la vérification anonyme échouerait.
 - **aucun essai hors Windows** ; un seul compilateur C, un seul interpréteur
   Python, un seul JDK, un seul serveur SQL ;
 - l'**instabilité du harnais hôte**, observée et non expliquée (§1) ;
-- la branche distante `phase-4-sql`, à nettoyer (§4) ;
+- l'**effacement incomplet** des quatre commits : la branche distante est
+  supprimée, les objets restent servis par hachage
+  (`docs/HYGIENE_HISTORIQUE_PHASE4.md`) ;
+- les **sujets du dépôt** : il n'en a **aucun**, et aucun outil de nos
+  sessions ne peut les poser ;
 - les éléments secondaires du dépôt — étiquettes de tickets, sujets, onglet
   Projects, brouillon de release de la 0.5.0 — **écartés sur consigne**, et
   toujours vrais.

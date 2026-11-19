@@ -7,10 +7,19 @@ Ouverte le **19 novembre 2026**, branche `phase-4-sql`.
 > bilan, les six défauts trouvés et les limites réelles :
 > [BILAN_SQL_V1.md](BILAN_SQL_V1.md).
 >
-> **Fusionné dans `main` et étiqueté `v0.7.0`.** La release GitHub reste à
-> créer à la main, en ***pre-release*** :
-> [`../PUBLICATION_0_7_0.md`](../PUBLICATION_0_7_0.md) §7. Clôture de la
-> phase : [CLOTURE.md](CLOTURE.md).
+> **Phase 4 définitivement close le 19 novembre 2026.** Fusionnée dans `main`,
+> étiquetée `v0.7.0`, et la **release est publiée** en ***pre-release***,
+> vérifiée anonymement jusqu'au `sha256` du `.vsix` téléchargé.
+>
+> Clôture : [CLOTURE.md](CLOTURE.md) · bilan :
+> [BILAN_SQL_V1.md](BILAN_SQL_V1.md) · histoire des lots :
+> [HISTORIQUE_DES_LOTS.md](HISTORIQUE_DES_LOTS.md).
+>
+> **Deux points restent ouverts et documentés** :
+> [`../INSTABILITE_SUITE_HOTE.md`](../INSTABILITE_SUITE_HOTE.md) — origine non
+> établie — et
+> [`../HYGIENE_HISTORIQUE_PHASE4.md`](../HYGIENE_HISTORIQUE_PHASE4.md) —
+> supprimer une branche n'efface rien.
 >
 > *Les documents ci-dessous gardent leur formulation d'origine, qui dit
 > souvent « rien n'est implémenté ». C'était vrai à leur date : un compte

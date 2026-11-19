@@ -144,13 +144,18 @@ exprimable ; « ou » sans accent n'est pas reconnu, et ne le sera pas.
 **Côté environnement** : une machine, **Windows**, un serveur PostgreSQL, un
 compilateur C, un interpréteur Python, un JDK.
 
-**Côté historique publié** : la branche `phase-4-sql` existe au distant et
-**quatre de ses commits portent un chemin personnel** dans le journal de
-l'exercice. C'est pourquoi la fusion dans `main` a été faite en **squash** :
-l'historique de `main` est propre, et le contrôle qui scanne tout
-`git log main -S` le confirme. **La branche distante, elle, reste à nettoyer**,
-et cela demande soit sa suppression, soit une réécriture d'un historique
-poussé — que les conventions du dépôt m'interdisent de faire seul.
+**Côté historique publié** : la branche distante `phase-4-sql` a été
+**supprimée** le 19 novembre 2026, après vérification que tout son contenu
+utile est dans `main`. Mais **la suppression n'efface rien** : les quatre
+commits qui portaient un chemin personnel restent servis par l'API et par
+`raw` à qui connaît leur hachage — mesuré, pas supposé. Un clone, lui, ne les
+obtient plus.
+
+Ce qui protège aujourd'hui est que **les hachages ne sont publiés nulle
+part**, et un contrôle l'impose. C'est une protection par obscurité, pas par
+effacement : elle suffit à un chemin de dossier, elle ne suffirait pas à un
+secret. Mesures, voies d'effacement réel et gardes contre la récidive :
+[`../HYGIENE_HISTORIQUE_PHASE4.md`](../HYGIENE_HISTORIQUE_PHASE4.md).
 
 **Côté usage** : `0/10`, et c'est le même zéro depuis la phase 1.
 
