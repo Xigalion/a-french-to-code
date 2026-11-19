@@ -10,7 +10,7 @@
   "miseAJour": "2026-11-19",
   "branche": "phase-4-sql",
   "langage": "SQL, dialecte de reference PostgreSQL 18, priorite au SQL standard",
-  "etat": "SQL-A V1 LIVRE, lots S0 a S11. 93 formulations natives, 9 domaines, 0 des 84 intentions partagees portee. 4 487 tests Node, 130 scenarios hote, 109 instructions executees contre PostgreSQL 18.7. Les onze decisions sont implementees. RIEN n'est fusionne dans main, et aucune release n'est publiee.",
+  "etat": "PHASE 4 CLOSE. SQL-A V1 livre, fusionne dans main en SQUASH et etiquete v0.7.0. Les QUATRE langages fondamentaux sont techniquement realises. La release GitHub reste a creer a la main, en PRE-RELEASE. Ni Rust-A ni le modele pedagogique 2 ne sont commences.",
   "indicateurs": [
     {
       "nom": "Phase 4 — audit du socle",
@@ -99,12 +99,20 @@
       "unite": "seances",
       "source": "aucune : rien n est mesure",
       "note": "Le meme zero qu aux phases 1, 2 et 3. QUATRE langages sont livres, et personne n a encore ecrit un programme avec A. Les 109 phrases de l exercice sont dictees par un script, et le 97,5 % du corpus SQL porte son biais ecrit. Le corpus GELE de la phase 2, a 95,1 %, reste l ordre de grandeur honnete."
+    },
+    {
+      "nom": "Phase 4 — version publique 0.7.0",
+      "fait": 8,
+      "total": 8,
+      "unite": "livrables",
+      "source": "CHANGELOG.md, README.md, docs/LIMITES_CONNUES.md, docs/ETAT_DU_PROJET.md, docs/CATALOGUE_SQL.md, docs/NOTES_PUBLICATION_0_7_0.md, docs/PUBLICATION_0_7_0.md, dist/c-a-0.7.0.vsix",
+      "note": "Documents publics des QUATRE langages, catalogue SQL engendre depuis le moteur, bilan consolide compare les quatre cote a cote avec des chiffres MESURES. Paquet reproductible AU BIT depuis TROIS constructions : sha256 63ec159b, 246 435 octets, 72 entrees. Suite hote 130/130 sur trois combinaisons, dont la version MINIMALE 1.96.4. Mise a niveau depuis la 0.6.0 verifiee, identifiant inchange. 20/20 controles de pre-publication sur main. La verification depuis un clone propre a TROUVE un defaut : la reproductibilite etait cassee par des CRLF locaux."
     }
   ],
   "cloture": {
     "date": "2026-11-19",
-    "document": "docs/phase4/BILAN_SQL_V1.md",
-    "etat": "SQL-A V1 LIVRE. Six defauts trouves et corriges, dont quatre invisibles pour tout test unitaire. RIEN n'est fusionne dans main, aucune release n'est publiee, et Rust-A n'est pas commence.",
-    "ceQuiResteOuvert": "docs/phase4/BILAN_SQL_V1.md section 8 (limites reelles), docs/LIMITES_CONNUES.md (public). Usage humain : 0/10, et c'est la seule barre qui compte encore."
+    "document": "docs/phase4/CLOTURE.md",
+    "etat": "CLOSE. Huit defauts trouves et corriges, dont CINQ invisibles pour tout test unitaire. Paquet 0.7.0 reproductible au bit depuis TROIS constructions. 20/20 controles sur main.",
+    "ceQuiResteOuvert": "docs/phase4/CLOTURE.md sections 5 et 6 : une instabilite du harnais hote OBSERVEE et NON EXPLIQUEE, et la branche distante phase-4-sql dont deux commits portent un chemin personnel -- la fusion en squash protege main, pas la branche. Usage humain : 0/10."
   }
 }

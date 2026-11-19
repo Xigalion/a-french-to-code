@@ -7,7 +7,10 @@ Ouverte le **19 novembre 2026**, branche `phase-4-sql`.
 > bilan, les six défauts trouvés et les limites réelles :
 > [BILAN_SQL_V1.md](BILAN_SQL_V1.md).
 >
-> **Rien n'est fusionné dans `main`, et aucune release n'est publiée.**
+> **Fusionné dans `main` et étiqueté `v0.7.0`.** La release GitHub reste à
+> créer à la main, en ***pre-release*** :
+> [`../PUBLICATION_0_7_0.md`](../PUBLICATION_0_7_0.md) §7. Clôture de la
+> phase : [CLOTURE.md](CLOTURE.md).
 >
 > *Les documents ci-dessous gardent leur formulation d'origine, qui dit
 > souvent « rien n'est implémenté ». C'était vrai à leur date : un compte
