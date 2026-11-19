@@ -43,6 +43,7 @@ const HISTORIQUES = new Map([
   ['exercice/journal/hote-lot26.txt', 'n’a jamais existé ; l’audit le cite comme défaut corrigé'],
 ]);
 
+
 for (const document of documents) {
   const contenu = readFileSync(join(racine, document), 'utf8');
   const base = dirname(document);

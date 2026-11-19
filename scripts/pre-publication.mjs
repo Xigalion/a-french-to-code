@@ -184,6 +184,33 @@ controle('aucun artefact de compilation suivi', () => {
     : mauvais.length + ' fichier(s) : ' + mauvais.slice(0, 5).join(', ');
 });
 
+// L'arbre de travail doit porter EXACTEMENT ce que le dépôt stocke.
+//
+// `.gitattributes` impose `eol=lf`, et le dépôt stocke donc des LF. Mais un
+// outil qui écrit un fichier sur Windows peut y mettre des CRLF sans que git
+// ne signale rien : le contenu normalisé est identique, donc `git status` est
+// muet, et pourtant le fichier SUR LE DISQUE diffère.
+//
+// Cela a cassé la reproductibilité au bit de la 0.7.0, et de la façon la plus
+// sournoise : le paquet construit sur le poste de développement différait de
+// celui d'un clone propre par 10 octets, parce que `extension/package.json`
+// est copié tel quel dans le paquet et qu'un littéral de gabarit multiligne
+// de TypeScript garde ses fins de ligne à la compilation.
+//
+// Le contrôle regarde donc le DISQUE, et non l'index. Un `git status` propre
+// ne prouve pas que le disque est canonique.
+controle('aucun CRLF dans un fichier texte suivi', () => {
+  const TEXTE = /\.(ts|mjs|cjs|js|json|md|c|h|sql|py|java|txt|yml|cmd)$/u;
+  const mauvais = suivis.filter(chemin => {
+    if (!TEXTE.test(chemin)) return false;
+    try { return readFileSync(chemin).includes(13); } catch { return false; }
+  });
+  return mauvais.length === 0 ? true
+    : mauvais.length + ' fichier(s) avec des CRLF sur le disque, alors que le dépôt stocke des LF : '
+      + mauvais.slice(0, 5).join(', ')
+      + ' — restaurez-les par `rm <fichier> && git checkout -- <fichier>`.';
+});
+
 // Les instructions de travail internes restent locales : ni suivies, ni
 // présentes dans l'historique publié. Leur substance est publiée par
 // docs/ETAT_DU_PROJET.md, et c'est la décision du 17 novembre 2026.

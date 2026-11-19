@@ -1391,6 +1391,141 @@ exports.run = async function run() {
       assert.equal(api.inspect().diagnostic.stage, 'translation');
       assert.equal(state.document.getText(), CORPS);
     });
+    // ================= SQL-A, lot S10 =================================
+    //
+    // L'IHM REELLE ecrit du SQL. Huit scenarios, dont trois qui n'ont
+    // d'equivalent dans aucun autre langage : la composition d'une requete
+    // par insertions pures, le refus d'une clause hors requete, et l'ordre
+    // des clauses.
+    async function fixtureSql(text = '', cursor = text.length) {
+      const file = path.join(workspace, `essai${++fixtureNumber}.sql`);
+      fs.writeFileSync(file, text, 'utf8');
+      const document = await vscode.workspace.openTextDocument(vscode.Uri.file(file));
+      const editor = await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.One });
+      editor.options = { insertSpaces: true, tabSize: 2, indentSize: 'tabSize' };
+      const position = document.positionAt(cursor);
+      editor.selection = new vscode.Selection(position, position);
+      documents.push(document);
+      await delay(100);
+      return { file, document, editor };
+    }
+    async function avecSql(body) {
+      try {
+        await vscode.workspace.getConfiguration('c-a').update('sql', true, vscode.ConfigurationTarget.Global);
+        await waitFor(() => vscode.workspace.getConfiguration('c-a').get('sql') === true, 'reglage sql actif');
+        await body();
+      } finally {
+        await vscode.workspace.getConfiguration('c-a').update('sql', false, vscode.ConfigurationTarget.Global);
+      }
+    }
+    await test('lot S10 : sans le reglage, un fichier .sql est refuse', async () => {
+      assert.equal(vscode.workspace.getConfiguration('c-a').get('sql'), false);
+      const state = await fixtureSql('');
+      await vscode.commands.executeCommand('c-a.translate', 'Supprime la table eleves.');
+      await delay(300);
+      assert.equal(api.inspect(), undefined);
+      assert.equal(state.document.getText(), '');
+    });
+    await test('lot S10 : avec le reglage, une instruction SQL est inseree', async () => {
+      await avecSql(async () => {
+        const state = await fixtureSql('');
+        await preview('Supprime la table eleves.');
+        assert.equal(api.inspect().langage, 'sql');
+        await inserted();
+        const eol = state.document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+        assert.equal(state.document.getText(),
+          '-- Supprime la table eleves.' + eol + 'DROP TABLE eleves;');
+        await vscode.commands.executeCommand('undo');
+        await waitFor(() => state.document.getText() === '', 'annulation en une fois');
+      });
+    });
+    await test('lot S10 : une requete ouvre un bloc, point-virgule seul sur sa ligne', async () => {
+      await avecSql(async () => {
+        const state = await fixtureSql('');
+        await preview('Crée une requête qui lit la colonne nom de la table eleves.');
+        await inserted();
+        const texte = state.document.getText();
+        assert.ok(/SELECT nom/u.test(texte), JSON.stringify(texte));
+        assert.ok(/FROM eleves/u.test(texte), JSON.stringify(texte));
+        assert.ok(/\r?\n\r?\n;$/u.test(texte), JSON.stringify(texte));
+      });
+    });
+    await test('lot S10 : une clause s insere dans la requete, SANS rien remplacer', async () => {
+      await avecSql(async () => {
+        const requete = 'SELECT nom' + EOL + 'FROM eleves' + EOL + EOL + ';' + EOL;
+        const state = await fixtureSql(requete, requete.indexOf(';') - EOL.length);
+        await preview('Ne garde que les lignes où "age > 18".');
+        assert.equal(api.inspect().attachmentLabel, 'requête ouverte');
+        await inserted();
+        const texte = state.document.getText();
+        assert.ok(texte.includes('WHERE age > 18'), JSON.stringify(texte));
+        // RIEN n'a ete remplace, et la ligne blanche du curseur a SURVECU :
+        // c'est elle qui rend la clause suivante possible.
+        assert.ok(texte.includes('SELECT nom'), texte);
+        assert.ok(texte.includes('FROM eleves'), texte);
+        assert.ok(/\r?\n\r?\n;/u.test(texte), JSON.stringify(texte));
+      });
+    });
+    await test('lot S10 : deux clauses de suite, composees par l IHM', async () => {
+      await avecSql(async () => {
+        const requete = 'SELECT nom' + EOL + 'FROM eleves' + EOL + EOL + ';' + EOL;
+        const state = await fixtureSql(requete, requete.indexOf(';') - EOL.length);
+        await preview('Ne garde que les lignes où "age > 18".');
+        await inserted();
+        // Le curseur est reste sur la ligne blanche : on enchaine.
+        const texte = state.document.getText();
+        const blanche = texte.lastIndexOf(EOL + EOL + ';') + EOL.length;
+        const editor = vscode.window.activeTextEditor;
+        const position = editor.document.positionAt(blanche);
+        editor.selection = new vscode.Selection(position, position);
+        await delay(100);
+        await preview('Exige aussi que "age < 60".');
+        await inserted();
+        const final = state.document.getText();
+        assert.ok(final.includes('WHERE age > 18'), JSON.stringify(final));
+        assert.ok(final.includes('AND age < 60'), JSON.stringify(final));
+        assert.ok(final.indexOf('WHERE') < final.indexOf('AND age'), JSON.stringify(final));
+      });
+    });
+    await test('lot S10 : une clause hors de toute requete est refusee', async () => {
+      await avecSql(async () => {
+        const state = await fixtureSql('');
+        await start('Ne garde que les lignes où "age > 18".');
+        await accept();
+        const diagnostic = api.inspect().diagnostic;
+        assert.equal(diagnostic.code, 'CLAUSE_HORS_REQUETE');
+        assert.equal(diagnostic.stage, 'placement');
+        assert.equal(state.document.getText(), '');
+      });
+    });
+    await test('lot S10 : une clause dans le mauvais ordre est refusee, et le message la NOMME', async () => {
+      await avecSql(async () => {
+        const requete = 'SELECT nom' + EOL + 'FROM eleves' + EOL + 'ORDER BY nom ASC' + EOL + EOL + ';' + EOL;
+        await fixtureSql(requete, requete.indexOf(';') - EOL.length);
+        await start('Ne garde que les lignes où "age > 18".');
+        await accept();
+        const diagnostic = api.inspect().diagnostic;
+        assert.equal(diagnostic.code, 'CLAUSE_DANS_LE_MAUVAIS_ORDRE');
+        assert.ok(/WHERE/u.test(diagnostic.message), diagnostic.message);
+      });
+    });
+    await test('lot S10 : une information passive de SQL est journalisee', async () => {
+      await avecSql(async () => {
+        await fixtureSql('');
+        await preview('Supprime toutes les lignes de la table eleves.');
+        const codes = api.inspect().information.map(item => item.code);
+        assert.ok(codes.includes('SQL_MODIFICATION_SANS_FILTRE'), codes.join(', '));
+        assert.ok(codes.includes('SQL_AUCUNE_EXECUTION'), codes.join(', '));
+        assert.deepEqual(api.inspect().advisories, []);
+      });
+    });
+    await test('lot S10 : une phrase SQL est refusee dans un fichier .c', async () => {
+      const state = await fixture(CORPS);
+      await start('Supprime la table eleves.');
+      await accept();
+      assert.equal(api.inspect().diagnostic.stage, 'translation');
+      assert.equal(state.document.getText(), CORPS);
+    });
     await test('v0.5.0 : les deux reglages sont ACTIFS par defaut dans le manifeste', async () => {
       // Le profil de test les epingle a false pour que les scenarios soient
       // deterministes. Le defaut du MANIFESTE, lui, est ce que verra un
@@ -1399,14 +1534,17 @@ exports.run = async function run() {
       const souplesse = vscode.workspace.getConfiguration('c-a').inspect('souplesse');
       const python = vscode.workspace.getConfiguration('c-a').inspect('python');
       const java = vscode.workspace.getConfiguration('c-a').inspect('java');
+      const sql = vscode.workspace.getConfiguration('c-a').inspect('sql');
       assert.equal(souplesse.defaultValue, true, 'le francais souple doit etre actif par defaut');
       assert.equal(python.defaultValue, true, 'Python doit etre actif par defaut');
       assert.equal(java.defaultValue, true, 'Java doit etre actif par defaut');
+      assert.equal(sql.defaultValue, true, 'SQL doit etre actif par defaut');
       // Et le mode strict reste ACCESSIBLE : le profil le prouve, puisqu'il
       // l'a epingle a false et que les scenarios stricts passent.
       assert.equal(vscode.workspace.getConfiguration('c-a').get('souplesse'), false);
       assert.equal(vscode.workspace.getConfiguration('c-a').get('python'), false);
       assert.equal(vscode.workspace.getConfiguration('c-a').get('java'), false);
+      assert.equal(vscode.workspace.getConfiguration('c-a').get('sql'), false);
     });
     await test('changer indentSize seul invalide le plan', async () => {
       const { editor } = await fixture();

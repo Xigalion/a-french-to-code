@@ -9,12 +9,12 @@ dans quel ordre, et ce qui vient après. Il ne promet aucune date.
 
 **Quatre langages fondamentaux**, avant tout modèle pédagogique supérieur :
 
-| Ordre | Langage | Déclinaison | État au 18 novembre 2026 |
+| Ordre | Langage | Déclinaison | État au 19 novembre 2026 |
 |---|---|---|---|
 | 1 | **C17** | C-A | **livré** — V1 publique, 84 intentions, 19 programmes compilés |
 | 2 | **Python** | Python-A | **livré** — 0.5.0, 97 intentions, 9 programmes exécutés |
-| 3 | **Java** | Java-A | **phase 3 ouverte** le 18 novembre 2026 |
-| 4 | **SQL** | SQL-A | **pas commencé**, et ne doit pas l'être |
+| 3 | **Java** | Java-A | **livré** — 0.6.0 publiée, 144 formulations, phase 3 close |
+| 4 | **SQL** | SQL-A | **phase 4 ouverte** le 19 novembre 2026 — orientations proposées, **rien d'implémenté** |
 
 Puis, et seulement ensuite : le **modèle pédagogique 2** — le palier de
 liberté linguistique où des formulations plus concises et des valeurs par
@@ -39,9 +39,17 @@ langage oblige à construire**.
   fichiers** (nom de classe = nom de fichier, paquetage = répertoire), et les
   **exceptions vérifiées**, qui sont une obligation du compilateur et non un
   choix du programmeur ;
-- **SQL** obligera à affronter autre chose encore : un langage **déclaratif**,
+- **SQL** oblige à affronter autre chose encore : un langage **déclaratif**,
   sans flot d'exécution, sans variables au sens des trois autres. C'est la
   raison de le garder pour la fin, pas de le considérer facile.
+
+**Et l'audit de la phase 4 l'a confirmé plus durement que prévu** : mesuré sur
+le moteur, C17 porte **84** intentions du catalogue partagé sur 84, Java
+**57**, Python **33**, et SQL **zéro**. La pente n'est pas un hasard : elle
+suit la distance au langage pour lequel le catalogue a été conçu. SQL-A est le
+premier langage **entièrement natif**, et il n'hérite donc d'aucune des
+vérifications accumulées par les lots 1 à 25. Détail :
+[`phase4/AUDIT_REUTILISATION.md`](phase4/AUDIT_REUTILISATION.md).
 
 ## 3. Ce que la feuille de route ne décide pas
 

@@ -14,10 +14,14 @@ qui est prouvé, comment le projet travaille, et ce qu'il ne faut pas croire.
 > fichiers touchés : c'est un **fait historique** — le lot l'avait bien mis
 > à jour — et non un fichier manquant du dépôt.
 >
-> État au 18 novembre 2026, version **0.6.0** — **trois** langages cibles :
-> C17 avec C-A, Python avec Python-A, Java 21 avec Java-A. Les trois réglages
-> — français souple, Python, Java — sont **actifs par défaut**, et chacun se
-> ferme.
+> État au 19 novembre 2026, version **0.7.0** — **quatre** langages cibles :
+> C17 avec C-A, Python avec Python-A, Java 21 avec Java-A, SQL avec SQL-A. Les
+> quatre réglages — français souple, Python, Java, SQL — sont **actifs par
+> défaut**, et chacun se ferme.
+>
+> **Les quatre langages fondamentaux de la feuille de route sont
+> techniquement réalisés.** Ce qui ne l'est pas, et qui ne l'a jamais été :
+> `0/10` séances d'usage réel.
 
 ---
 
@@ -25,9 +29,10 @@ qui est prouvé, comment le projet travaille, et ce qu'il ne faut pas croire.
 
 **A** est un projet de programmation assistée : traduire une intention
 exprimée en **langue naturelle contrôlée** vers du code d'un langage **réel
-et existant**. **C-A** en est la première incarnation : **français → C17 et
-Python**,
-intégrée à VS Code, moteur en TypeScript.
+et existant**. **C-A** en est la première incarnation — **français → C17** —
+et trois autres déclinaisons l'ont suivie : **Python-A**, **Java-A** et
+**SQL-A**. Une seule extension VS Code les porte toutes les quatre, moteur en
+TypeScript.
 
     Crée un entier nommé age de valeur 20.
 
@@ -339,3 +344,44 @@ est au lexique — la couche produisait `e.Affiche();`, et **A renommait
 silencieusement la méthode de l'utilisateur**. C'est la faute la plus grave de
 la classification, et la seule qu'aucun taux ne rachète. Corrigée, puis
 corrigée une seconde fois parce que la correction sur-protégeait à son tour.
+
+---
+
+## Les quatre langages, côte à côte
+
+Mesuré sur le moteur, et non lu : `node --input-type=module -e "…"`.
+
+| | C-A | Python-A | Java-A | **SQL-A** |
+|---|---|---|---|---|
+| cible | C17 | Python 3 | Java 21 LTS | **SQL standard, vérifié sur PostgreSQL 18** |
+| intentions du catalogue partagé portées | **84 / 84** | 33 | 57 | **0** |
+| refusées, avec leur raison | 0 | 51 en 19 textes | 27 en 21 textes | **84 en 10 raisons** |
+| formulations propres | — | 64 | 87 | **93** |
+| délimiteur de blocs | accolades | indentation | accolades | **`;`** |
+| portées de placement | 2 | profondeurs | **4** | **3**, plus **10 rangs de clauses** |
+| informations passives | — | 21 | 28 | **17** |
+| preuve d'exécution | 19 programmes compilés | 9 programmes exécutés | 2 programmes compilés et exécutés | **109 instructions jouées, 3 épreuves négatives** |
+
+**La pente des reprises n'est pas un hasard** — 84, puis 57, puis 33, puis 0.
+Elle suit la distance au langage pour lequel le catalogue a été conçu, et SQL
+en est le terme : un langage de requêtes n'a ni variable, ni boucle, ni
+fonction, ni affichage, ni fichier, ni mémoire, ni préprocesseur.
+
+**Ce que les quatre langages ont appris, et qui vaut pour tous :**
+
+1. **un second langage n'est pas un portage.** Python l'a montré en refusant
+   51 intentions avec une raison ; SQL l'a poussé jusqu'à 84 ;
+2. **l'étiquette de blocs ne garantit pas la règle de placement.** Java porte
+   la même que C17 et a pourtant exigé son propre module : `planPlacement`
+   encode des règles **du C**, pas des règles des accolades. SQL a exigé une
+   **troisième étiquette**, et c'est la troisième confirmation que les
+   placements se *sélectionnent* ;
+3. **le français souple est indépendant du langage cible.** Les 98
+   reformulations de la phase 2 servent aux quatre sans une ligne ajoutée ;
+   seul le **lexique** a grandi, et uniquement sur des formulations mesurées ;
+4. **une erreur de sens ne se rachète par aucun taux.** Java l'a prouvé en
+   renommant silencieusement une méthode ; SQL a fermé le même risque
+   **avant** de le mesurer, parce qu'il était devenu prévisible ;
+5. **un test unitaire ne voit pas ce qu'un programme entier montre.** Quatre
+   des six défauts de SQL-A ont été trouvés par l'exercice de clôture ou par
+   le serveur, et aucun par la suite de tests.

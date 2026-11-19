@@ -1,8 +1,8 @@
 {
   "name": "c-a",
   "displayName": "A — Français vers Code",
-  "description": "Prototype pédagogique : traduction, aperçu et insertion explicite d’instructions depuis des phrases françaises contrôlées. Trois langages cibles : C17 avec C-A, Python avec Python-A, Java 21 avec Java-A.",
-  "version": "0.6.0",
+  "description": "A : une phrase francaise, une instruction. Quatre declinaisons : C-A vers C17, Python-A vers Python, Java-A vers Java 21 et SQL-A vers SQL.",
+  "version": "0.7.0",
   "publisher": "projet-a-local",
   "private": true,
   "type": "commonjs",
@@ -56,6 +56,11 @@
           "type": "boolean",
           "default": true,
           "markdownDescription": "Ouvrir aussi les fichiers `.java` et y écrire du **Java 21**, avec le catalogue pédagogique de Java-A. À `false`, seuls les fichiers `.c` et `.py` sont ouverts. Java-A ne vérifie ni les types, ni les symboles, ni les bornes, ni la **visibilité** : une insertion acceptée n’est pas un programme correct."
+        },
+        "c-a.sql": {
+          "type": "boolean",
+          "default": true,
+          "description": "Ouvrir les fichiers .sql. SQL-A traduit vers du SQL standard, verifie sur PostgreSQL 18. Il n'execute JAMAIS rien : il ecrit dans votre fichier, et c'est vous qui lancez le script."
         }
       }
     }

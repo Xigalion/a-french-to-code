@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { TranslationSession } from './session.ts';
 import { PythonTranslationSession } from './sessionPython.ts';
 import { JavaTranslationSession } from './sessionJava.ts';
+import { SqlTranslationSession } from './sessionSql.ts';
 import type { InformationAffichable, SessionControleur, SessionDiagnostic, TargetState } from './session.ts';
 import { PreviewStore } from './preview.ts';
 import type { PreviewPair } from './preview.ts';
@@ -17,7 +18,7 @@ export type SessionInspection = {
   information: InformationAffichable[];
   attachmentLabel: string | undefined;
   souple: boolean;
-  langage: 'c17' | 'python' | 'java';
+  langage: 'c17' | 'python' | 'java' | 'sql';
   normalisation: { source: string; canonique: string; lectures: number } | undefined;
   validation: string | vscode.InputBoxValidationMessage | undefined;
   confirmationTitle: string | undefined;
@@ -93,18 +94,35 @@ function javaActif(): boolean {
   return typeof reglage === 'boolean' ? reglage : JAVA_PAR_DEFAUT;
 }
 
+/** SQL est ACTIF par defaut, lot S10.
+ *
+ * Il arrive avec les neuf domaines couverts : 93 formulations, TOUTES natives
+ * -- aucune des 84 intentions du catalogue partage n'est portee --, 17
+ * informations passives, trois portees de placement, et un exercice de 109
+ * phrases execute contre PostgreSQL 18.
+ *
+ * Le reglage existe pour la meme raison que les deux autres : pouvoir le
+ * fermer sans desinstaller. A `false`, un fichier .sql est refuse. */
+export const SQL_PAR_DEFAUT = true;
+
+function sqlActif(): boolean {
+  const reglage = vscode.workspace.getConfiguration('c-a').get<boolean>('sql');
+  return typeof reglage === 'boolean' ? reglage : SQL_PAR_DEFAUT;
+}
+
 /** Les langages que la commande accepte, par extension et identifiant VS Code.
  * Aucun repli : un fichier qui n'est ni l'un ni l'autre est refuse. */
-type Cible = { langage: 'c17' | 'python' | 'java'; extension: string; languageId: string };
+type Cible = { langage: 'c17' | 'python' | 'java' | 'sql'; extension: string; languageId: string };
 const CIBLES: readonly Cible[] = [
   { langage: 'c17', extension: '.c', languageId: 'c' },
   { langage: 'python', extension: '.py', languageId: 'python' },
   { langage: 'java', extension: '.java', languageId: 'java' },
+  { langage: 'sql', extension: '.sql', languageId: 'sql' },
 ];
 
 class NativeSession {
   readonly controller: SessionControleur;
-  private readonly langage: 'c17' | 'python' | 'java';
+  private readonly langage: 'c17' | 'python' | 'java' | 'sql';
   private readonly languageId: string;
   private readonly document: vscode.TextDocument;
   private readonly column: vscode.ViewColumn;
@@ -149,7 +167,9 @@ class NativeSession {
       ? new PythonTranslationSession(initial, draft, { souple })
       : cible.langage === 'java'
         ? new JavaTranslationSession(initial, draft, { souple })
-        : new TranslationSession(initial, draft, { souple });
+        : cible.langage === 'sql'
+          ? new SqlTranslationSession(initial, draft, { souple })
+          : new TranslationSession(initial, draft, { souple });
     const observe = () => {
       if (this.disposed || this.finishing) return;
       this.controller.observe(this.capture());
@@ -474,7 +494,8 @@ export function activate(context: vscode.ExtensionContext): ExtensionApi {
     const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
     const disponibles = CIBLES.filter(c => c.langage === 'c17'
       || (c.langage === 'python' && pythonActif())
-      || (c.langage === 'java' && javaActif()));
+      || (c.langage === 'java' && javaActif())
+      || (c.langage === 'sql' && sqlActif()));
     const cible = editor === undefined ? undefined : disponibles.find(candidat =>
       editor.document.uri.path.endsWith(candidat.extension) && editor.document.languageId === candidat.languageId);
     if (!editor || editor.document.uri.scheme !== 'file' || cible === undefined

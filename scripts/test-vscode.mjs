@@ -33,7 +33,7 @@ writeFileSync(path.join(profile, 'User', 'settings.json'), JSON.stringify({
   // scenario qui veut l'autre etat l'active lui-meme. Le DEFAUT du manifeste,
   // lui, est verifie par un scenario dedie qui lit `inspect().defaultValue` —
   // epingler ici ne doit pas faire disparaitre la verification du defaut.
-  'c-a.souplesse': false, 'c-a.python': false, 'c-a.java': false,
+  'c-a.souplesse': false, 'c-a.python': false, 'c-a.java': false, 'c-a.sql': false,
 }));
 const env = { ...process.env, CA_TEST_ROOT: root, CA_TEST_REPORT: report, CA_TEST_WORKSPACE: workspace };
 delete env.ELECTRON_RUN_AS_NODE;

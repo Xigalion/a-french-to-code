@@ -6,6 +6,7 @@ import { BUDGET, LEXIQUE, normaliser, zonesProtegees } from '../src/langue/varia
 // Le lexique sert desormais TROIS langages : une entree vivante en Java seul
 // n'est pas une entree morte, et ce test doit pouvoir le voir.
 import { JAVA } from '../src/langages/java/langage.ts';
+import { SQL } from '../src/langages/sql/langage.ts';
 
 // Souplesse linguistique — la couche est DÉSACTIVÉE par défaut : rien dans le
 // moteur ne l'appelle. Ces tests vérifient qu'elle est juste quand on
@@ -180,6 +181,16 @@ test('souplesse : chaque entrée du lexique produit au moins une lecture valide'
     'importer': 'Importer java.util.List.',
     'lancer': 'Lancer une exception IllegalStateException avec le texte "non".',
     'retirer': 'Retirer l’élément "0" de la liste notes.',
+    // Lot S9 : six infinitifs trouves par le corpus SQL. Aucun n'a de lecture
+    // en C17 ni en Java : ils vivent par le catalogue natif de SQL seul, ce
+    // qui fait passer ce test de DEUX arbitres a TROIS. Le contrat d'une
+    // entree reste « vivante dans AU MOINS UN langage ».
+    'supprimer': 'Supprimer la table eleves.',
+    'ordonner': 'Ordonner les lignes par nom en ordre croissant.',
+    'regrouper': 'Regrouper les lignes par ville.',
+    'insérer': 'Insérer dans la table eleves une ligne dont nom vaut le texte "Zoe".',
+    'ouvrir': 'Ouvrir une transaction.',
+    'modifier': 'Modifier la table eleves en donnant à age la valeur 0 là où "id = 1".',
   };
   /** L'arbitre Java, reduit a ce dont ce test a besoin : le catalogue natif. */
   const arbitreJava = (phrase) => {
@@ -188,10 +199,18 @@ test('souplesse : chaque entrée du lexique produit au moins une lecture valide'
     return { accepte: true, sens: 'natif:' + natif.kind + ':' + natif.code,
       intention: natif.kind, apercu: natif.code, resultat: natif };
   };
+  /** L'arbitre SQL, reduit de meme : SQL n'a QUE son catalogue natif. */
+  const arbitreSql = (phrase) => {
+    const natif = SQL.natif?.(phrase);
+    if (natif === undefined || natif.status !== 'rendu') return { accepte: false };
+    return { accepte: true, sens: 'natif:' + natif.kind + ':' + natif.code,
+      intention: natif.kind, apercu: natif.code, resultat: natif };
+  };
   for (const entree of LEXIQUE) {
     const phrase = phrases[entree.libre];
     assert.ok(phrase !== undefined, 'entrée sans phrase de démonstration : ' + entree.libre);
-    const verdicts = [normaliser(phrase).verdict, normaliser(phrase, { arbitre: arbitreJava }).verdict];
+    const verdicts = [normaliser(phrase).verdict, normaliser(phrase, { arbitre: arbitreJava }).verdict,
+      normaliser(phrase, { arbitre: arbitreSql }).verdict];
     assert.ok(verdicts.some(verdict => ['normalise', 'resolu', 'ambigu'].includes(verdict)),
       'entrée morte dans TOUS les langages : ' + entree.libre + ' → ' + verdicts.join(', '));
     assert.ok(entree.motif.length > 0, 'entrée sans motif : ' + entree.libre);

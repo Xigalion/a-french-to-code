@@ -73,6 +73,15 @@ export type ExpressionCapabilities = {
   readonly castTypes: readonly CoreNumericType[];
   /** Comparisons, `!`, `&&`, `||` and their dedicated diagnostics. */
   readonly logic: boolean;
+  /** Lot S3. `=` lu comme l'égalité et `<>` comme l'inégalité, au lieu du
+   * refus `ASSIGNMENT_IN_CONDITION`. **Faux dans tous les profils publiés** :
+   * en C17, en Python et en Java, `=` affecte, et le refus est juste. Seul le
+   * profil SQL l'active, parce qu'en SQL `=` EST l'égalité — et c'est le
+   * prédicat le plus courant du langage.
+   *
+   * L'extension est **additive** : le jeton produit porte le texte canonique
+   * `==`/`!=`, donc l'arbre ne change pas, et aucun nœud nouveau n'existe. */
+  readonly simpleEquality: boolean;
   readonly invalidTokenMessage: string;
   readonly invariantMessage: string;
 };
@@ -89,6 +98,7 @@ export const INTEGER_CAPABILITIES: ExpressionCapabilities = {
   casts: false,
   castTypes: [],
   logic: false,
+  simpleEquality: false,
   invalidTokenMessage: 'Cet élément n’appartient pas à une expression entière prise en charge.',
   invariantMessage: 'Invariant interne : expression analysée absente.',
 };
@@ -105,6 +115,7 @@ export const NUMERIC_CAPABILITIES: ExpressionCapabilities = {
   casts: true,
   castTypes: ['int', 'unsigned int', 'float', 'double', 'char'],
   logic: false,
+  simpleEquality: false,
   invalidTokenMessage: 'Cet élément n’appartient pas à une expression numérique prise en charge.',
   invariantMessage: 'Invariant interne : expression numérique analysée absente.',
 };
@@ -121,6 +132,7 @@ export const CONDITION_CAPABILITIES: ExpressionCapabilities = {
   casts: true,
   castTypes: ['int', 'unsigned int', 'float', 'double', 'char'],
   logic: true,
+  simpleEquality: false,
   invalidTokenMessage: 'Cet élément n’appartient pas à une expression numérique prise en charge.',
   invariantMessage: 'Invariant interne : expression numérique analysée absente.',
 };
@@ -142,6 +154,7 @@ export const INDEX_CAPABILITIES: ExpressionCapabilities = {
   casts: false,
   castTypes: [],
   logic: false,
+  simpleEquality: false,
   invalidTokenMessage: 'Cet élément n’appartient pas à un indice entier pris en charge.',
   invariantMessage: 'Invariant interne : indice analysé absent.',
 };
@@ -197,6 +210,28 @@ export function parseCore(source: string, start: number, end: number, validateNa
       if (++budget.count > MAX_EXPRESSION_TOKENS) return tooComplex(dot);
       cached = dot;
       return dot;
+    }
+    // Lot S3. `=` est l'égalité et `<>` l'inégalité : c'est vrai en SQL, et
+    // faux dans les trois autres langages, où `=` affecte. La reconnaissance
+    // est donc faite ICI, avant le motif historique, et **seulement** si le
+    // profil la déclare — le motif d'en dessous n'est pas touché, et aucun
+    // profil existant ne voit un jeton différent.
+    //
+    // Le jeton produit porte le texte CANONIQUE `==` ou `!=`, et l'intervalle
+    // des caractères réellement écrits. L'arbre est donc identique à celui
+    // qu'un `==` aurait produit : c'est le rendu, propre à chaque langage, qui
+    // décide d'écrire `=` ou `==`. Ne rien ajouter à l'AST était la condition
+    // pour que l'extension reste isolée.
+    if (capabilities.simpleEquality) {
+      const sql = /^(?:<>|=)(?![=<>])/u.exec(source.slice(position, end));
+      if (sql !== null) {
+        position += sql[0].length;
+        const compare = { text: sql[0] === '=' ? '==' : '!=',
+          range: { start: beginning, end: position } };
+        if (++budget.count > MAX_EXPRESSION_TOKENS) return tooComplex(compare);
+        cached = compare;
+        return compare;
+      }
     }
     const unsupported = /^(?:>>=|<<=|->|\+\+|--|\*\*|\/\/|\/\*|\*\/|\+=|-=|\*=|\/=|%=|==|!=|<=|>=|&&|\|\||<<|>>|&=|\|=|\^=|[=<>!&|^~?:])/u.exec(source.slice(position, end));
     const numeric = capabilities.literals === 'numeric' && /[0-9.]/u.test(source.charAt(position));

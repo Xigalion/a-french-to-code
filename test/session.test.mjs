@@ -423,8 +423,11 @@ test('v0.5.0 : l’identifiant technique de l’extension est INCHANGE', () => {
   const manifest = JSON.parse(readFileSync(new URL('../extension/package.json', import.meta.url), 'utf8'));
   assert.equal(manifest.publisher, 'projet-a-local');
   assert.equal(manifest.name, 'c-a');
-  // Le nom AFFICHE, lui, porte le projet global et ses deux declinaisons.
+  // Le nom AFFICHE, lui, porte le projet global et ses declinaisons. La
+  // liste s'allonge a chaque langage : SQL-A au lot S10.
   assert.match(manifest.displayName, /^A — /u);
   assert.match(manifest.description, /C-A/u);
   assert.match(manifest.description, /Python-A/u);
+  assert.match(manifest.description, /Java-A/u);
+  assert.match(manifest.description, /SQL-A/u);
 });

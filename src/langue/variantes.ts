@@ -66,6 +66,17 @@ export const LEXIQUE: readonly Entree[] = [
   { libre: 'lancer', formes: ['Lance'], motif: 'infinitif, trouve par le corpus java' },
   { libre: 'retirer', formes: ['Retire'], motif: 'infinitif, trouve par le corpus java' },
   { libre: 'sortir', formes: ['Sors'], motif: 'infinitif, trouve par le corpus java' },
+  // Six infinitifs trouves par le corpus SQL du lot S9
+  // (test-utilisateur/corpus/corpus-sql.json). Meme regle : le verbe est au
+  // catalogue, la formulation a ete MESUREE, et la table ne grandit pas
+  // autrement. Aucune information n'est inventee -- le verbe vient de
+  // l'utilisateur, la couche ne fait que le conjuguer.
+  { libre: 'supprimer', formes: ['Supprime'], motif: 'infinitif, trouve par le corpus sql' },
+  { libre: 'ordonner', formes: ['Ordonne'], motif: 'infinitif, trouve par le corpus sql' },
+  { libre: 'regrouper', formes: ['Regroupe'], motif: 'infinitif, trouve par le corpus sql' },
+  { libre: 'insérer', formes: ['Insère'], motif: 'infinitif, trouve par le corpus sql' },
+  { libre: 'ouvrir', formes: ['Ouvre'], motif: 'infinitif, trouve par le corpus sql' },
+  { libre: 'modifier', formes: ['Modifie'], motif: 'infinitif, trouve par le corpus sql' },
   { libre: 'appelé', formes: ['nommé'], motif: 'synonyme' },
   { libre: 'appelée', formes: ['nommée'], motif: 'synonyme' },
   { libre: 'valant', formes: ['de valeur'], motif: 'synonyme' },
@@ -97,7 +108,13 @@ const AVANT_IDENTIFIANT = ['nommé', 'nommée', 'nommés', 'nommées', 'appelé'
   //
   // Cette liste ne peut que PROTÉGER : elle empêche une substitution, elle
   // n'en autorise aucune.
-  'méthode', 'champ', 'classe', 'paquetage', 'exception', 'paramètre'];
+  'méthode', 'champ', 'classe', 'paquetage', 'exception', 'paramètre',
+  // Lot S9 : les sept noms communs que SQL introduit. Le defaut de sens du
+  // lot J9 -- « Appelle la methode afficher de e. » rendu « e.Affiche(); » --
+  // etait de cette forme exacte, et il mordait parce que la garde ne
+  // connaissait que « nomme » et « appele ». Le risque etait donc PREVISIBLE
+  // ici, et il est ferme AVANT la mesure plutot qu apres.
+  'table', 'colonne', 'vue', 'index', 'contrainte', 'schéma', 'rôle'];
 
 /** Les mots qui annoncent un nom, et qui ne peuvent donc jamais ÊTRE le nom.
  * Ils échappent à la protection ci-dessus : voir `zonesProtegees`. */

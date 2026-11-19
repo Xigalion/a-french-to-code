@@ -1,0 +1,959 @@
+{
+  "_lisezMoi": [
+    "Specification PROPOSEE du catalogue SQL-A. Rien ici n'est implemente.",
+    "Ce fichier est la SOURCE : docs/phase4/CATALOGUE_SQL_SPEC.md est engendre",
+    "par `node scripts/catalogue-sql.mjs --markdown`, et AUCUN compteur n'est",
+    "ecrit a la main. La phase 3 avait produit trois chiffres faux en les",
+    "ecrivant a la main ; la cause a ete traitee, pas seulement les chiffres.",
+    "",
+    "`genre` : le nom d'intention propose. `phrase` : la formulation francaise",
+    "exacte, avec ses parametres entre accolades. `sql` : la sortie exacte, les",
+    "sauts de ligne ecrits \\n. `portee` : ou l'instruction est placable.",
+    "`bloc` : vrai si le fragment ouvre une requete multi-lignes dont le `;`",
+    "ferme et dans laquelle le curseur est pose."
+  ],
+  "version": "proposition du 19 novembre 2026",
+  "dialecte": "SQL standard prioritaire, VERIFIE PAR EXECUTION sur PostgreSQL 18.7",
+  "domaines": [
+    {
+      "numero": 1,
+      "nom": "Fondamentaux : tables, colonnes et types"
+    },
+    {
+      "numero": 2,
+      "nom": "Interrogation et projection"
+    },
+    {
+      "numero": 3,
+      "nom": "Filtrage des lignes"
+    },
+    {
+      "numero": 4,
+      "nom": "Tri et limitation"
+    },
+    {
+      "numero": 5,
+      "nom": "Agregats et regroupement"
+    },
+    {
+      "numero": 6,
+      "nom": "Jointures"
+    },
+    {
+      "numero": 7,
+      "nom": "Sous-requetes, expressions de table et ensembles"
+    },
+    {
+      "numero": 8,
+      "nom": "Modification des donnees"
+    },
+    {
+      "numero": 9,
+      "nom": "Integrite, vues, index et transactions"
+    }
+  ],
+  "formulations": [
+    {
+      "genre": "SQL_TABLE_CREE",
+      "domaine": 1,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Crée une table nommée {table} avec une colonne entière nommée {colonne}.",
+      "sql": "CREATE TABLE {table} (\n  {colonne} integer\n);",
+      "note": "Une table sans aucune colonne n'est pas du SQL standard. Exiger la premiere colonne evite d'en inventer une."
+    },
+    {
+      "genre": "SQL_COLONNE_ENTIERE",
+      "domaine": 1,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Ajoute à la table {table} une colonne entière nommée {colonne}.",
+      "sql": "ALTER TABLE {table} ADD COLUMN {colonne} integer;"
+    },
+    {
+      "genre": "SQL_COLONNE_TEXTE",
+      "domaine": 1,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Ajoute à la table {table} une colonne de texte nommée {colonne} de longueur {entier}.",
+      "sql": "ALTER TABLE {table} ADD COLUMN {colonne} varchar({entier});",
+      "note": "La longueur est EXIGEE : `varchar` sans longueur et `text` ne sont pas interchangeables, et choisir a la place de l'apprenant serait inventer."
+    },
+    {
+      "genre": "SQL_COLONNE_DECIMALE",
+      "domaine": 1,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Ajoute à la table {table} une colonne décimale nommée {colonne} de précision {entier} et d’échelle {entier2}.",
+      "sql": "ALTER TABLE {table} ADD COLUMN {colonne} numeric({entier}, {entier2});"
+    },
+    {
+      "genre": "SQL_COLONNE_BOOLEENNE",
+      "domaine": 1,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Ajoute à la table {table} une colonne booléenne nommée {colonne}.",
+      "sql": "ALTER TABLE {table} ADD COLUMN {colonne} boolean;"
+    },
+    {
+      "genre": "SQL_COLONNE_DATE",
+      "domaine": 1,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Ajoute à la table {table} une colonne de date nommée {colonne}.",
+      "sql": "ALTER TABLE {table} ADD COLUMN {colonne} date;"
+    },
+    {
+      "genre": "SQL_COLONNE_HORODATAGE",
+      "domaine": 1,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Ajoute à la table {table} une colonne d’horodatage nommée {colonne}.",
+      "sql": "ALTER TABLE {table} ADD COLUMN {colonne} timestamp;"
+    },
+    {
+      "genre": "SQL_COLONNE_RENOMME",
+      "domaine": 1,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Renomme la colonne {colonne} de la table {table} en {colonne2}.",
+      "sql": "ALTER TABLE {table} RENAME COLUMN {colonne} TO {colonne2};"
+    },
+    {
+      "genre": "SQL_COLONNE_SUPPRIME",
+      "domaine": 1,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Supprime la colonne {colonne} de la table {table}.",
+      "sql": "ALTER TABLE {table} DROP COLUMN {colonne};"
+    },
+    {
+      "genre": "SQL_TABLE_SUPPRIME",
+      "domaine": 1,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Supprime la table {table}.",
+      "sql": "DROP TABLE {table};"
+    },
+    {
+      "genre": "SQL_TABLE_RENOMME",
+      "domaine": 1,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Renomme la table {table} en {table2}.",
+      "sql": "ALTER TABLE {table} RENAME TO {table2};"
+    },
+    {
+      "genre": "SQL_DOMAINE_CREE",
+      "domaine": 1,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Crée un domaine nommé {domaine} fondé sur le type entier.",
+      "sql": "CREATE DOMAIN {domaine} AS integer;",
+      "note": "Le seul equivalent reel d'un synonyme de type en SQL standard. C'est aussi la seule correspondance defendable avec TYPE_ALIAS du catalogue partage."
+    },
+    {
+      "genre": "SQL_SCHEMA_CREE",
+      "domaine": 1,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Crée un schéma nommé {schema}.",
+      "sql": "CREATE SCHEMA {schema};"
+    },
+    {
+      "genre": "SQL_REQUETE_COLONNE",
+      "domaine": 2,
+      "portee": "fichier",
+      "bloc": true,
+      "phrase": "Crée une requête qui lit la colonne {colonne} de la table {table}.",
+      "sql": "SELECT {colonne}\nFROM {table}\n\n;"
+    },
+    {
+      "genre": "SQL_REQUETE_COLONNES",
+      "domaine": 2,
+      "portee": "fichier",
+      "bloc": true,
+      "phrase": "Crée une requête qui lit les colonnes {colonne} et {colonne2} de la table {table}.",
+      "sql": "SELECT {colonne}\n     , {colonne2}\nFROM {table}\n\n;",
+      "note": "Virgule EN TETE de ligne : c'est la seule disposition qui permette d'ajouter une colonne par une insertion pure, sans toucher a la ligne precedente. Regle 9."
+    },
+    {
+      "genre": "SQL_REQUETE_TOUTES",
+      "domaine": 2,
+      "portee": "fichier",
+      "bloc": true,
+      "phrase": "Crée une requête qui lit toutes les colonnes de la table {table}.",
+      "sql": "SELECT *\nFROM {table}\n\n;",
+      "note": "`*` n'apparait QUE si la phrase dit « toutes les colonnes ». Il n'est jamais un defaut."
+    },
+    {
+      "genre": "SQL_REQUETE_DISTINCT",
+      "domaine": 2,
+      "portee": "fichier",
+      "bloc": true,
+      "phrase": "Crée une requête qui lit les valeurs distinctes de la colonne {colonne} de la table {table}.",
+      "sql": "SELECT DISTINCT {colonne}\nFROM {table}\n\n;"
+    },
+    {
+      "genre": "SQL_REQUETE_ALIAS_COLONNE",
+      "domaine": 2,
+      "portee": "fichier",
+      "bloc": true,
+      "phrase": "Crée une requête qui lit la colonne {colonne} de la table {table} sous le nom {alias}.",
+      "sql": "SELECT {colonne} AS {alias}\nFROM {table}\n\n;"
+    },
+    {
+      "genre": "SQL_REQUETE_EXPRESSION",
+      "domaine": 2,
+      "portee": "fichier",
+      "bloc": true,
+      "phrase": "Crée une requête qui lit le résultat de \"{expression}\" de la table {table} sous le nom {alias}.",
+      "sql": "SELECT ({expression}) AS {alias}\nFROM {table}\n\n;",
+      "note": "L expression est PARENTHESEE, comme dans les trois autres langages : renderNumericExpression du C17 le fait depuis le lot 7. Ecrire la priorite plutot que de s y fier evite une surprise, et A n a pas a parier sur la table de priorite que l apprenant connait."
+    },
+    {
+      "genre": "SQL_REQUETE_ALIAS_TABLE",
+      "domaine": 2,
+      "portee": "fichier",
+      "bloc": true,
+      "phrase": "Crée une requête qui lit la colonne {colonne} de la table {table} désignée par {alias}.",
+      "sql": "SELECT {colonne}\nFROM {table} AS {alias}\n\n;"
+    },
+    {
+      "genre": "SQL_PROJECTION_AJOUTE",
+      "domaine": 2,
+      "portee": "projection",
+      "bloc": false,
+      "phrase": "Lis aussi la colonne {colonne}.",
+      "sql": "     , {colonne}",
+      "note": "Placable UNIQUEMENT sur une ligne blanche de la liste de projection, avant le FROM. C'est la portee `projection`."
+    },
+    {
+      "genre": "SQL_FILTRE_CONDITION",
+      "domaine": 3,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Ne garde que les lignes où \"{condition}\".",
+      "sql": "WHERE {condition}"
+    },
+    {
+      "genre": "SQL_FILTRE_NUL",
+      "domaine": 3,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Ne garde que les lignes où {colonne} est nulle.",
+      "sql": "WHERE {colonne} IS NULL",
+      "note": "Formulation DEDIEE, parce que `= NULL` est faux en SQL et qu'aucune expression citee ne doit pouvoir l'ecrire."
+    },
+    {
+      "genre": "SQL_FILTRE_NON_NUL",
+      "domaine": 3,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Ne garde que les lignes où {colonne} n’est pas nulle.",
+      "sql": "WHERE {colonne} IS NOT NULL"
+    },
+    {
+      "genre": "SQL_FILTRE_TEXTE",
+      "domaine": 3,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Ne garde que les lignes où {colonne} vaut le texte \"{texte}\".",
+      "sql": "WHERE {colonne} = '{texte}'"
+    },
+    {
+      "genre": "SQL_FILTRE_COMMENCE",
+      "domaine": 3,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Ne garde que les lignes où {colonne} commence par \"{texte}\".",
+      "sql": "WHERE {colonne} LIKE '{texte}%'"
+    },
+    {
+      "genre": "SQL_FILTRE_CONTIENT",
+      "domaine": 3,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Ne garde que les lignes où {colonne} contient \"{texte}\".",
+      "sql": "WHERE {colonne} LIKE '%{texte}%'"
+    },
+    {
+      "genre": "SQL_FILTRE_INTERVALLE",
+      "domaine": 3,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Ne garde que les lignes où {colonne} est comprise entre {entier} et {entier2}.",
+      "sql": "WHERE {colonne} BETWEEN {entier} AND {entier2}"
+    },
+    {
+      "genre": "SQL_FILTRE_PARMI",
+      "domaine": 3,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Ne garde que les lignes où {colonne} vaut {entier} ou {entier2}.",
+      "sql": "WHERE {colonne} IN ({entier}, {entier2})"
+    },
+    {
+      "genre": "SQL_FILTRE_ET",
+      "domaine": 3,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Exige aussi que \"{condition}\".",
+      "sql": "  AND {condition}",
+      "note": "Operateur EN TETE de ligne, meme raison que la virgule : ajouter une condition reste une insertion pure."
+    },
+    {
+      "genre": "SQL_FILTRE_OU",
+      "domaine": 3,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Accepte aussi les lignes où \"{condition}\".",
+      "sql": "   OR {condition}",
+      "note": "Une information passive dira que OR melange a AND sans parentheses suit une priorite que l'apprenant doit connaitre : A n'ajoute pas de parentheses non demandees."
+    },
+    {
+      "genre": "SQL_ORDRE_CROISSANT",
+      "domaine": 4,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Ordonne les lignes par {colonne} en ordre croissant.",
+      "sql": "ORDER BY {colonne} ASC"
+    },
+    {
+      "genre": "SQL_ORDRE_DECROISSANT",
+      "domaine": 4,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Ordonne les lignes par {colonne} en ordre décroissant.",
+      "sql": "ORDER BY {colonne} DESC"
+    },
+    {
+      "genre": "SQL_ORDRE_ENSUITE",
+      "domaine": 4,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Ordonne ensuite les lignes par {colonne} en ordre croissant.",
+      "sql": "        , {colonne} ASC"
+    },
+    {
+      "genre": "SQL_ORDRE_NULS_FIN",
+      "domaine": 4,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Place les valeurs nulles en dernier.",
+      "sql": "        NULLS LAST",
+      "note": "Aligne sous ORDER BY, comme la virgule de continuation : la disposition est celle de la decision S5. A verifier par execution : sans NULLS FIRST ni NULLS LAST, le defaut de PostgreSQL est NULLS LAST en ASC et NULLS FIRST en DESC. La phrase existe pour que l apprenant ne DEPENDE pas de ce defaut. Elle porte sur le DERNIER critere de tri ecrit."
+    },
+    {
+      "genre": "SQL_LIMITE",
+      "domaine": 4,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Ne garde que les {entier} premières lignes.",
+      "sql": "FETCH FIRST {entier} ROWS ONLY",
+      "note": "Forme STANDARD. `LIMIT` est une extension de PostgreSQL et sera refusee nommement."
+    },
+    {
+      "genre": "SQL_DECALAGE",
+      "domaine": 4,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Ignore les {entier} premières lignes.",
+      "sql": "OFFSET {entier} ROWS"
+    },
+    {
+      "genre": "SQL_AGREGAT_COMPTE",
+      "domaine": 5,
+      "portee": "fichier",
+      "bloc": true,
+      "phrase": "Crée une requête qui compte les lignes de la table {table}.",
+      "sql": "SELECT COUNT(*)\nFROM {table}\n\n;"
+    },
+    {
+      "genre": "SQL_AGREGAT_COMPTE_COLONNE",
+      "domaine": 5,
+      "portee": "fichier",
+      "bloc": true,
+      "phrase": "Crée une requête qui compte les valeurs non nulles de la colonne {colonne} de la table {table}.",
+      "sql": "SELECT COUNT({colonne})\nFROM {table}\n\n;",
+      "note": "Deux formulations distinctes parce que COUNT(*) et COUNT(c) ne comptent pas la meme chose. Une information passive le dira."
+    },
+    {
+      "genre": "SQL_AGREGAT_SOMME",
+      "domaine": 5,
+      "portee": "fichier",
+      "bloc": true,
+      "phrase": "Crée une requête qui somme la colonne {colonne} de la table {table}.",
+      "sql": "SELECT SUM({colonne})\nFROM {table}\n\n;"
+    },
+    {
+      "genre": "SQL_AGREGAT_MOYENNE",
+      "domaine": 5,
+      "portee": "fichier",
+      "bloc": true,
+      "phrase": "Crée une requête qui calcule la moyenne de la colonne {colonne} de la table {table}.",
+      "sql": "SELECT AVG({colonne})\nFROM {table}\n\n;"
+    },
+    {
+      "genre": "SQL_AGREGAT_MIN",
+      "domaine": 5,
+      "portee": "fichier",
+      "bloc": true,
+      "phrase": "Crée une requête qui cherche la plus petite valeur de la colonne {colonne} de la table {table}.",
+      "sql": "SELECT MIN({colonne})\nFROM {table}\n\n;"
+    },
+    {
+      "genre": "SQL_AGREGAT_MAX",
+      "domaine": 5,
+      "portee": "fichier",
+      "bloc": true,
+      "phrase": "Crée une requête qui cherche la plus grande valeur de la colonne {colonne} de la table {table}.",
+      "sql": "SELECT MAX({colonne})\nFROM {table}\n\n;"
+    },
+    {
+      "genre": "SQL_REQUETE_COLONNE_ET_COMPTE",
+      "domaine": 5,
+      "portee": "fichier",
+      "bloc": true,
+      "phrase": "Crée une requête qui lit la colonne {colonne} et le nombre de lignes de la table {table}.",
+      "sql": "SELECT {colonne}\n     , COUNT(*)\nFROM {table}\n\n;"
+    },
+    {
+      "genre": "SQL_GROUPE",
+      "domaine": 5,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Regroupe les lignes par {colonne}.",
+      "sql": "GROUP BY {colonne}"
+    },
+    {
+      "genre": "SQL_GROUPE_ENSUITE",
+      "domaine": 5,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Regroupe ensuite les lignes par {colonne}.",
+      "sql": "       , {colonne}"
+    },
+    {
+      "genre": "SQL_GROUPE_FILTRE",
+      "domaine": 5,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Ne garde que les groupes où \"{condition}\".",
+      "sql": "HAVING {condition}"
+    },
+    {
+      "genre": "SQL_GROUPE_FILTRE_COMPTE",
+      "domaine": 5,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Ne garde que les groupes de plus de {entier} lignes.",
+      "sql": "HAVING COUNT(*) > {entier}"
+    },
+    {
+      "genre": "SQL_JOINTURE_INTERNE",
+      "domaine": 6,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Joins la table {table} sur \"{condition}\".",
+      "sql": "INNER JOIN {table} ON {condition}",
+      "note": "`INNER` est ECRIT, bien que facultatif : le mot absent laisserait croire qu'une jointure sans qualificatif est autre chose qu'une jointure interne."
+    },
+    {
+      "genre": "SQL_JOINTURE_INTERNE_ALIAS",
+      "domaine": 6,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Joins la table {table} désignée par {alias} sur \"{condition}\".",
+      "sql": "INNER JOIN {table} AS {alias} ON {condition}"
+    },
+    {
+      "genre": "SQL_JOINTURE_GAUCHE",
+      "domaine": 6,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Joins la table {table} en gardant toutes les lignes de gauche sur \"{condition}\".",
+      "sql": "LEFT OUTER JOIN {table} ON {condition}"
+    },
+    {
+      "genre": "SQL_JOINTURE_DROITE",
+      "domaine": 6,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Joins la table {table} en gardant toutes les lignes de droite sur \"{condition}\".",
+      "sql": "RIGHT OUTER JOIN {table} ON {condition}"
+    },
+    {
+      "genre": "SQL_JOINTURE_COMPLETE",
+      "domaine": 6,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Joins la table {table} en gardant toutes les lignes des deux côtés sur \"{condition}\".",
+      "sql": "FULL OUTER JOIN {table} ON {condition}"
+    },
+    {
+      "genre": "SQL_JOINTURE_CROISEE",
+      "domaine": 6,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Joins la table {table} sans condition.",
+      "sql": "CROSS JOIN {table}",
+      "note": "Une information passive dira ce que coute un produit cartesien, sans refuser : c'est une construction legitime."
+    },
+    {
+      "genre": "SQL_SOUS_REQUETE_PARMI",
+      "domaine": 7,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Ne garde que les lignes où {colonne} figure parmi les {colonne2} de la table {table}.",
+      "sql": "WHERE {colonne} IN (\n        SELECT {colonne2}\n        FROM {table}\n      )"
+    },
+    {
+      "genre": "SQL_SOUS_REQUETE_EXISTE",
+      "domaine": 7,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Ne garde que les lignes pour lesquelles il existe une ligne de la table {table} où \"{condition}\".",
+      "sql": "WHERE EXISTS (\n        SELECT 1\n        FROM {table}\n        WHERE {condition}\n      )",
+      "note": "Le `1` est exige par la syntaxe d'EXISTS, qui ignore la projection. Ce n'est pas un ajout implicite mais une obligation du langage, comme `String[] args` en Java ; une information passive le dit."
+    },
+    {
+      "genre": "SQL_EXPRESSION_TABLE",
+      "domaine": 7,
+      "portee": "fichier",
+      "bloc": true,
+      "phrase": "Crée une requête fondée sur l’expression de table nommée {alias} qui lit la colonne {colonne} de la table {table}.",
+      "sql": "WITH {alias} AS (\n  SELECT {colonne}\n  FROM {table}\n)\nSELECT {colonne}\nFROM {alias}\n\n;",
+      "note": "DEFAUT TROUVE PAR L EXERCICE DE CLOTURE : la premiere formulation rendait un WITH suivi d un point-virgule, ce qui n est PAS du SQL valide -- une expression de table exige une requete qui la lise. Aucun test unitaire ne l avait vu : il fallait un serveur. La phrase dit maintenant ce qu elle produit, une REQUETE fondee sur l expression de table, et le SELECT exterieur n est donc pas un ajout implicite."
+    },
+    {
+      "genre": "SQL_UNION_SANS_DOUBLON",
+      "domaine": 7,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Ajoute sans doublon les {colonne} de la table {table}.",
+      "sql": "UNION\nSELECT {colonne}\nFROM {table}"
+    },
+    {
+      "genre": "SQL_UNION_AVEC_DOUBLONS",
+      "domaine": 7,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Ajoute avec les doublons les {colonne} de la table {table}.",
+      "sql": "UNION ALL\nSELECT {colonne}\nFROM {table}"
+    },
+    {
+      "genre": "SQL_INTERSECTION",
+      "domaine": 7,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Ne garde que ce qui figure aussi parmi les {colonne} de la table {table}.",
+      "sql": "INTERSECT\nSELECT {colonne}\nFROM {table}"
+    },
+    {
+      "genre": "SQL_DIFFERENCE",
+      "domaine": 7,
+      "portee": "requete",
+      "bloc": false,
+      "phrase": "Retire ce qui figure parmi les {colonne} de la table {table}.",
+      "sql": "EXCEPT\nSELECT {colonne}\nFROM {table}"
+    },
+    {
+      "genre": "SQL_INSERE_UNE_COLONNE",
+      "domaine": 8,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Insère dans la table {table} une ligne dont {colonne} vaut {entier}.",
+      "sql": "INSERT INTO {table} ({colonne})\nVALUES ({entier});"
+    },
+    {
+      "genre": "SQL_INSERE_TEXTE",
+      "domaine": 8,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Insère dans la table {table} une ligne dont {colonne} vaut le texte \"{texte}\".",
+      "sql": "INSERT INTO {table} ({colonne})\nVALUES ('{texte}');"
+    },
+    {
+      "genre": "SQL_INSERE_DEUX_ENTIERS",
+      "domaine": 8,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Insère dans la table {table} une ligne dont {colonne} vaut {entier} et {colonne2} vaut {entier2}.",
+      "sql": "INSERT INTO {table} ({colonne}, {colonne2})\nVALUES ({entier}, {entier2});",
+      "note": "LACUNE TROUVEE PAR L EXERCICE DE CLOTURE, et par rien d autre : seule la forme « entier puis TEXTE » existait, donc inserer deux colonnes ENTIERES -- un identifiant et une cle etrangere, le cas le plus banal d une table de liaison -- etait inexprimable. Aucun test unitaire ne l avait vu, parce qu aucun test n ecrivait une base entiere."
+    },
+    {
+      "genre": "SQL_INSERE_DEUX_COLONNES",
+      "domaine": 8,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Insère dans la table {table} une ligne dont {colonne} vaut {entier} et {colonne2} vaut le texte \"{texte}\".",
+      "sql": "INSERT INTO {table} ({colonne}, {colonne2})\nVALUES ({entier}, '{texte}');"
+    },
+    {
+      "genre": "SQL_INSERE_DEPUIS_REQUETE",
+      "domaine": 8,
+      "portee": "fichier",
+      "bloc": true,
+      "phrase": "Insère dans la table {table} la colonne {colonne} lue dans la table {table2}.",
+      "sql": "INSERT INTO {table} ({colonne})\nSELECT {colonne}\nFROM {table2}\n\n;"
+    },
+    {
+      "genre": "SQL_MODIFIE_TEXTE",
+      "domaine": 8,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Modifie la table {table} en donnant à {colonne} le texte \"{texte}\" là où \"{condition}\".",
+      "sql": "UPDATE {table}\nSET {colonne} = '{texte}'\nWHERE {condition};",
+      "note": "LACUNE TROUVEE PAR L EXERCICE : seule la valeur ENTIERE existait, donc aucune phrase ne pouvait affecter un texte ni une DATE -- `SET rendu = '2026-01-15'` est la facon normale d ecrire une date en SQL. L apostrophe est doublee, decision S7."
+    },
+    {
+      "genre": "SQL_MODIFIE_VALEUR",
+      "domaine": 8,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Modifie la table {table} en donnant à {colonne} la valeur {entier} là où \"{condition}\".",
+      "sql": "UPDATE {table}\nSET {colonne} = {entier}\nWHERE {condition};"
+    },
+    {
+      "genre": "SQL_MODIFIE_EXPRESSION",
+      "domaine": 8,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Modifie la table {table} en donnant à {colonne} le résultat de \"{expression}\" là où \"{condition}\".",
+      "sql": "UPDATE {table}\nSET {colonne} = ({expression})\nWHERE {condition};"
+    },
+    {
+      "genre": "SQL_MODIFIE_TOUTES",
+      "domaine": 8,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Modifie toutes les lignes de la table {table} en donnant à {colonne} la valeur {entier}.",
+      "sql": "UPDATE {table}\nSET {colonne} = {entier};",
+      "note": "La phrase doit DIRE « toutes les lignes ». A n'ajoute jamais de WHERE, et ne retire jamais celui qui manque : il exige que l'intention soit ecrite."
+    },
+    {
+      "genre": "SQL_SUPPRIME_LIGNES",
+      "domaine": 8,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Supprime de la table {table} les lignes où \"{condition}\".",
+      "sql": "DELETE FROM {table}\nWHERE {condition};"
+    },
+    {
+      "genre": "SQL_SUPPRIME_TOUTES",
+      "domaine": 8,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Supprime toutes les lignes de la table {table}.",
+      "sql": "DELETE FROM {table};"
+    },
+    {
+      "genre": "SQL_CLE_PRIMAIRE",
+      "domaine": 9,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Fais de {colonne} la clé primaire de la table {table}, sous la contrainte nommée {contrainte}.",
+      "sql": "ALTER TABLE {table}\nADD CONSTRAINT {contrainte} PRIMARY KEY ({colonne});",
+      "note": "Le nom de la contrainte est EXIGE. Sans lui, c'est le serveur qui en invente un, et un nom invente ne peut pas etre cite dans une phrase de suppression."
+    },
+    {
+      "genre": "SQL_CLE_ETRANGERE",
+      "domaine": 9,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Fais de {colonne} une clé étrangère de la table {table} vers {colonne2} de la table {table2}, sous la contrainte nommée {contrainte}.",
+      "sql": "ALTER TABLE {table}\nADD CONSTRAINT {contrainte} FOREIGN KEY ({colonne}) REFERENCES {table2} ({colonne2});"
+    },
+    {
+      "genre": "SQL_NON_NUL",
+      "domaine": 9,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Exige que {colonne} de la table {table} ne soit jamais nulle.",
+      "sql": "ALTER TABLE {table}\nALTER COLUMN {colonne} SET NOT NULL;"
+    },
+    {
+      "genre": "SQL_UNIQUE",
+      "domaine": 9,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Exige que {colonne} de la table {table} soit unique, sous la contrainte nommée {contrainte}.",
+      "sql": "ALTER TABLE {table}\nADD CONSTRAINT {contrainte} UNIQUE ({colonne});"
+    },
+    {
+      "genre": "SQL_VERIFICATION",
+      "domaine": 9,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Exige de la table {table} que \"{condition}\", sous la contrainte nommée {contrainte}.",
+      "sql": "ALTER TABLE {table}\nADD CONSTRAINT {contrainte} CHECK ({condition});"
+    },
+    {
+      "genre": "SQL_DEFAUT",
+      "domaine": 9,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Donne à {colonne} de la table {table} la valeur par défaut {entier}.",
+      "sql": "ALTER TABLE {table}\nALTER COLUMN {colonne} SET DEFAULT {entier};"
+    },
+    {
+      "genre": "SQL_IDENTITE",
+      "domaine": 9,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Fais de {colonne} de la table {table} une identité engendrée par défaut.",
+      "sql": "ALTER TABLE {table}\nALTER COLUMN {colonne} ADD GENERATED BY DEFAULT AS IDENTITY;",
+      "note": "Forme STANDARD ; `serial` est une extension de PostgreSQL, refusee nommement. DEFAUT TROUVE PAR EXECUTION le 19 novembre 2026 : PostgreSQL refuse cette instruction si la colonne n est pas DEJA declaree NOT NULL -- « column \"id\" of relation \"eleves\" must be declared NOT NULL before identity can be added ». L ordre des deux instructions compte donc, et A ne pose PAS le NOT NULL a votre place : il l explique, par SQL_IDENTITE_EXIGE_NON_NUL. C est le traitement decide pour les exceptions verifiees de Java, transpose."
+    },
+    {
+      "genre": "SQL_CONTRAINTE_SUPPRIME",
+      "domaine": 9,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Supprime la contrainte {contrainte} de la table {table}.",
+      "sql": "ALTER TABLE {table}\nDROP CONSTRAINT {contrainte};"
+    },
+    {
+      "genre": "SQL_VUE_CREE",
+      "domaine": 9,
+      "portee": "fichier",
+      "bloc": true,
+      "phrase": "Crée une vue nommée {vue} qui lit la colonne {colonne} de la table {table}.",
+      "sql": "CREATE VIEW {vue} AS\nSELECT {colonne}\nFROM {table}\n\n;"
+    },
+    {
+      "genre": "SQL_VUE_SUPPRIME",
+      "domaine": 9,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Supprime la vue {vue}.",
+      "sql": "DROP VIEW {vue};"
+    },
+    {
+      "genre": "SQL_INDEX_CREE",
+      "domaine": 9,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Crée un index nommé {index} sur {colonne} de la table {table}.",
+      "sql": "CREATE INDEX {index} ON {table} ({colonne});",
+      "note": "CREATE INDEX n'est PAS dans le SQL standard, et c'est assume : aucune base reelle ne s'en passe, et le domaine 9 l'enseigne. Une information passive le dira."
+    },
+    {
+      "genre": "SQL_INDEX_SUPPRIME",
+      "domaine": 9,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Supprime l’index {index}.",
+      "sql": "DROP INDEX {index};"
+    },
+    {
+      "genre": "SQL_TRANSACTION_OUVRE",
+      "domaine": 9,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Ouvre une transaction.",
+      "sql": "START TRANSACTION;",
+      "note": "Forme STANDARD. `BEGIN` est l'usage de PostgreSQL et sera refusee nommement."
+    },
+    {
+      "genre": "SQL_TRANSACTION_VALIDE",
+      "domaine": 9,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Valide la transaction.",
+      "sql": "COMMIT;"
+    },
+    {
+      "genre": "SQL_TRANSACTION_ANNULE",
+      "domaine": 9,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Annule la transaction.",
+      "sql": "ROLLBACK;"
+    },
+    {
+      "genre": "SQL_POINT_DE_REPRISE",
+      "domaine": 9,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Pose un point de reprise nommé {point}.",
+      "sql": "SAVEPOINT {point};"
+    },
+    {
+      "genre": "SQL_RETOUR_AU_POINT",
+      "domaine": 9,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Reviens au point de reprise {point}.",
+      "sql": "ROLLBACK TO SAVEPOINT {point};"
+    },
+    {
+      "genre": "SQL_ROLE_CREE",
+      "domaine": 9,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Crée un rôle nommé {role}.",
+      "sql": "CREATE ROLE {role};"
+    },
+    {
+      "genre": "SQL_DROIT_LECTURE",
+      "domaine": 9,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Accorde la lecture de la table {table} au rôle {role}.",
+      "sql": "GRANT SELECT ON {table} TO {role};"
+    },
+    {
+      "genre": "SQL_DROIT_ECRITURE",
+      "domaine": 9,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Accorde l’insertion dans la table {table} au rôle {role}.",
+      "sql": "GRANT INSERT ON {table} TO {role};"
+    },
+    {
+      "genre": "SQL_DROIT_RETIRE",
+      "domaine": 9,
+      "portee": "fichier",
+      "bloc": false,
+      "phrase": "Retire la lecture de la table {table} au rôle {role}.",
+      "sql": "REVOKE SELECT ON {table} FROM {role};"
+    }
+  ],
+  "refusNommes": [
+    {
+      "code": "SQL_LIMIT_NON_STANDARD",
+      "sujet": "LIMIT n",
+      "raison": "`LIMIT` est une extension de PostgreSQL. La forme standard est `FETCH FIRST n ROWS ONLY`, et c'est elle que SQL-A ecrit : « Ne garde que les {n} premieres lignes. »"
+    },
+    {
+      "code": "SQL_SERIAL_NON_STANDARD",
+      "sujet": "serial",
+      "raison": "`serial` est une extension de PostgreSQL. La forme standard est `GENERATED BY DEFAULT AS IDENTITY`, ecrite par « Fais de {colonne} ... une identite engendree par defaut. »"
+    },
+    {
+      "code": "SQL_CAST_ABREGE",
+      "sujet": "x::type",
+      "raison": "`::` est propre a PostgreSQL. La forme standard est `CAST(x AS type)`."
+    },
+    {
+      "code": "SQL_ILIKE",
+      "sujet": "ILIKE",
+      "raison": "`ILIKE` est propre a PostgreSQL. En SQL standard, on compare `LOWER(colonne)` a un motif en minuscules."
+    },
+    {
+      "code": "SQL_RETURNING",
+      "sujet": "RETURNING",
+      "raison": "`RETURNING` est propre a PostgreSQL : une modification n'y renvoie pas de lignes en SQL standard."
+    },
+    {
+      "code": "SQL_ON_CONFLICT",
+      "sujet": "ON CONFLICT",
+      "raison": "`ON CONFLICT` est propre a PostgreSQL ; l'equivalent standard, `MERGE`, n'est pas au catalogue du modele 1."
+    },
+    {
+      "code": "SQL_TYPE_TEXT",
+      "sujet": "text",
+      "raison": "`text` n'est pas un type du SQL standard. `varchar(n)` l'est, et la longueur fait partie de ce qu'il faut decider."
+    },
+    {
+      "code": "SQL_BEGIN",
+      "sujet": "BEGIN",
+      "raison": "`BEGIN` ouvre une transaction dans PostgreSQL, mais en SQL standard c'est `START TRANSACTION` ; `BEGIN` y ouvre un bloc de code."
+    },
+    {
+      "code": "SQL_FENETRE",
+      "sujet": "fonctions de fenetrage",
+      "raison": "`OVER (PARTITION BY ...)` n'est pas au catalogue du modele 1 : c'est une notion du niveau suivant, et l'annoncer serait promettre ce qui n'est pas livre."
+    },
+    {
+      "code": "SQL_RECURSIF",
+      "sujet": "WITH RECURSIVE",
+      "raison": "Une expression de table recursive n'est pas au catalogue du modele 1."
+    },
+    {
+      "code": "SQL_PROCEDURAL",
+      "sujet": "PL/pgSQL, declencheurs, procedures",
+      "raison": "Un langage procedural dans la base sort du SQL : c'est un autre langage cible, et il n'est pas livre."
+    },
+    {
+      "code": "SQL_META_PSQL",
+      "sujet": "commandes de psql (\\dt, \\d)",
+      "raison": "Les commandes a antislash appartiennent au client `psql`, pas au langage SQL : elles ne s'ecrivent pas dans un fichier de script portable."
+    }
+  ],
+  "informationsPassives": [
+    {
+      "code": "SQL_IDENTIFIANT_REPLIE",
+      "sujet": "repliement de la casse",
+      "texte": "Un identifiant non entoure de guillemets n'est pas lu tel quel : PostgreSQL le replie en MINUSCULES, le SQL standard en MAJUSCULES. `Eleves`, `eleves` et `ELEVES` designent donc la meme table, alors que `\"Eleves\"` en designe une autre. SQL-A ecrit l'identifiant tel que vous l'avez donne et ne le met jamais entre guillemets."
+    },
+    {
+      "code": "SQL_AUCUNE_VERIFICATION",
+      "sujet": "symboles et types",
+      "texte": "SQL-A ne sait pas si cette table, cette colonne ou ce role existent, ni de quel type ils sont. Une instruction acceptee n'est pas une instruction qui s'executera."
+    },
+    {
+      "code": "SQL_MODIFICATION_SANS_FILTRE",
+      "sujet": "UPDATE et DELETE",
+      "texte": "Cette instruction touche TOUTES les lignes de la table. C'est ce que votre phrase a demande, et SQL-A n'ajoutera jamais de filtre a votre place : un WHERE invente changerait le sens de votre ordre."
+    },
+    {
+      "code": "SQL_NUL_NEST_PAS_UNE_VALEUR",
+      "sujet": "NULL",
+      "texte": "NULL n'est pas une valeur mais une absence : `colonne = NULL` n'est jamais vrai, meme quand la colonne est nulle. C'est pourquoi « est nulle » a sa propre phrase, qui ecrit `IS NULL`."
+    },
+    {
+      "code": "SQL_COMPTE_ETOILE",
+      "sujet": "COUNT(*) et COUNT(colonne)",
+      "texte": "`COUNT(*)` compte les lignes ; `COUNT(colonne)` compte les lignes dont cette colonne n'est pas nulle. Les deux chiffres different des que la colonne admet des nuls, et c'est pourquoi les deux ont leur phrase."
+    },
+    {
+      "code": "SQL_PRIORITE_ET_OU",
+      "sujet": "AND et OR",
+      "texte": "AND lie plus fort que OR : `a OR b AND c` se lit `a OR (b AND c)`. SQL-A n'ajoute aucune parenthese que vous n'avez pas demandee."
+    },
+    {
+      "code": "SQL_PRODUIT_CARTESIEN",
+      "sujet": "CROSS JOIN",
+      "texte": "Une jointure sans condition associe chaque ligne de gauche a chaque ligne de droite : 1 000 lignes de chaque cote en font un million. C'est une construction legitime, et ce n'est presque jamais ce que l'on voulait."
+    },
+    {
+      "code": "SQL_EXISTE_IGNORE_LA_PROJECTION",
+      "sujet": "EXISTS",
+      "texte": "EXISTS ne regarde pas CE QUE la sous-requete lit, seulement s'il en sort au moins une ligne. Le `SELECT 1` ecrit ici n'est pas un choix de SQL-A : la syntaxe exige une projection, et `1` est la moins trompeuse."
+    },
+    {
+      "code": "SQL_ORDRE_NON_GARANTI",
+      "sujet": "absence d'ORDER BY",
+      "texte": "Sans ORDER BY, l'ordre des lignes n'est pas defini. Il peut sembler stable pendant des mois puis changer : rien ne le promet."
+    },
+    {
+      "code": "SQL_GROUPE_EXIGE_LA_PROJECTION",
+      "sujet": "GROUP BY",
+      "texte": "Une colonne lue sans agregat doit figurer dans le GROUP BY. SQL-A ne verifie pas cette regle et ne l'ajoutera pas : c'est le serveur qui refusera, et c'est a vous de l'ecrire."
+    },
+    {
+      "code": "SQL_INDEX_HORS_STANDARD",
+      "sujet": "CREATE INDEX",
+      "texte": "CREATE INDEX ne fait pas partie du SQL standard, bien qu'aucune base reelle ne s'en passe. La syntaxe ecrite ici est celle que PostgreSQL accepte."
+    },
+    {
+      "code": "SQL_TRANSACTION_NON_FERMEE",
+      "sujet": "transactions",
+      "texte": "Une transaction ouverte et jamais validee ni annulee laisse ses verrous en place. SQL-A n'ajoute ni COMMIT ni ROLLBACK a votre place."
+    },
+    {
+      "code": "SQL_DROIT_CUMULATIF",
+      "sujet": "GRANT",
+      "texte": "Un droit accorde s'ajoute a ceux qui existent deja ; il ne les remplace pas. Lire les droits en vigueur demande d'interroger le catalogue de la base, ce que SQL-A ne fait pas."
+    },
+    {
+      "code": "SQL_IDENTITE_EXIGE_NON_NUL",
+      "sujet": "identite engendree",
+      "texte": "Cette instruction echouera si la colonne n est pas deja declaree NOT NULL : PostgreSQL l exige avant d ajouter une identite. Il faut donc ecrire d abord « Exige que {colonne} de la table {table} ne soit jamais nulle. ». SQL-A ne l ajoute pas a votre place : l ordre de vos instructions vous appartient."
+    }
+  ]
+}

@@ -18,12 +18,19 @@ const PROFILES = [
 
 // The capability records are the lot 13 contract. A future lot that needs a new
 // capability must add a field; it must never silently widen an existing profile.
+//
+// Lot S3 added `simpleEquality`, and this test did its job: it FAILED, which is
+// the whole point of listing the records literally. It is `false` in all four
+// published profiles, because `=` assigns in C17, in Python and in Java, and
+// `ASSIGNMENT_IN_CONDITION` is the right refusal there. Only the SQL profile
+// opens it, and the differential against v0.6.0 showed 0 regression and 0
+// capability lost on 1 335 559 comparisons.
 test('capacités déclarées des quatre profils', () => {
   // The lot 6 profile stays exactly as lot 13 sealed it: lot 15 added two
   // fields, and left `indexing` off here on purpose.
   assert.deepEqual(INTEGER_CAPABILITIES, {
     literals: 'integer', literalKind: 'integer', indexing: false, characters: false, addressOf: false, dereference: false, pointerOffset: false, members: false,
-    casts: false, castTypes: [], logic: false,
+    casts: false, castTypes: [], logic: false, simpleEquality: false,
     invalidTokenMessage: 'Cet élément n’appartient pas à une expression entière prise en charge.',
     invariantMessage: 'Invariant interne : expression analysée absente.',
   });
@@ -33,20 +40,20 @@ test('capacités déclarées des quatre profils', () => {
   // an approved and documented extension.
   assert.deepEqual(NUMERIC_CAPABILITIES, {
     literals: 'numeric', literalKind: 'literal', indexing: true, characters: true, addressOf: true, dereference: true, pointerOffset: true, members: true,
-    casts: true, castTypes: ['int', 'unsigned int', 'float', 'double', 'char'], logic: false,
+    casts: true, castTypes: ['int', 'unsigned int', 'float', 'double', 'char'], logic: false, simpleEquality: false,
     invalidTokenMessage: 'Cet élément n’appartient pas à une expression numérique prise en charge.',
     invariantMessage: 'Invariant interne : expression numérique analysée absente.',
   });
   assert.deepEqual(CONDITION_CAPABILITIES, {
     literals: 'numeric', literalKind: 'literal', indexing: true, characters: true, addressOf: true, dereference: true, pointerOffset: true, members: true,
-    casts: true, castTypes: ['int', 'unsigned int', 'float', 'double', 'char'], logic: true,
+    casts: true, castTypes: ['int', 'unsigned int', 'float', 'double', 'char'], logic: true, simpleEquality: false,
     invalidTokenMessage: 'Cet élément n’appartient pas à une expression numérique prise en charge.',
     invariantMessage: 'Invariant interne : expression numérique analysée absente.',
   });
   // Never published as a profile: selected only between `[` and `]`.
   assert.deepEqual(INDEX_CAPABILITIES, {
     literals: 'integer', literalKind: 'literal', indexing: true, characters: false, addressOf: false, dereference: false, pointerOffset: false, members: false,
-    casts: false, castTypes: [], logic: false,
+    casts: false, castTypes: [], logic: false, simpleEquality: false,
     invalidTokenMessage: 'Cet élément n’appartient pas à un indice entier pris en charge.',
     invariantMessage: 'Invariant interne : indice analysé absent.',
   });

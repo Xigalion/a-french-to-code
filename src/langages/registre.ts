@@ -4,8 +4,13 @@ import { renderC17 } from './c17/rendu.ts';
 
 /** Comment un langage délimite ses blocs. C'est une **étiquette**, pas une
  * abstraction : elle sélectionne une implémentation de placement, elle
- * n'essaie pas d'unifier les accolades et l'indentation. Décision 2 du socle. */
-export type Blocs = 'accolades' | 'indentation';
+ * n'essaie pas d'unifier les accolades et l'indentation. Décision 2 du socle.
+ *
+ * `terminateur` est arrivé au lot S0, pour SQL : ses instructions ne sont
+ * délimitées ni par des accolades ni par l'indentation, mais par `;`. L'ajout
+ * est **additif** — aucun des trois langages précédents ne change — et il
+ * confirme la décision 2 une troisième fois. */
+export type Blocs = 'accolades' | 'indentation' | 'terminateur';
 
 /** Une intention non portée est un **refus nommé**, jamais un rendu
  * approximatif. Décision 3 du socle, et c'est elle qui empêche de forcer un

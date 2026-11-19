@@ -1,8 +1,9 @@
 # A — du français contrôlé vers du code
 
 **A traduit une phrase française en une instruction, montre un aperçu, et
-n'insère rien sans confirmation.** Trois déclinaisons : **C-A** vers **C17**,
-**Python-A** vers **Python**, **Java-A** vers **Java 21**.
+n'insère rien sans confirmation.** Quatre déclinaisons : **C-A** vers **C17**,
+**Python-A** vers **Python**, **Java-A** vers **Java 21**, **SQL-A** vers
+**SQL** (standard, vérifié sur PostgreSQL 18).
 
 ```
 Crée un entier nommé age de valeur 20.
@@ -60,8 +61,11 @@ l'on modifie et que l'on compile.
 **A** est un projet de programmation assistée : traduire une intention
 exprimée en **langue naturelle contrôlée** vers du code d'un langage
 **réel et existant**. Il se décline par langage cible : **C-A** vers C17,
-**Python-A** vers Python, **Java-A** vers Java 21. Une seule extension
-**VS Code** les porte tous les trois, moteur en TypeScript.
+**Python-A** vers Python, **Java-A** vers Java 21, **SQL-A** vers SQL. Une
+seule extension **VS Code** les porte tous les quatre, moteur en TypeScript.
+
+**SQL-A n'exécute jamais rien** : il écrit l'instruction dans votre fichier, et
+c'est vous qui lancez le script contre la base de votre choix.
 
 L'extension garde l'identifiant technique `projet-a-local.c-a` : c'est la clé
 par laquelle VS Code reconnaît une installation, et la changer en
@@ -102,22 +106,24 @@ correcte à recopier.
 | | |
 |---|---|
 | version | 0.6.0 |
-| langages cibles | **trois** : C17, Python, Java 21 |
+| langages cibles | **quatre** : C17, Python, Java 21, SQL |
 | domaines couverts | **9 / 9** par langage |
 | formulations C17 | [`docs/CATALOGUE.md`](docs/CATALOGUE.md) — **tout ce qui n'y figure pas est refusé** |
 | formulations Python | [`docs/CATALOGUE_PYTHON.md`](docs/CATALOGUE_PYTHON.md) — 33 portées, 64 natives, 51 refus nommés |
 | formulations Java | [`docs/CATALOGUE_JAVA.md`](docs/CATALOGUE_JAVA.md) — 57 portées, 87 natives, 27 refus nommés |
-| tests | **4 438** tests Node, **121** tests hôte VS Code |
+| formulations SQL | [`docs/CATALOGUE_SQL.md`](docs/CATALOGUE_SQL.md) — **0 portée, 93 natives**, 84 refus en 10 raisons |
+| tests | **4 487** tests Node, **130** tests hôte VS Code |
 | dépendances d'exécution | **aucune** |
-| preuves d'exécution | 19 programmes C compilés en C17 `-Wall -Wextra -pedantic`, **9 programmes Python exécutés**, et **2 programmes Java compilés par `javac --release 21 -Xlint:all` et exécutés**, dont un de **quatre fichiers** |
+| preuves d'exécution | 19 programmes C compilés en C17 `-Wall -Wextra -pedantic`, **9 programmes Python exécutés**, **2 programmes Java compilés par `javac --release 21 -Xlint:all` et exécutés**, dont un de **quatre fichiers**, et **109 instructions SQL jouées contre PostgreSQL 18.7** avec trois épreuves négatives |
 
-**Les trois réglages sont actifs par défaut**, et chacun se ferme :
+**Les quatre réglages sont actifs par défaut**, et chacun se ferme :
 
 | Réglage | À `false` |
 |---|---|
 | `c-a.souplesse` | restaure le **mode strict** : seules les phrases exactes du catalogue |
 | `c-a.python` | n'ouvre pas les fichiers `.py` |
 | `c-a.java` | n'ouvre pas les fichiers `.java` |
+| `c-a.sql` | n'ouvre pas les fichiers `.sql` |
 
 Le mode strict reste la référence, et il reste **accessible** : la commande
 « A : Basculer entre français strict et français souple » le fait en un geste.

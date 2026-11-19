@@ -1,0 +1,110 @@
+{
+  "_lisezMoi": [
+    "Etat chiffre de la phase 4. Les barres `fait` sont EDITEES A LA MAIN ;",
+    "les CONTROLES, eux, sont executes par scripts/progression-phase4.mjs, qui",
+    "lit le disque. Une barre qui dirait « livre » pendant qu un controle dit",
+    "« absent » est un mensonge visible, et c est voulu.",
+    "",
+    "Rien n est implemente. Toutes les barres d implementation sont a zero."
+  ],
+  "miseAJour": "2026-11-19",
+  "branche": "phase-4-sql",
+  "langage": "SQL, dialecte de reference PostgreSQL 18, priorite au SQL standard",
+  "etat": "SQL-A V1 LIVRE, lots S0 a S11. 93 formulations natives, 9 domaines, 0 des 84 intentions partagees portee. 4 487 tests Node, 130 scenarios hote, 109 instructions executees contre PostgreSQL 18.7. Les onze decisions sont implementees. RIEN n'est fusionne dans main, et aucune release n'est publiee.",
+  "indicateurs": [
+    {
+      "nom": "Phase 4 — audit du socle",
+      "fait": 1,
+      "total": 1,
+      "unite": "document",
+      "source": "docs/phase4/AUDIT_REUTILISATION.md",
+      "note": "Mesure sur le moteur, non lue : C17 porte 84 intentions sur 84, Java 57, Python 33, SQL ZERO. Obstacle trouve DANS le code : expressionCore.ts refusait `=` seul, alors qu en SQL `=` est l egalite."
+    },
+    {
+      "nom": "Phase 4 — dialecte de reference",
+      "fait": 1,
+      "total": 1,
+      "unite": "serveur verifie",
+      "source": "docs/phase4/POSTGRES_INSTALLATION.md ; node scripts/postgres.mjs",
+      "note": "PostgreSQL 18.7 portable, hors du depot, port 55432, 127.0.0.1 seulement, aucun service Windows, PATH systeme inchange. Aucune somme de controle publiee par PostgreSQL -- ecart honnete avec Temurin -- donc integrite par SIGNATURE Authenticode, Valid, EnterpriseDB Corporation. Quinze affirmations verifiees PAR EXECUTION avant la premiere ligne de moteur, et l une a trouve un defaut du catalogue propose."
+    },
+    {
+      "nom": "Phase 4 — catalogue livre",
+      "fait": 9,
+      "total": 9,
+      "unite": "domaines couverts",
+      "source": "docs/CATALOGUE_SQL.md, engendre depuis le moteur ; node scripts/catalogue-sql-public.mjs",
+      "note": "93 formulations, TOUTES natives. 58 instructions completes, 34 clauses, 1 clause de projection, dont 17 ouvrant une requete. 17 informations passives. Le generateur CONFRONTE le moteur a la specification approuvee, entree par entree, par substitution exacte des parametres -- un premier comparateur approximatif declarait identiques des sorties differant par leurs identifiants."
+    },
+    {
+      "nom": "Phase 4 — 84 intentions classees",
+      "fait": 84,
+      "total": 84,
+      "unite": "intentions",
+      "source": "src/langages/sql/raisons.ts ; test/sql.test.mjs",
+      "note": "0 reprise, 0 adaptation, 84 refus groupes en 10 raisons. L exhaustivite est verifiee AU CHARGEMENT du module contre les genres du moteur : la faute « 82 classees pour 84 » de la phase 3 est desormais impossible, et un genre nouveau casse SQL-A tout de suite."
+    },
+    {
+      "nom": "Phase 4 — decisions validees",
+      "fait": 11,
+      "total": 11,
+      "unite": "decisions",
+      "source": "docs/phase4/DECISIONS_SQL.md",
+      "note": "S1 a S11, validees par le fondateur le 19 novembre 2026, avec quatre precisions : extension du noyau additive et isolee, transactions distinguant l annulable du definitif, TRUNCATE ecarte comme choix de perimetre, et A n execute JAMAIS les requetes produites."
+    },
+    {
+      "nom": "Phase 4 — lots implementes",
+      "fait": 12,
+      "total": 12,
+      "unite": "lots",
+      "source": "src/langages/sql/ — 8 fichiers ; extension/src/sessionSql.ts",
+      "note": "S0 a S11. Le noyau a recu UNE capacite, `simpleEquality`, fermee dans les quatre profils publies. L etiquette de blocs a recu une TROISIEME valeur, `terminateur`, additive -- troisieme confirmation de la decision 2 du socle."
+    },
+    {
+      "nom": "Phase 4 — preservation de C, Python et Java",
+      "fait": 1,
+      "total": 1,
+      "unite": "differentiel",
+      "source": "node scripts/differentiel.mjs v0.6.0 --no-loss",
+      "note": "1 335 559 comparaisons, 0 regression, 0 capacite perdue. Relance DEUX fois : apres l extension du noyau (S3) et apres celle du lexique (S9). Corpus gele C17 inchange a 95,1 %. Et le test du contrat des capacites a fait son travail en ECHOUANT a l ajout du drapeau."
+    },
+    {
+      "nom": "Phase 4 — execution reelle",
+      "fait": 1,
+      "total": 1,
+      "unite": "exercice execute",
+      "source": "node exercice/sql/cloture.mjs ; exercice/sql/journal/cloture.json",
+      "note": "109 phrases dictees, 0 refus, 0 RETOUCHE MANUELLE, 9 fichiers. Six en code 0 sous psql --set ON_ERROR_STOP=1, et TROIS epreuves negatives qui echouent chacune avec la contrainte attendue. Resultats conformes au CALCUL FAIT A LA MAIN : COUNT(*) 7 contre COUNT(rendu) 5, jointure interne 7 lignes contre gauche 8, moyenne 30,5, nuls en dernier, ROLLBACK qui ramene 6, apostrophe relue intacte. Un test relit ce journal, avec les chiffres ECRITS et non lus."
+    },
+    {
+      "nom": "Phase 4 — integration VS Code",
+      "fait": 1,
+      "total": 1,
+      "unite": "suite hote",
+      "source": "npm run test:vscode",
+      "note": "130 scenarios sur 130, dont NEUF nouveaux pour SQL : le refus d un .sql sans le reglage, l insertion par l IHM reelle avec annulation en une fois, l ouverture d un bloc de requete, l insertion d une clause SANS rien remplacer, la composition de DEUX clauses d affilee, le refus d une clause hors requete, le refus d une clause dans le mauvais ordre dont le message la NOMME, une information passive journalisee, et une phrase SQL refusee dans un .c."
+    },
+    {
+      "nom": "Phase 4 — francais souple MESURE en SQL",
+      "fait": 1,
+      "total": 1,
+      "unite": "mesure sur corpus independant",
+      "source": "node scripts/mesurer-sql.mjs ; test-utilisateur/corpus/corpus-sql.json",
+      "note": "54 entrees, 40 claires : 39 reconnues (97,5 %), 0 ACCEPTEE A TORT, 0 ERREUR DE SENS. Premiere mesure : 34/40 -- six infinitifs manquaient au lexique. Le risque de sens etait PREVISIBLE cette fois : les sept noms communs de SQL sont dans la garde des identifiants AVANT la mesure. Le seul refus restant, « les lignes ou » sans accent, n est PAS corrige : `ou` et `ou` accentue sont deux mots differents."
+    },
+    {
+      "nom": "Phase 4 — usage humain reel",
+      "fait": 0,
+      "total": 10,
+      "unite": "seances",
+      "source": "aucune : rien n est mesure",
+      "note": "Le meme zero qu aux phases 1, 2 et 3. QUATRE langages sont livres, et personne n a encore ecrit un programme avec A. Les 109 phrases de l exercice sont dictees par un script, et le 97,5 % du corpus SQL porte son biais ecrit. Le corpus GELE de la phase 2, a 95,1 %, reste l ordre de grandeur honnete."
+    }
+  ],
+  "cloture": {
+    "date": "2026-11-19",
+    "document": "docs/phase4/BILAN_SQL_V1.md",
+    "etat": "SQL-A V1 LIVRE. Six defauts trouves et corriges, dont quatre invisibles pour tout test unitaire. RIEN n'est fusionne dans main, aucune release n'est publiee, et Rust-A n'est pas commence.",
+    "ceQuiResteOuvert": "docs/phase4/BILAN_SQL_V1.md section 8 (limites reelles), docs/LIMITES_CONNUES.md (public). Usage humain : 0/10, et c'est la seule barre qui compte encore."
+  }
+}
